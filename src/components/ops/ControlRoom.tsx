@@ -62,7 +62,7 @@ function Header({ s, now }: { s: Session; now: string }) {
             {asking ? (
               <form onSubmit={(e) => { e.preventDefault(); if (reason.trim()) { void send({ kind: "kill_switch", scope: "global", on: !on, reason }); setAsking(false); setReason(""); } }} className="flex gap-1">
                 <input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="One-line reason" className="h-8 rounded-[8px] border border-line-strong px-2 text-[14px]" />
-                <button className="rounded-[8px] bg-navy px-2 text-[13px] font-semibold text-white">Confirm</button>
+                <button className="rounded-[8px] btn-primary px-2 text-[13px] font-semibold text-white">Confirm</button>
               </form>
             ) : (
               <button role="switch" aria-checked={on} onClick={() => setAsking(true)} className={`relative h-6 w-10 rounded-full ${on ? "bg-amber" : "bg-green"}`}>
@@ -80,11 +80,11 @@ function IncidentPanel({ s, now }: { s: Session; now: string }) {
   const inc = [...s.state.incidents.values()][0];
   const m = metrics(s);
   const acted = s.state.settingsChangedBy.get("m_padhoai");
-  if (!inc) return <section className="rounded-[12px] border border-line bg-surface p-5 text-[15px] text-slate">No open incidents. Review Radar is watching 14 merchants.<p className="mt-2 text-[13px]">Next run at :58, {timeIST(now)} now.</p></section>;
+  if (!inc) return <section className="card p-5 text-[15px] text-slate">No open incidents. Review Radar is watching 14 merchants.<p className="mt-2 text-[13px]">Next run at :58, {timeIST(now)} now.</p></section>;
   const mer = s.idx.merchant.get(inc.merchantId)!;
   const mx = inc.metrics;
   return (
-    <section className="flex flex-col gap-4 rounded-[12px] border border-line bg-surface p-5">
+    <section className="flex flex-col gap-4 card p-5">
       <div>
         <div className="flex items-center gap-2"><StatusPill kind="answer">{inc.id}</StatusPill><span className="text-[13px] text-slate">Opened {timeIST(inc.openedAt)}</span></div>
         <h2 className="mt-2 text-[17px] font-semibold">{mx.count} low-star reviews about {mer.brand} in 6 hours</h2>
@@ -119,7 +119,7 @@ const STATUS_PILL: Record<string, ["answer" | "neutral" | "done" | "muted" | "fr
 function CaseTable({ s, selected, onPick, onPickSunita }: { s: Session; selected?: string; onPick: (code: string) => void; onPickSunita: () => void }) {
   const cases = [...s.state.cases.values()].sort((a, b) => (a.status === "with_person" ? -1 : 0) - (b.status === "with_person" ? -1 : 0) || a.code.localeCompare(b.code));
   return (
-    <section className="rounded-[12px] border border-line bg-surface">
+    <section className="card">
       <div className="flex items-center justify-between border-b border-line px-5 py-3">
         <h2 className="text-[17px] font-semibold">Cases</h2>
         <button onClick={onPickSunita} className="text-[13px] font-semibold text-navy underline">Sunita&apos;s flight recorder</button>
@@ -150,7 +150,7 @@ function CaseFile({ s, code }: { s: Session; code: string }) {
   const sum = cs.summary as Record<string, unknown> | undefined;
   const decide = (decision: "refund" | "uphold" | "need_info") => reason.trim() && send({ kind: "person_decision", caseId: code, decision, reason, by: "Priya Nair" });
   return (
-    <div className="rounded-[12px] border border-line bg-surface p-5 text-[14px]">
+    <div className="card p-5 text-[14px]">
       <div className="flex items-center justify-between"><h2 className="text-[17px] font-semibold">{code}</h2>{cs.type === "fraud" && <StatusPill kind="fraud">Fraud lane</StatusPill>}</div>
       {sum ? (
         <>
@@ -171,7 +171,7 @@ function CaseFile({ s, code }: { s: Session; code: string }) {
         <div className="mt-3 flex flex-col gap-2">
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="One-line reason (required)" className="h-10 rounded-[8px] border border-line-strong px-3" />
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => decide("refund")} className="h-10 rounded-[10px] bg-navy px-3 font-semibold text-white disabled:opacity-50" disabled={!reason.trim()}>Ask merchant to refund</button>
+            <button onClick={() => decide("refund")} className="h-10 rounded-full btn-primary px-3 font-semibold text-white disabled:opacity-50" disabled={!reason.trim()}>Ask merchant to refund</button>
             <button onClick={() => decide("uphold")} className="h-10 rounded-[10px] border border-line-strong px-3 font-semibold text-navy disabled:opacity-50" disabled={!reason.trim()}>Uphold merchant decision</button>
             <button onClick={() => decide("need_info")} className="h-10 rounded-[10px] border border-line-strong px-3 font-semibold text-navy disabled:opacity-50" disabled={!reason.trim()}>Need more info</button>
             {cs.callback && !cs.callback.doneAt && <button onClick={() => send({ kind: "callback_done", caseId: code })} className="h-10 rounded-[10px] border border-line-strong px-3 font-semibold text-navy">Mark call done</button>}
@@ -186,7 +186,7 @@ function FlightRecorder({ s, subject }: { s: Session; subject: { cycleId?: strin
   const rows = eventsFor(s, subject).map((e) => recorderRow(s, e)).filter((r): r is NonNullable<typeof r> => !!r);
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-[12px] border border-line bg-surface">
+    <div className="flex min-h-0 flex-1 flex-col card">
       <div className="border-b border-line px-5 py-3">
         <h2 className="text-[17px] font-semibold">Flight recorder</h2>
         <p className="text-[13px] text-slate">{subject.label}</p>

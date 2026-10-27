@@ -60,7 +60,7 @@ export default function ConsumerApp({ embedded = false }: { embedded?: boolean }
       {sheet && (
         <div className="absolute inset-0 z-20 flex flex-col justify-end">
           <button aria-label="Close" className="anim-backdrop absolute inset-0 bg-[rgba(10,25,55,.42)]" onClick={() => setSheet(null)} />
-          <div role="dialog" aria-modal className="anim-sheet relative max-h-[92%] overflow-y-auto rounded-t-[20px] bg-surface px-4 pb-5 pt-2 shadow-[var(--shadow-sheet)]" onKeyDown={(e) => e.key === "Escape" && setSheet(null)}>
+          <div role="dialog" aria-modal className="anim-sheet relative max-h-[92%] overflow-y-auto rounded-t-[28px] bg-surface px-4 pb-5 pt-2 shadow-[var(--shadow-sheet)]" onKeyDown={(e) => e.key === "Escape" && setSheet(null)}>
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line-strong" />
             {sheet.name === "decision" && <DecisionSheet s={session} cycleId={sheet.cycleId} lang={lang} now={now} onPin={(choice) => setSheet({ name: "pin", cycleId: sheet.cycleId, choice })} onDone={(choice, status) => setSheet({ name: "result", cycleId: sheet.cycleId, choice, status })} />}
             {sheet.name === "pin" && <PinPad s={session} userId={userId} cycleId={sheet.cycleId} choice={sheet.choice} lang={lang} onDone={(status) => setSheet({ name: "result", cycleId: sheet.cycleId, choice: sheet.choice, status })} />}
@@ -80,7 +80,7 @@ export default function ConsumerApp({ embedded = false }: { embedded?: boolean }
         <span className="text-[13px] text-slate">{t("en", "persona.switch")}</span>
         {PERSONAS.map((p) => (
           <button key={p.id} onClick={() => { setPersona(p.id); setScreen({ name: "list" }); setSheet(null); }}
-            className={`rounded-full px-3 py-1 text-[13px] font-semibold ${persona === p.id ? "bg-navy text-white" : "border border-line-strong text-navy"}`}>{p.label}</button>
+            className={`rounded-full px-3 py-1 text-[13px] font-semibold ${persona === p.id ? "btn-primary text-white" : "border border-line-strong text-navy"}`}>{p.label}</button>
         ))}
       </div>
       <div className="h-[100dvh] w-full overflow-hidden sm:h-[844px] sm:w-[390px] sm:rounded-[36px] sm:border-[10px] sm:border-ink">{body}</div>
@@ -109,30 +109,30 @@ function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscal
   const first = asks[0] ?? collects[0];
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex items-center gap-2 border-b border-line bg-surface px-4 py-3">
-        <ChevronLeft size={20} strokeWidth={1.8} className="text-navy" aria-hidden />
+      <header className="flex items-center gap-2 bg-surface px-4 py-3 shadow-[0_1px_0_var(--line)]">
+        <ChevronLeft size={20} strokeWidth={1.8} className="text-blue" aria-hidden />
         <h1 className="flex-1 text-[20px] font-bold text-navy">{t(lang, "list.title")}</h1>
         <LangToggle lang={lang} onChange={setLang} />
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto pb-24">
         <CaseCards s={s} userId={userId} lang={lang} now={now} onFraud={onFraud} onEscalate={onEscalate} />
         {first && (
-          <div className="mx-4 mt-4 rounded-[12px] bg-navy px-4 py-3.5 text-white">
+          <div className="mx-4 mt-4 rounded-[20px] bg-gradient-to-br from-sky to-blue px-4 py-4 text-white shadow-[0_10px_24px_rgba(11,114,231,0.30)]">
             <PakkaSeal onNavy />
             <p className="mt-2 text-[17px] font-semibold leading-6">
               {asks.length ? t(lang, "nudge.card.title", { n: soonCount }) : t(lang, "nudge.card.collect", { brand: first.merchant.brand, amount: inr(first.cycle.amount), day: relativeDay(first.cycle.dueAt, now, lang) })}
             </p>
             {asks.length > 0 && <p className="mt-1 text-[14px] text-white/80">{t(lang, "nudge.card.sub", { brand: asks[0].merchant.brand, amount: inr(asks[0].cycle.amount) })}</p>}
-            <button onClick={() => (asks.length ? ask(asks[0].cycle.id) : open(first))} className="mt-3 h-[38px] rounded-[10px] bg-white px-4 text-[15px] font-semibold text-navy">{t(lang, "nudge.card.cta")}</button>
+            <button onClick={() => (asks.length ? ask(asks[0].cycle.id) : open(first))} className="press mt-3 h-[38px] rounded-full bg-white px-5 text-[15px] font-semibold text-blue">{t(lang, "nudge.card.cta")}</button>
           </div>
         )}
         {rows.length === 0 && <p className="p-6 text-slate">{t(lang, "list.empty")}</p>}
         {groups.map((g) => g.rows.length > 0 && (
           <section key={g.key}>
-            <h2 className="px-4 pb-1.5 pt-3.5 text-[14px] font-semibold text-slate">
+            <h2 className="px-5 pb-2 pt-4 text-[14px] font-semibold text-slate">
               {g.key === "soon" ? `${relativeDay(g.rows[0].cycle.dueAt, now, lang)}, ${dayMonth(g.rows[0].cycle.dueAt, lang)}` : t(lang, g.key)}
             </h2>
-            <div className="bg-surface">
+            <div className="card mx-4 overflow-hidden">
               {g.rows.map((r) => <MandateRow key={r.mandate.id} r={r} lang={lang} now={now} onClick={() => (needsAnswer(r) ? ask(r.cycle.id) : open(r))} />)}
             </div>
           </section>
@@ -149,7 +149,7 @@ function MandateRow({ r, lang, now, onClick }: { r: Row; lang: Lang; now: string
   const soon = sectionOf(r, now) === "soon";
   const sub = r.mandate.irrevocable ? t(lang, "row.irrevocable") : r.mandate.visibleViaInterop ? t(lang, "row.interop") : soon ? t(lang, "row.after", { time: "9:30 PM" }) : t(lang, "row.monthly");
   return (
-    <button onClick={onClick} className="flex min-h-12 w-full items-center gap-3 border-b border-line px-4 py-3 text-left last:border-b-0">
+    <button onClick={onClick} className="flex min-h-12 w-full items-center gap-3 border-b border-line px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-canvas active:bg-sky-soft/60">
       <MerchantTile brand={r.merchant.brand} tile={r.merchant.tile} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[16px] font-semibold">{r.merchant.brand}{r.merchant.category === "loan" ? " EMI" : ""}</div>
@@ -218,7 +218,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <PakkaSeal />
-        <button onClick={listen} className="inline-flex items-center gap-1.5 rounded-full bg-cyan-wash px-3 py-1.5 text-[14px] font-semibold text-navy">
+        <button onClick={listen} className="btn-soft inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-semibold">
           {audio === "playing" ? <Pause size={16} aria-hidden /> : <Volume2 size={16} aria-hidden />}{t(lang, "sheet.listen")}
         </button>
       </div>
@@ -241,9 +241,9 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
         {options.map((o) => {
           const sel = choice === o.id;
           return (
-            <label key={o.id} className={`flex cursor-pointer gap-3 rounded-[12px] border px-3 py-[9px] transition-shadow duration-[120ms] ${sel ? "border-navy bg-[#FBFDFF] shadow-[0_0_0_1px_var(--navy)]" : "border-line-strong bg-surface"}`}>
+            <label key={o.id} className={`flex cursor-pointer gap-3 rounded-[14px] border px-3 py-[9px] transition-all duration-[120ms] ${sel ? "border-blue bg-sky-soft/50 shadow-[0_0_0_1px_var(--blue)]" : "border-line-strong bg-surface hover:border-blue/50"}`}>
               <input type="radio" name="choice" className="sr-only" checked={sel} onChange={() => setChoice(o.id)} />
-              <span aria-hidden className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 ${sel ? "border-[6px] border-navy" : "border-line-strong"}`} />
+              <span aria-hidden className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 ${sel ? "border-[6px] border-blue" : "border-line-strong"}`} />
               <span className="flex-1">
                 <span className="block text-[16px] font-semibold">{choiceLabel(lang, o.id)}</span>
                 <span className="block text-[14px] text-slate">{o.desc}</span>
@@ -259,7 +259,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
         })}
       </div>
       <p className="flex gap-2 text-[14px] text-slate"><Info size={18} className="shrink-0" aria-hidden />{t(lang, dh ? "noanswer.dh" : "noanswer.default", p)}</p>
-      <button disabled={!choice || busy} onClick={confirm} className={`h-12 rounded-[10px] text-[16px] font-semibold ${choice ? "bg-navy text-white hover:bg-navy-700" : "bg-line-strong text-slate"}`}>
+      <button disabled={!choice || busy} onClick={confirm} className={`h-12 rounded-[10px] text-[16px] font-semibold ${choice ? "btn-primary text-white" : "bg-line-strong text-slate"}`}>
         {busy ? t(lang, "button.working") : choice ? choiceLabel(lang, choice) : t(lang, "button.choose")}
       </button>
       <AIFooter lang={lang} />
@@ -298,7 +298,7 @@ function PinPad({ s, userId, cycleId, choice, lang, onDone }: { s: Session; user
             className="h-12 rounded-[10px] border border-line text-[20px] font-semibold text-ink" aria-label={k === "del" ? "Delete" : k}>{k === "del" ? <X size={20} className="mx-auto" /> : k}</button>
         ))}
       </div>
-      <button disabled={busy || !(digits.length === 4 || digits.length === 6)} onClick={submit} className="h-12 w-full rounded-[10px] bg-navy text-[16px] font-semibold text-white disabled:bg-line-strong disabled:text-slate">
+      <button disabled={busy || !(digits.length === 4 || digits.length === 6)} onClick={submit} className="h-12 w-full rounded-full btn-primary text-[16px] font-semibold text-white disabled:bg-line-strong disabled:text-slate">
         {busy ? t(lang, "button.working") : t(lang, "button.ok")}
       </button>
     </div>
@@ -322,11 +322,11 @@ function ResultState({ s, cycleId, choice, status, lang, now, close }: { s: Sess
   else { title = t(lang, "result.cancel", p); sub = t(lang, "result.cancel.sub", p); }
   return (
     <div className="flex flex-col items-center gap-3 py-2 text-center">
-      {verified ? <span className="flex h-12 w-12 items-center justify-center rounded-full bg-green-wash"><Check size={30} className="text-green" aria-hidden /></span> : <Clock size={40} className="text-amber" aria-hidden />}
+      {verified ? <span className="anim-pop flex h-14 w-14 items-center justify-center rounded-full bg-green-wash"><Check size={32} className="text-green" aria-hidden /></span> : <Clock size={40} className="text-amber" aria-hidden />}
       <h2 className="text-[20px] font-bold leading-[26px] text-navy">{title}</h2>
       {sub && <p className="text-[16px] text-slate">{sub}</p>}
       <div className="w-full py-2"><DebitTimeline startMs={ms(c.noticeAt)} endMs={ms(addMin(c.dueAt, -130))} nowMs={ms(now)} ended={choice !== "keep"} variant="compact" /></div>
-      <button onClick={close} className="h-12 w-full rounded-[10px] bg-navy text-[16px] font-semibold text-white">{t(lang, "button.ok")}</button>
+      <button onClick={close} className="h-12 w-full rounded-full btn-primary text-[16px] font-semibold text-white">{t(lang, "button.ok")}</button>
     </div>
   );
 }
@@ -358,7 +358,7 @@ function RetryScreen({ s, mandateId, lang, now, back, ask }: { s: Session; manda
         <h1 className="text-[17px] font-semibold text-navy">{mer.brand} AutoPay</h1>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <div className="flex items-center gap-3 rounded-[12px] border border-line bg-surface p-3">
+        <div className="flex items-center gap-3 card p-3">
           <MerchantTile brand={mer.brand} tile={mer.tile} />
           <div className="flex-1"><div className="text-[16px] font-semibold">{mer.brand}</div><div className="text-[14px] text-slate">{t(lang, "row.monthly_on", { n: 27 })}</div></div>
           <Amount paise={cycle.amount} lang={lang} />
@@ -366,7 +366,7 @@ function RetryScreen({ s, mandateId, lang, now, back, ask }: { s: Session; manda
         {cs.status === "succeeded" ? (
           <div className="mt-3 rounded-[12px] bg-green-wash p-4 text-[17px] font-semibold text-green">{t(lang, "success.title", { amount, brand: mer.brand })}</div>
         ) : failed ? (
-          <div className="mt-3 rounded-[12px] border border-line bg-surface p-4">
+          <div className="mt-3 card p-4">
             <h2 className="text-[20px] font-bold text-navy">{t(lang, "failed.title", { amount })}</h2>
             <p className="mt-1 text-[15px] text-slate">{t(lang, "failed.body")}</p>
             {tapped ? (
@@ -375,7 +375,7 @@ function RetryScreen({ s, mandateId, lang, now, back, ask }: { s: Session; manda
               <p className="mt-3 text-[14px] text-slate">{t(lang, "failed.limit", { brand: mer.brand })}</p>
             ) : (
               <div className="mt-3 flex items-center gap-4">
-                <button disabled={busy} onClick={async () => { setBusy(true); await send({ kind: "topup_confirmed", cycleId: cycle.id }); setBusy(false); }} className="h-12 flex-1 rounded-[10px] bg-navy text-[16px] font-semibold text-white">{busy ? t(lang, "button.working") : t(lang, "failed.cta")}</button>
+                <button disabled={busy} onClick={async () => { setBusy(true); await send({ kind: "topup_confirmed", cycleId: cycle.id }); setBusy(false); }} className="h-12 flex-1 rounded-full btn-primary text-[16px] font-semibold text-white">{busy ? t(lang, "button.working") : t(lang, "failed.cta")}</button>
                 <span className="text-[14px] text-slate">{t(lang, "failed.remind")}</span>
               </div>
             )}
@@ -392,7 +392,7 @@ function RetryScreen({ s, mandateId, lang, now, back, ask }: { s: Session; manda
             )}
           </div>
         ) : (
-          <div className="mt-3 rounded-[12px] border border-line bg-surface p-4 text-[15px]">
+          <div className="mt-3 card p-4 text-[15px]">
             <p>{t(lang, "collect.push", { day: relativeDay(cycle.dueAt, now, lang), amount, brand: mer.brand })}</p>
           </div>
         )}
@@ -431,20 +431,20 @@ function DetailScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mand
           <div className="flex-1"><div className="text-[17px] font-semibold">{mer.brand}</div><div className="text-[14px] text-slate">{mer.legalName}</div></div>
           <Amount paise={cycle.amount} size="l" lang={lang} />
         </div>
-        <dl className="mt-4 divide-y divide-line rounded-[12px] border border-line bg-surface">
+        <dl className="mt-4 divide-y divide-line card">
           {rows.map(([k, v]) => <div key={k} className="flex justify-between px-4 py-3 text-[15px]"><dt className="text-slate">{t(lang, k)}</dt><dd className="font-semibold">{v}</dd></div>)}
         </dl>
         {hist.length > 0 && (
           <>
             <h2 className="mt-4 text-[14px] font-semibold text-slate">{t(lang, "detail.history")}</h2>
-            <ul className="mt-1 divide-y divide-line rounded-[12px] border border-line bg-surface">
+            <ul className="mt-1 divide-y divide-line card">
               {hist.map((h) => <li key={h.id} className="flex justify-between px-4 py-2.5 text-[14px]"><span>{dayMonth(h.at, lang)}</span><StatusPill kind={h.result === "success" ? "done" : "muted"}>{t(lang, h.result === "success" ? "outcome.charged" : "outcome.failed")}</StatusPill></li>)}
             </ul>
           </>
         )}
         <div className="mt-4 flex flex-col gap-2">
           {m.irrevocable ? (
-            <div className="flex justify-between rounded-[12px] border border-line bg-surface px-4 py-3 text-[15px]"><span>{t(lang, "detail.remind_when")}</span><span className="font-semibold">{t(lang, "detail.remind_value")}</span></div>
+            <div className="flex justify-between card px-4 py-3 text-[15px]"><span>{t(lang, "detail.remind_when")}</span><span className="font-semibold">{t(lang, "detail.remind_value")}</span></div>
           ) : s.state.mandateStatus.get(m.id) === "active" && (
             <button onClick={() => ask(cycle.id)} className="h-12 rounded-[10px] border border-line-strong bg-surface text-[15px] font-semibold text-navy">{t(lang, "choice.pause")} / {t(lang, "choice.cancel")}</button>
           )}
@@ -464,9 +464,9 @@ function CaseCards({ s, userId, lang, now, onFraud, onEscalate }: { s: Session; 
     <>
       {cases.filter((c) => c.callback).map((c) => (
         c.callback!.doneAt ? (
-          <p key={c.code + "cb"} className="mx-4 mt-4 flex items-center gap-2 rounded-[12px] border border-line bg-surface p-3 text-[14px]"><Phone size={16} className="text-navy" aria-hidden />{t(lang, "callback.done", { name: "Priya", time: timeIST(c.callback!.doneAt) })}</p>
+          <p key={c.code + "cb"} className="mx-4 mt-4 flex items-center gap-2 card p-3 text-[14px]"><Phone size={16} className="text-navy" aria-hidden />{t(lang, "callback.done", { name: "Priya", time: timeIST(c.callback!.doneAt) })}</p>
         ) : (
-          <div key={c.code + "cb"} className="mx-4 mt-4 rounded-[12px] bg-surface p-4 shadow-[var(--shadow-float)]">
+          <div key={c.code + "cb"} className="card mx-4 mt-4 p-4">
             <div className="flex gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy"><Phone size={18} className="text-white" aria-hidden /></span>
               <div>
@@ -488,7 +488,7 @@ function CaseCards({ s, userId, lang, now, onFraud, onEscalate }: { s: Session; 
         const cs = r.caseCode ? s.state.cases.get(r.caseCode) : undefined;
         if (r.status === "offered") {
           return (
-            <div key={r.executionId} className="mx-4 mt-4 rounded-[12px] border border-line bg-surface p-4">
+            <div key={r.executionId} className="mx-4 mt-4 card p-4">
               <PakkaSeal />
               <p className="mt-2 text-[16px] font-semibold">{t(lang, "refund.offer", { amount: inr(r.amount), brand: mer.brand, date: charge ? dayMonth(charge.at, lang) : "" })}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -508,7 +508,7 @@ function CaseCards({ s, userId, lang, now, onFraud, onEscalate }: { s: Session; 
         ];
         const nowIdx = steps.findIndex((x) => !x.done);
         return (
-          <div key={r.executionId} className="mx-4 mt-4 rounded-[12px] border border-line bg-surface p-4">
+          <div key={r.executionId} className="mx-4 mt-4 card p-4">
             <div className="flex items-center justify-between"><span className="text-[15px] font-semibold">{r.caseCode ? t(lang, "case.title", { code: r.caseCode }) : mer.brand}</span><Amount paise={r.amount} lang={lang} /></div>
             <ol className="mt-3 flex flex-col">
               {steps.map((st, i) => (
@@ -529,7 +529,7 @@ function CaseCards({ s, userId, lang, now, onFraud, onEscalate }: { s: Session; 
         );
       })}
       {cases.filter((c) => c.type === "fraud").map((c) => (
-        <button key={c.code} onClick={() => onFraud(c.code, c.mandateId)} className="mx-4 mt-4 flex w-[calc(100%-32px)] items-center justify-between rounded-[12px] border border-line bg-surface p-3 text-left text-[14px]">
+        <button key={c.code} onClick={() => onFraud(c.code, c.mandateId)} className="mx-4 mt-4 flex w-[calc(100%-32px)] items-center justify-between card p-3 text-left text-[14px]">
           <span className="font-semibold">{t(lang, "fraud.case", { code: c.code })}</span><StatusPill kind="fraud">{c.code}</StatusPill>
         </button>
       ))}
@@ -557,7 +557,7 @@ function FraudLaneSheet({ s, code, mandateId, lang, onCancel }: { s: Session; co
           <li key={k} className="flex gap-3 rounded-[12px] border border-line p-3 text-[15px]"><span className="font-bold text-navy">{i + 1}</span><span>{t(lang, k)}</span></li>
         ))}
       </ol>
-      {cycle && active && <button onClick={() => onCancel(cycle.id)} className="h-12 rounded-[10px] bg-navy text-[16px] font-semibold text-white">{t(lang, "choice.cancel")}</button>}
+      {cycle && active && <button onClick={() => onCancel(cycle.id)} className="h-12 rounded-full btn-primary text-[16px] font-semibold text-white">{t(lang, "choice.cancel")}</button>}
       {code && <p className="text-[14px] text-slate">{t(lang, "fraud.case", { code })}</p>}
     </div>
   );
@@ -587,7 +587,7 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
     if (r?.intent === "never_approved") onFraud(r.caseCode, r.mandateId);
   };
   if (!open) return (
-    <button onClick={() => setOpen(true)} className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-navy px-5 py-2.5 text-[15px] font-semibold text-white shadow-[var(--shadow-float)]">{t(lang, "ask.pill")}</button>
+    <button onClick={() => setOpen(true)} className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full btn-primary px-5 py-2.5 text-[15px] font-semibold text-white shadow-[var(--shadow-float)]">{t(lang, "ask.pill")}</button>
   );
   return (
     <div className="absolute inset-x-0 bottom-0 z-10 max-h-[60%] overflow-y-auto border-t border-line bg-surface p-4 shadow-[var(--shadow-sheet)]">
@@ -602,7 +602,7 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
         <div className="mt-3 rounded-[12px] border border-line p-3">
           <div className="flex items-center gap-3"><MerchantTile brand={facts.mer.brand} tile={facts.mer.tile} /><div className="flex-1 text-[16px] font-semibold">{facts.mer.brand}</div><Amount paise={facts.c.amount} lang={lang} /></div>
           <p className="mt-2 text-[15px]">{t(lang, "ask.facts", { legal: facts.mer.legalName, brand: facts.mer.brand, plan: facts.plan.name, amount: inr(facts.c.amount), when: `${dayMonth(facts.c.dueAt, lang)}, ${timeIST(facts.c.dueAt)}` })}</p>
-          {needsAnswer({ cs: s.state.cycle(facts.c.id) } as Row) && <button onClick={() => ask(facts.c.id)} className="mt-3 h-11 w-full rounded-[10px] bg-navy text-[15px] font-semibold text-white">{t(lang, "sheet.question")}</button>}
+          {needsAnswer({ cs: s.state.cycle(facts.c.id) } as Row) && <button onClick={() => ask(facts.c.id)} className="mt-3 h-11 w-full rounded-full btn-primary text-[15px] font-semibold text-white">{t(lang, "sheet.question")}</button>}
         </div>
       )}
       {answer && !answer.mandateId && (

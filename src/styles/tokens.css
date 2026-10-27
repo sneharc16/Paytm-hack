@@ -2,7 +2,8 @@
 :root {
   --navy: #002E6E;  --navy-700: #0A3F86;  --cyan: #00BAF2;
   --ink: #12223F;   --slate: #56657F;     --mist: #8794AB;
-  --canvas: #F2F6FA; --surface: #FFFFFF;
+  --canvas: #F4F8FD; --surface: #FFFFFF;
+  --blue: #0B72E7; --sky: #00BAF2; --sky-soft: #EAF7FE;
   --line: #E2E8F0;  --line-strong: #CBD5E3;
   --cyan-wash: #E6F8FE; --navy-wash: #EBF0F8;
   --green: #0B7A55; --green-wash: #E3F4EC;
@@ -14,6 +15,8 @@
   --r-sheet: 20px; --r-card: 12px; --r-control: 10px; --r-input: 8px;
   --shadow-float: 0 6px 20px rgba(0, 46, 110, 0.12);
   --shadow-sheet: 0 -8px 32px rgba(0, 46, 110, 0.14);
+  --shadow-card: 0 1px 2px rgba(0, 46, 110, 0.04), 0 6px 24px rgba(0, 46, 110, 0.06);
+  --shadow-card-hover: 0 2px 4px rgba(0, 46, 110, 0.06), 0 14px 36px rgba(0, 46, 110, 0.12);
   --ease-out: cubic-bezier(.2, .8, .2, 1);
   --font: "Mukta", system-ui, sans-serif;
 }

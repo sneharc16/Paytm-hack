@@ -110,11 +110,11 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
     <>
       <div className="flex items-start justify-between gap-4">
         <div><p className="text-[14px] text-slate">Subscriptions / <span className="font-semibold text-ink">Pakka</span></p><h1 className="text-[26px] font-bold leading-8 text-navy">Ask before the first real charge</h1></div>
-        <div className="text-right"><button disabled={!dirty || issues.length > 0} onClick={save} className="h-10 rounded-[10px] bg-navy px-4 text-[15px] font-semibold text-white disabled:bg-line-strong disabled:text-slate">Save changes</button>{msg && <p className="mt-1 text-[13px] text-slate">{msg}</p>}</div>
+        <div className="text-right"><button disabled={!dirty || issues.length > 0} onClick={save} className="h-10 rounded-full btn-primary px-4 text-[15px] font-semibold text-white disabled:bg-line-strong disabled:text-slate">Save changes</button>{msg && <p className="mt-1 text-[13px] text-slate">{msg}</p>}</div>
       </div>
       <PrivateAlert s={s} />
       <div className="mt-4 grid gap-4 @min-[980px]:grid-cols-[1.4fr_1fr]">
-        <section className="rounded-[12px] border border-line bg-surface px-5 py-3">
+        <section className="card px-5 py-3">
           <h2 className="pt-2 text-[17px] font-semibold">Before the first charge after a trial</h2>
           <SettingRow title="Charge only after the customer says yes" help="Pakka asks 24 hours before. If they don't answer, this cycle is skipped and the plan stays active." on={draft.askBeforeFirstCharge} onChange={(v) => set({ askBeforeFirstCharge: v })} />
           {saved.askBeforeFirstCharge && !draft.askBeforeFirstCharge && <p className="pb-2 text-[14px] text-amber">Customers will be asked only when Pakka&apos;s score is high, and charged if they don&apos;t answer.</p>}
@@ -143,16 +143,16 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
           </SettingRow>
         </section>
         <div className="flex flex-col gap-4">
-          <section className="rounded-[12px] border border-line bg-surface p-5">
+          <section className="card p-5">
             <h2 className="text-[17px] font-semibold">What customers see at checkout</h2>
             <div className="mt-3 rounded-[12px] border border-line p-4">
               <p className="text-[15px] font-semibold">PadhoAI Pro, 7 day trial</p>
               <p className="text-[14px] text-slate">₹1 today, then ₹599 a month</p>
               {draft.askBeforeFirstCharge && <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-cyan-wash px-3 py-1 text-[14px] font-semibold text-navy"><PakkaSeal label={false} />Charge karne se pehle poochenge</p>}
-              <button className="mt-3 h-11 w-full rounded-[10px] bg-navy text-[15px] font-semibold text-white">Start trial with UPI AutoPay</button>
+              <button className="mt-3 h-11 w-full rounded-full btn-primary text-[15px] font-semibold text-white">Start trial with UPI AutoPay</button>
             </div>
           </section>
-          <section className="rounded-[12px] border border-line bg-surface p-5">
+          <section className="card p-5">
             <h2 className="text-[17px] font-semibold">Last 7 days</h2>
             <div className="mt-2 grid grid-cols-2 divide-x divide-y divide-line border border-line">
               {[["18.4", "disputes per 1,000 charges"], ["41%", "trials end in a cancelled AutoPay"], [String(m.keptBySkipOrPause), "kept through skip or pause"], [inr(m.refundedUnderMerchantRules), "refunded under your rule"]].map(([v, l]) => (
@@ -175,7 +175,7 @@ function RefundQueue({ s, now }: { s: Session; now: string }) {
     <>
       <p className="text-[14px] text-slate">Subscriptions / <span className="font-semibold text-ink">Refunds</span></p>
       <h1 className="text-[26px] font-bold text-navy">Customers waiting on you</h1>
-      <table className="mt-4 w-full rounded-[12px] border border-line bg-surface text-[14px]">
+      <table className="mt-4 w-full card text-[14px]">
         <thead><tr className="border-b border-line text-left text-slate"><th className="p-3">Customer</th><th>Plan</th><th>Amount</th><th>Charged</th><th>Why it came to you</th><th>Status</th><th /></tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td colSpan={7} className="p-4 text-slate">Nothing waiting.</td></tr>}
@@ -194,10 +194,10 @@ function RefundQueue({ s, now }: { s: Session; now: string }) {
                 <td className="p-3 text-right">
                   {r.status === "with_merchant" && (declining === r.executionId ? (
                     <span className="flex gap-1"><input value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 w-64 rounded-[8px] border border-line-strong px-2" />
-                      <button onClick={() => { void send({ kind: "merchant_refund_decision", executionId: r.executionId, decision: "decline", reason }); setDeclining(null); }} className="rounded-[8px] bg-navy px-2 text-white">Decline</button></span>
+                      <button onClick={() => { void send({ kind: "merchant_refund_decision", executionId: r.executionId, decision: "decline", reason }); setDeclining(null); }} className="rounded-[8px] btn-primary px-2 text-white">Decline</button></span>
                   ) : (
                     <span className="flex justify-end gap-2">
-                      <button onClick={() => send({ kind: "merchant_refund_decision", executionId: r.executionId, decision: "approve" })} className="h-8 rounded-[8px] bg-navy px-3 font-semibold text-white">Refund</button>
+                      <button onClick={() => send({ kind: "merchant_refund_decision", executionId: r.executionId, decision: "approve" })} className="h-8 rounded-[8px] btn-primary px-3 font-semibold text-white">Refund</button>
                       <button onClick={() => setDeclining(r.executionId)} className="h-8 rounded-[8px] border border-line-strong px-3 font-semibold text-navy">Decline with reason</button>
                     </span>
                   ))}

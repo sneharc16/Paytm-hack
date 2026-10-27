@@ -2,28 +2,33 @@
 // Hub, / (PRD 20.0): what Pakka is, the results, and a way into each surface and the demo session.
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { BadgeCheck, Building2, Clock, Eye, Gavel, Lock, MessageCircleQuestion, Play, Radar, RefreshCw, ShieldCheck, Smartphone, Store, Volume2, Zap } from "lucide-react";
+import {
+  BadgeCheck, Building2, ChevronRight, Clock, Eye, Gavel, Languages, Lock, Play, Radar, RefreshCw,
+  ShieldCheck, Smartphone, Sparkles, Store, TrendingUp, Undo2, Volume2, Zap,
+} from "lucide-react";
+import { t } from "@/copy/strings";
+import type { Lang } from "@/engine/types";
 import { DebitTimeline, PakkaSeal } from "@/components/shared";
 import { sessionIdFromUrl, SYNC_MODE } from "@/lib/sync/client";
 
 const RESULTS = [
-  { value: "₹1,59,334", label: "Unwanted charges stopped before they left", tone: "text-white" },
-  { value: "₹55,016", label: "At-risk charges that still went through", tone: "text-[#7EE2B8]" },
-  { value: "318", label: "People asked, in Hindi, Hinglish or English", tone: "text-white" },
-  { value: "0", label: "Rupees moved without a rule", tone: "text-cyan" },
+  { value: "₹1,59,334", label: "Unwanted charges stopped before they left", Icon: ShieldCheck, tile: "bg-sky-soft text-blue", tone: "text-navy" },
+  { value: "₹55,016", label: "At-risk charges that still went through", Icon: TrendingUp, tile: "bg-green-wash text-green", tone: "text-green" },
+  { value: "318", label: "People asked in Hindi, Hinglish or English", Icon: Languages, tile: "bg-amber-wash text-amber", tone: "text-navy" },
+  { value: "₹0", label: "Moved without a rule. Always.", Icon: BadgeCheck, tile: "bg-navy-wash text-navy", tone: "text-navy" },
 ];
 
 const GAPS = [
-  { title: "Consent gap", Icon: Lock, line: "The PIN that pays ₹1 for a trial also approves every ₹599 that follows.", fix: "One clear question the day before the first real charge." },
-  { title: "Name gap", Icon: Building2, line: "The bank SMS says Vidyakosh Learning Pvt Ltd. Nobody knows that is PadhoAI.", fix: "Show the brand next to the registered name, only when verified." },
-  { title: "Ownership gap", Icon: Eye, line: "Service in the app, mandate in the UPI app, money in the bank. Nobody owns the night before.", fix: "Pakka owns the 24 hours and acts across all three." },
+  { title: "Consent gap", Icon: Lock, tile: "bg-amber-wash text-amber", line: "The PIN that pays ₹1 for a trial also approves every ₹599 that follows.", fix: "One clear question the day before the first real charge." },
+  { title: "Name gap", Icon: Building2, tile: "bg-sky-soft text-blue", line: "The bank SMS says Vidyakosh Learning Pvt Ltd. Nobody knows that is PadhoAI.", fix: "The brand shown next to the registered name, when verified." },
+  { title: "Ownership gap", Icon: Eye, tile: "bg-green-wash text-green", line: "Service in one app, mandate in another, money in the bank. Nobody owns the night before.", fix: "Pakka owns the 24 hours and acts across all three." },
 ];
 
 const STEPS = [
   { Icon: Radar, title: "Sense", body: "Pre-debit notices, failed charges and review spikes, as they happen." },
   { Icon: Zap, title: "Decide", body: "A transparent risk score with named reasons, plus the merchant's own rules." },
   { Icon: RefreshCw, title: "Act", body: "Ask the customer, skip via the merchant, refund, or book an off-peak retry." },
-  { Icon: Gavel, title: "Verify and explain", body: "Read the state back, tell the customer, and record every step with a rule ID." },
+  { Icon: Gavel, title: "Verify", body: "Read the result back, tell the customer, record every step with a rule ID." },
 ];
 
 export default function Hub() {
@@ -43,115 +48,114 @@ export default function Hub() {
   const q = `session=${id}`;
   const surfaces = [
     { href: `/app?${q}`, title: "Customer app", who: "Sunita, Rahul, Farhan, Anjali", body: "The Doosri Haan sheet, the PIN step, retries and a verified callback.", Icon: Smartphone },
-    { href: `/merchant?${q}`, title: "Merchant console", who: "Imran at PadhoAI", body: "A private alert, one toggle, and a checkout preview that changes live.", Icon: Store },
+    { href: `/merchant?${q}`, title: "Merchant console", who: "Imran at PadhoAI", body: "A private alert, one toggle, and a checkout that changes live.", Icon: Store },
     { href: `/ops?${q}`, title: "Control room", who: "Priya on the trust team", body: "Incidents, cases and a flight recorder that explains every step.", Icon: ShieldCheck },
-    { href: `/demo?${q}`, title: "Demo view", who: "Judges and the stage", body: "The clock, the six story steps and the counters, all from the event log.", Icon: Clock },
+    { href: `/demo?${q}`, title: "Counters", who: "Judges and the stage", body: "The clock, the story steps and the numbers, all from the event log.", Icon: Clock },
   ];
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-canvas">
-      {/* Nav */}
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-navy/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-line/70 bg-white/85 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-8">
-          <PakkaSeal onNavy />
-          <div className="ml-auto hidden items-center gap-6 text-[15px] font-medium text-white/80 md:flex">
-            <a href="#how" className="hover:text-white">How it works</a>
-            <a href="#surfaces" className="hover:text-white">Screens</a>
-            <a href="#join" className="hover:text-white">Join on a phone</a>
+          <PakkaSeal />
+          <div className="ml-auto hidden items-center gap-7 text-[15px] font-medium text-slate md:flex">
+            <a href="#how" className="hover:text-navy">How it works</a>
+            <a href="#surfaces" className="hover:text-navy">Screens</a>
+            <a href="#join" className="hover:text-navy">On your phone</a>
           </div>
-          <a href={`/demo?${q}&grid=1`} className="ml-auto inline-flex h-10 items-center gap-2 rounded-[10px] bg-white px-4 text-[15px] font-semibold text-navy md:ml-0">
+          <a href={`/demo?${q}&grid=1`} className="btn-primary ml-auto inline-flex h-10 items-center gap-2 rounded-full px-5 text-[15px] font-semibold md:ml-0">
             <Play size={16} aria-hidden />Open the demo
           </a>
         </nav>
       </header>
 
       {/* Hero */}
-      <section className="bg-navy text-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:pt-20">
+      <section className="hero-glow">
+        <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-16 pt-12 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:pb-24 lg:pt-20">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[14px] font-medium text-white/90">
-              <span className="h-2 w-2 rounded-full bg-cyan" />An AI teammate for UPI AutoPay
+            <p className="inline-flex items-center gap-2 rounded-full bg-sky-soft px-3.5 py-1.5 text-[14px] font-semibold text-blue">
+              <Sparkles size={16} aria-hidden />An AI teammate for UPI AutoPay
             </p>
-            <h1 className="mt-6 text-[36px] font-extrabold leading-[1.1] tracking-[-0.01em] sm:text-[56px] sm:leading-[1.08]">
-              Galat paisa nahi katega, sahi paisa nahi rukega.
+            <h1 className="mt-6 text-[38px] font-extrabold leading-[1.08] tracking-[-0.015em] text-navy sm:text-[52px]">
+              Galat paisa nahi katega, <span className="text-blue">sahi paisa nahi rukega.</span>
             </h1>
-            <p className="mt-5 max-w-xl text-[18px] leading-7 text-white/80">
-              Pakka lives in the 24 hours between a bank&apos;s pre-debit notice and the charge. It asks before the money moves, keeps the charges people want from failing, and hands the hard cases to a person.
+            <p className="mt-5 max-w-xl text-[18px] leading-7 text-slate">
+              Pakka lives in the 24 hours before every AutoPay charge. It asks before the money moves, keeps the charges people want from failing, and brings in a person only when it matters.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a href={`/demo?${q}&grid=1`} className="inline-flex h-12 items-center gap-2 rounded-[10px] bg-white px-5 text-[16px] font-semibold text-navy hover:bg-cyan-wash">
+              <a href={`/demo?${q}&grid=1`} className="btn-primary inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-[16px] font-semibold">
                 <Play size={18} aria-hidden />Watch the 3 minute story
               </a>
-              <a href={`/app?${q}&persona=sunita`} className="inline-flex h-12 items-center gap-2 rounded-[10px] border border-white/30 px-5 text-[16px] font-semibold text-white hover:bg-white/10">
+              <a href={`/app?${q}&persona=sunita`} className="press inline-flex items-center gap-2 rounded-full border border-line-strong bg-white px-6 py-3.5 text-[16px] font-semibold text-navy hover:border-blue">
                 <Smartphone size={18} aria-hidden />Try Sunita&apos;s phone
               </a>
             </div>
-            <p className="mt-6 text-[14px] text-white/60">Prototype. Every merchant and person is fictional. No real money moves.</p>
+            <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-[14px] font-medium text-slate">
+              <li className="inline-flex items-center gap-2"><ShieldCheck size={18} className="text-green" aria-hidden />Never blocks a charge on its own</li>
+              <li className="inline-flex items-center gap-2"><Languages size={18} className="text-blue" aria-hidden />Hindi first, with voice</li>
+              <li className="inline-flex items-center gap-2"><Undo2 size={18} className="text-amber" aria-hidden />Refunds to the same account</li>
+            </ul>
           </div>
           <HeroPhone />
         </div>
       </section>
 
       {/* Results */}
-      <section className="relative z-10 mx-auto -mt-10 max-w-6xl px-4 sm:px-8">
-        <div className="grid overflow-hidden rounded-[16px] bg-ink text-white shadow-[var(--shadow-float)] sm:grid-cols-2 lg:grid-cols-4">
-          {RESULTS.map((r, i) => (
-            <div key={r.label} className={`p-6 ${i ? "border-t border-white/10 sm:border-l sm:border-t-0" : ""} ${i === 2 ? "sm:border-l-0 sm:border-t lg:border-l lg:border-t-0" : ""}`}>
-              <div className={`tnum text-[34px] font-extrabold leading-10 ${r.tone}`}>{r.value}</div>
-              <div className="mt-1 text-[14px] leading-5 text-white/70">{r.label}</div>
+      <section className="mx-auto max-w-6xl px-4 sm:px-8">
+        <div className="-mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {RESULTS.map(({ value, label, Icon, tile, tone }) => (
+            <div key={label} className="card lift p-5">
+              <span className={`flex h-10 w-10 items-center justify-center rounded-[12px] ${tile}`}><Icon size={20} strokeWidth={2} aria-hidden /></span>
+              <div className={`tnum mt-4 text-[32px] font-extrabold leading-9 ${tone}`}>{value}</div>
+              <div className="mt-1 text-[14px] leading-5 text-slate">{label}</div>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-center text-[13px] text-slate">Demo results from 26 Oct, 8:55 PM to 29 Oct, 6:00 AM. Computed from the event log, never typed in.</p>
+        <p className="mt-3 text-center text-[13px] text-slate">Results from the demo story, 26 Oct 8:55 PM to 29 Oct 6:00 AM. Computed from the event log, never typed in.</p>
       </section>
 
-      {/* The problem */}
+      {/* Problem */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-8">
-        <div className="max-w-2xl">
-          <h2 className="text-[32px] font-bold leading-10 text-navy">AutoPay doesn&apos;t have a fraud problem. It has a consent problem.</h2>
-          <p className="mt-3 text-[17px] leading-7 text-slate">You pay ₹1 for a trial. The same PIN quietly approves ₹599 every month. About 2 crore mandates are revoked every month, and nobody owns the gap.</p>
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-[30px] font-bold leading-[38px] text-navy sm:text-[36px] sm:leading-[44px]">AutoPay doesn&apos;t have a fraud problem. It has a consent problem.</h2>
+          <p className="mt-4 text-[17px] leading-7 text-slate">You pay ₹1 for a trial. The same PIN quietly approves ₹599 every month. About 2 crore mandates are revoked every month, and nobody owns the gap.</p>
         </div>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {GAPS.map(({ title, Icon, line, fix }) => (
-            <article key={title} className="flex flex-col rounded-[16px] border border-line bg-surface p-6">
-              <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-navy-wash text-navy"><Icon size={22} strokeWidth={1.8} aria-hidden /></span>
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
+          {GAPS.map(({ title, Icon, tile, line, fix }) => (
+            <article key={title} className="card lift flex flex-col p-6">
+              <span className={`flex h-12 w-12 items-center justify-center rounded-[14px] ${tile}`}><Icon size={24} strokeWidth={1.9} aria-hidden /></span>
               <h3 className="mt-5 text-[20px] font-bold text-ink">{title}</h3>
               <p className="mt-2 flex-1 text-[15px] leading-6 text-slate">{line}</p>
-              <p className="mt-5 flex gap-2 border-t border-line pt-4 text-[15px] font-semibold text-navy"><BadgeCheck size={20} className="shrink-0 text-green" aria-hidden />{fix}</p>
+              <p className="mt-5 flex gap-2 rounded-[12px] bg-canvas p-3 text-[14.5px] font-semibold text-navy"><BadgeCheck size={20} className="shrink-0 text-green" aria-hidden />{fix}</p>
             </article>
           ))}
         </div>
       </section>
 
       {/* How it works */}
-      <section id="how" className="border-y border-line bg-surface">
+      <section id="how" className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-8">
-          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-            <div>
-              <h2 className="text-[32px] font-bold leading-10 text-navy">AI where judgement lives. Rules where money moves.</h2>
-              <p className="mt-3 text-[17px] leading-7 text-slate">The language model writes, tags and summarises. It never moves money. Every action passes one gateway, carries a rule ID, and lands in the flight recorder.</p>
-              <div className="mt-6 rounded-[12px] bg-canvas p-4">
-                <p className="text-[14px] font-semibold text-ink">Respects the rails</p>
-                <ul className="mt-2 space-y-1.5 text-[14px] text-slate">
-                  <li>No charges 10 AM to 1 PM or 5 PM to 9:30 PM</li>
-                  <li>One attempt plus three retries, never a fifth</li>
-                  <li>Pause and cancel always need the customer&apos;s own PIN</li>
-                  <li>Refunds only to the original UPI account</li>
-                </ul>
-              </div>
-            </div>
-            <ol className="grid gap-4 sm:grid-cols-2">
-              {STEPS.map(({ Icon, title, body }, i) => (
-                <li key={title} className="rounded-[16px] border border-line p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-cyan-wash text-navy"><Icon size={22} strokeWidth={1.8} aria-hidden /></span>
-                    <span className="text-[14px] font-semibold text-mist">Step {i + 1}</span>
-                  </div>
-                  <h3 className="mt-5 text-[19px] font-bold text-ink">{title}</h3>
-                  <p className="mt-2 text-[15px] leading-6 text-slate">{body}</p>
-                </li>
-              ))}
-            </ol>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-[30px] font-bold leading-[38px] text-navy sm:text-[36px] sm:leading-[44px]">AI where judgement lives. Rules where money moves.</h2>
+            <p className="mt-4 text-[17px] leading-7 text-slate">The model writes, tags and summarises. It never moves money. Every action passes one gateway, carries a rule ID, and lands in the flight recorder.</p>
+          </div>
+          <ol className="relative mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <span aria-hidden className="absolute left-[12%] right-[12%] top-8 hidden h-0.5 bg-gradient-to-r from-sky/40 via-blue/40 to-sky/40 lg:block" />
+            {STEPS.map(({ Icon, title, body }, i) => (
+              <li key={title} className="relative text-center">
+                <span className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-[var(--shadow-card)] ring-1 ring-line">
+                  <Icon size={26} strokeWidth={1.9} className="text-blue" aria-hidden />
+                  <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-navy text-[12px] font-bold text-white">{i + 1}</span>
+                </span>
+                <h3 className="mt-4 text-[19px] font-bold text-ink">{title}</h3>
+                <p className="mx-auto mt-2 max-w-[240px] text-[15px] leading-6 text-slate">{body}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="mx-auto mt-12 grid max-w-4xl gap-3 sm:grid-cols-2">
+            {["No charges 10 AM to 1 PM or 5 PM to 9:30 PM, per NPCI", "One attempt plus three retries, never a fifth", "Pause and cancel always need the customer's own PIN", "Merchant offers sit beside Cancel, never in front of it"].map((x) => (
+              <p key={x} className="flex items-center gap-2.5 rounded-[14px] bg-canvas px-4 py-3 text-[15px] text-ink"><ShieldCheck size={18} className="shrink-0 text-green" aria-hidden />{x}</p>
+            ))}
           </div>
         </div>
       </section>
@@ -160,20 +164,20 @@ export default function Hub() {
       <section id="surfaces" className="mx-auto max-w-6xl px-4 py-20 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-[32px] font-bold leading-10 text-navy">Four screens, one story</h2>
-            <p className="mt-2 text-[17px] text-slate">Each opens on the same demo session, so a tap in one shows up in the others.</p>
+            <h2 className="text-[30px] font-bold text-navy sm:text-[36px]">Four screens, one story</h2>
+            <p className="mt-2 text-[17px] text-slate">Open any of them on the same session. A tap in one shows up in the others.</p>
           </div>
-          <a href={`/demo?${q}&grid=1`} className="text-[15px] font-semibold text-navy underline underline-offset-4">See all four at once</a>
+          <a href={`/demo?${q}&grid=1`} className="btn-soft inline-flex h-10 items-center gap-1 rounded-full px-4 text-[15px] font-semibold">See them together<ChevronRight size={18} aria-hidden /></a>
         </div>
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {surfaces.map(({ href, title, who, body, Icon }) => (
             <li key={title}>
-              <a href={href} className="group flex h-full flex-col rounded-[16px] border border-line bg-surface p-6 transition-colors hover:border-navy">
-                <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-navy text-white"><Icon size={22} strokeWidth={1.8} aria-hidden /></span>
+              <a href={href} className="card lift group flex h-full flex-col p-6">
+                <span className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-gradient-to-br from-sky to-blue text-white shadow-[0_6px_16px_rgba(11,114,231,0.28)]"><Icon size={22} strokeWidth={1.9} aria-hidden /></span>
                 <h3 className="mt-5 text-[19px] font-bold text-ink">{title}</h3>
-                <p className="text-[14px] font-medium text-slate">{who}</p>
+                <p className="text-[14px] font-medium text-blue">{who}</p>
                 <p className="mt-3 flex-1 text-[15px] leading-6 text-slate">{body}</p>
-                <span className="mt-5 text-[15px] font-semibold text-navy group-hover:underline">Open</span>
+                <span className="mt-5 inline-flex items-center gap-1 text-[15px] font-semibold text-navy">Open<ChevronRight size={18} className="transition-transform group-hover:translate-x-1" aria-hidden /></span>
               </a>
             </li>
           ))}
@@ -182,89 +186,108 @@ export default function Hub() {
 
       {/* Join */}
       <section id="join" className="mx-auto max-w-6xl px-4 pb-20 sm:px-8">
-        <div className="grid items-center gap-8 rounded-[20px] border border-line bg-surface p-6 sm:p-10 lg:grid-cols-[1fr_auto]">
-          <div>
-            <h2 className="text-[28px] font-bold leading-9 text-navy">Put Sunita&apos;s app on a real phone</h2>
-            <p className="mt-2 max-w-xl text-[16px] leading-6 text-slate">
-              {SYNC_MODE === "local"
-                ? "Scan the code to open the customer app. The demo runs inside each browser, so the phone plays its own copy of the story, and tabs in this browser stay in sync."
-                : "Scan the code on a phone on the same network. The phone joins this session, so Sunita's taps show up in the control room."}
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <label htmlFor="session" className="text-[14px] font-semibold text-slate">Session</label>
-              <input id="session" value={id} onChange={(e) => setId(e.target.value.toUpperCase())} className="h-11 w-36 rounded-[8px] border border-line-strong px-3 text-[16px] font-semibold text-ink" />
-              <button onClick={create} className="h-11 rounded-[10px] border border-line-strong px-4 text-[15px] font-semibold text-navy hover:border-navy">Start a new session</button>
+        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0A2A66] via-navy to-[#0B4FB0] p-6 text-white sm:p-10">
+          <span aria-hidden className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky/25 blur-3xl" />
+          <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_auto]">
+            <div>
+              <h2 className="text-[28px] font-bold leading-9">Put Sunita&apos;s app on a real phone</h2>
+              <p className="mt-2 max-w-xl text-[16px] leading-6 text-white/80">
+                {SYNC_MODE === "local"
+                  ? "Scan to open the customer app. The demo runs inside each browser, so the phone plays its own copy of the story; tabs in one browser stay in sync."
+                  : "Scan on a phone on the same network. The phone joins this session, so Sunita's taps show up in the control room."}
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <label htmlFor="session" className="text-[14px] font-semibold text-white/80">Session</label>
+                <input id="session" value={id} onChange={(e) => setId(e.target.value.toUpperCase())} className="h-11 w-36 rounded-full border border-white/25 bg-white/10 px-4 text-[16px] font-semibold text-white" />
+                <button onClick={create} className="press h-11 rounded-full bg-white px-5 text-[15px] font-semibold text-navy">New session</button>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4 rounded-[16px] bg-canvas p-4">
-            {qr ? <img src={qr} alt={`QR code to open session ${id} on a phone`} width={160} height={160} className="rounded-[10px]" /> : <div className="h-40 w-40 rounded-[10px] bg-line" />}
-            <div className="max-w-[140px] text-[14px] text-slate"><b className="block text-ink">{id}</b>Opens as Sunita in Kanpur, in Hindi.</div>
+            <div className="flex items-center gap-4 rounded-[20px] bg-white p-4 text-ink">
+              {qr ? <img src={qr} alt={`QR code to open session ${id} on a phone`} width={150} height={150} className="rounded-[10px]" /> : <div className="h-[150px] w-[150px] rounded-[10px] bg-line" />}
+              <div className="max-w-[130px] text-[14px] text-slate"><b className="block text-[16px] text-navy">{id}</b>Opens as Sunita in Kanpur, in Hindi.</div>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-line bg-surface">
+      <footer className="border-t border-line bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-8 text-[14px] text-slate sm:px-8">
           <PakkaSeal />
-          <span>Built on rules that already exist: RBI e-mandate framework, NPCI AutoPay execution rules, the 2023 dark pattern guidelines and the DPDP Act.</span>
-          <span className="sm:ml-auto">Paytm Build for India AI Hackathon, Problem Statement 3</span>
+          <span>Built on rules that already exist: RBI e-mandate framework, NPCI AutoPay rules, the 2023 dark pattern guidelines and the DPDP Act. Prototype; all merchants and people are fictional.</span>
         </div>
       </footer>
     </div>
   );
 }
 
-/** A static preview of the hero screen: Sunita's Doosri Haan sheet. */
+/** Interactive preview of the hero screen: Sunita's sheet, in three languages, with choices you can tap. */
 function HeroPhone() {
+  const [lang, setLang] = useState<Lang>("hinglish");
+  const [pick, setPick] = useState<number | null>(1);
   const t0 = Date.parse("2026-10-26T15:40:00Z");
   const t1 = Date.parse("2026-10-27T16:00:00Z");
-  const options: { title: string; desc: string; tag?: "offer" | "pin"; selected?: boolean }[] = [
-    { title: "Chalne do", desc: "Plan chalu rahega, kal ₹599 katenge" },
-    { title: "Is mahine skip karo", desc: "Is mahine paisa nahi, plan chalu", tag: "offer", selected: true },
-    { title: "Pause karo", desc: "Jab tak wapas chalu na karein", tag: "pin" },
-    { title: "AutoPay band karo", desc: "Aage se PadhoAI paisa nahi le payega", tag: "pin" },
+  const p = { day: lang === "hi" ? "कल" : lang === "en" ? "tomorrow" : "Kal", amount: "₹599", brand: "PadhoAI", trialDate: lang === "hi" ? "18 अक्टूबर" : "18 Oct", trialAmount: "₹1" };
+  const options = [
+    { title: t(lang, "choice.keep"), desc: t(lang, "choice.keep.desc", p) },
+    { title: t(lang, "choice.skip"), desc: t(lang, "choice.skip.desc"), offer: true },
+    { title: t(lang, "choice.pause"), desc: t(lang, "choice.pause.desc"), pin: true },
+    { title: t(lang, "choice.cancel"), desc: t(lang, "choice.cancel.desc", p), pin: true },
   ];
   return (
-    <div className="relative mx-auto w-full max-w-[360px]" aria-label="Preview of Sunita's decision sheet">
-      <div className="absolute -left-24 top-[310px] z-10 hidden rounded-[12px] bg-white px-3 py-2 text-[13px] font-semibold text-ink shadow-[var(--shadow-float)] xl:block">
-        <span className="text-slate">Risk score</span> <span className="text-navy">90</span>
+    <div className="relative mx-auto w-full max-w-[360px]">
+      <div className="mb-4 flex justify-center gap-1 rounded-full bg-white p-1 shadow-[var(--shadow-card)] ring-1 ring-line" role="tablist" aria-label="Preview language">
+        {([["hi", "हिंदी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([l, label]) => (
+          <button key={l} role="tab" aria-selected={lang === l} onClick={() => setLang(l)} className={`press h-9 flex-1 rounded-full text-[14px] font-semibold ${lang === l ? "bg-navy text-white" : "text-slate hover:text-navy"}`}>{label}</button>
+        ))}
       </div>
-      <div className="absolute -right-24 bottom-40 z-10 hidden rounded-[12px] bg-white px-3 py-2 text-[13px] font-semibold text-ink shadow-[var(--shadow-float)] xl:block">
-        <span className="text-green">No PIN</span> <span className="text-slate">for skip</span>
+      <div className="absolute -right-[156px] top-[250px] z-10 hidden w-40 rounded-[16px] bg-white p-3 shadow-[var(--shadow-card-hover)] xl:block">
+        <p className="text-[12px] font-medium text-slate">Risk score</p>
+        <p className="text-[24px] font-extrabold leading-7 text-navy">90<span className="text-[13px] font-semibold text-slate"> / 100</span></p>
+        <div className="mt-1.5 h-1.5 rounded-full bg-line"><div className="h-1.5 w-[90%] rounded-full bg-gradient-to-r from-sky to-blue" /></div>
+        <p className="mt-1.5 text-[11px] text-slate">Trial jump, app not opened, name gap</p>
       </div>
-      <div className="rounded-[36px] border-[10px] border-[#0B1730] bg-surface text-ink shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
-        <div className="rounded-t-[26px] bg-canvas px-4 pb-3 pt-3">
-          <div className="flex items-center justify-between text-[12px] font-semibold"><span>9:12</span><span className="text-slate">4G</span></div>
-          <div className="mt-3 rounded-[12px] bg-navy p-3 text-white">
-            <PakkaSeal onNavy />
-            <p className="mt-1.5 text-[14px] font-semibold">Kal ₹599 PadhoAI ko jaayenge. Aapka jawab chahiye.</p>
+      <div className="absolute -right-[150px] bottom-44 z-10 hidden items-center gap-2 rounded-[16px] bg-white p-3 shadow-[var(--shadow-card-hover)] xl:flex">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-wash text-green"><BadgeCheck size={18} aria-hidden /></span>
+        <span className="text-[13px] font-semibold text-ink">Skip needs<br />no PIN</span>
+      </div>
+      <div className="rounded-[40px] bg-[#0B1730] p-2.5 shadow-[0_40px_80px_rgba(0,46,110,0.28)]">
+        <div className="overflow-hidden rounded-[32px] bg-surface text-ink">
+          <div className="bg-gradient-to-br from-sky to-blue px-4 pb-4 pt-3 text-white">
+            <div className="flex items-center justify-between text-[12px] font-semibold"><span>9:12</span><span className="opacity-80">4G</span></div>
+            <div className="mt-3 rounded-[14px] bg-white/15 p-3">
+              <PakkaSeal onNavy />
+              <p className="mt-1.5 text-[14px] font-semibold leading-5">{t(lang, "push.ask", p)}</p>
+            </div>
           </div>
-        </div>
-        <div className="rounded-b-[26px] px-4 pb-5 pt-3">
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line-strong" />
-          <div className="flex items-center justify-between">
-            <PakkaSeal />
-            <span className="inline-flex items-center gap-1 rounded-full bg-cyan-wash px-2.5 py-1 text-[12px] font-semibold text-navy"><Volume2 size={14} aria-hidden />Hindi mein sunein</span>
+          <div className="px-4 pb-5 pt-3">
+            <div className="flex items-center justify-between">
+              <PakkaSeal />
+              <span className="inline-flex items-center gap-1 rounded-full bg-sky-soft px-2.5 py-1 text-[12px] font-semibold text-blue"><Volume2 size={14} aria-hidden />{t(lang, "sheet.listen")}</span>
+            </div>
+            <p className="mt-2 text-[19px] font-bold leading-6 text-navy">{t(lang, "sheet.title", p)}</p>
+            <p className="mt-1 text-[13px] text-slate">{t(lang, "sheet.lede.trial_unused", p)}</p>
+            <div className="mt-3"><DebitTimeline startMs={t0} endMs={t1} nowMs={t0 + (t1 - t0) * 0.1} variant="compact" /></div>
+            <div className="mt-3 flex flex-col gap-1.5" role="radiogroup" aria-label="Choices">
+              {options.map((o, i) => {
+                const sel = pick === i;
+                return (
+                  <button key={i} role="radio" aria-checked={sel} onClick={() => setPick(i)} className={`press flex gap-2.5 rounded-[12px] border px-2.5 py-2 text-left ${sel ? "border-blue bg-sky-soft/60 shadow-[0_0_0_1px_var(--blue)]" : "border-line-strong hover:border-blue/50"}`}>
+                    <span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${sel ? "border-[5px] border-blue" : "border-line-strong"}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-semibold">{o.title}</span>
+                      <span className="block truncate text-[12px] text-slate">{o.desc}</span>
+                    </span>
+                    {o.offer && <span className="self-start whitespace-nowrap rounded-full bg-offer-wash px-1.5 text-[11px] font-semibold text-offer">{t(lang, "tag.offer", p)}</span>}
+                    {o.pin && <Lock size={14} className="mt-0.5 shrink-0 text-slate" aria-label={t(lang, "tag.pin")} />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className={`mt-3 flex h-11 items-center justify-center rounded-full text-[14px] font-semibold ${pick === null ? "bg-line-strong text-slate" : "btn-primary"}`}>
+              {pick === null ? t(lang, "button.choose") : options[pick].title}
+            </div>
+            <p className="mt-2 text-center text-[11px] text-slate">{t(lang, "ai.footer")}</p>
           </div>
-          <p className="mt-2 text-[19px] font-bold leading-6 text-navy">Kal ₹599 PadhoAI ko jaayenge</p>
-          <p className="mt-1 text-[13px] text-slate">18 Oct ko aapne ₹1 ka trial liya tha. Uske baad PadhoAI app nahi khula.</p>
-          <div className="mt-3"><DebitTimeline startMs={t0} endMs={t1} nowMs={t0 + (t1 - t0) * 0.08} left={["Aaj 9:10 PM", "Aapko bataya"]} right={["Kal 9:30 PM ke baad", "₹599 katega"]} /></div>
-          <p className="mt-3 flex gap-1.5 rounded-[8px] bg-canvas px-2.5 py-2 text-[12px]"><ShieldCheck size={16} className="shrink-0 text-green" aria-hidden /><span>Bank SMS mein naam <b>Vidyakosh Learning Pvt Ltd</b> aayega. Ye PadhoAI ki company hai.</span></p>
-          <div className="mt-3 flex flex-col gap-1.5">
-            {options.map((o) => (
-              <div key={o.title} className={`flex gap-2.5 rounded-[10px] border px-2.5 py-2 ${o.selected ? "border-navy bg-[#FBFDFF] shadow-[0_0_0_1px_var(--navy)]" : "border-line-strong"}`}>
-                <span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${o.selected ? "border-[5px] border-navy" : "border-line-strong"}`} />
-                <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold">{o.title}</span>
-                  <span className="block truncate text-[12px] text-slate">{o.desc}</span>
-                </span>
-                {o.tag === "offer" && <span className="ml-auto self-start whitespace-nowrap rounded-full bg-offer-wash px-1.5 text-[11px] font-semibold text-offer">PadhoAI ka offer</span>}
-                {o.tag === "pin" && <Lock size={14} className="ml-auto mt-0.5 shrink-0 text-slate" aria-label="UPI PIN lagega" />}
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex h-10 items-center justify-center rounded-[10px] bg-navy text-[14px] font-semibold text-white">Is mahine skip karo</div>
-          <p className="mt-2 flex items-center justify-center gap-1 text-[11px] text-slate"><MessageCircleQuestion size={12} aria-hidden />Pakka AI se chalta hai. Aap jo chunenge, wahi hoga.</p>
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@
 @theme {
   --color-navy: #002E6E;  --color-navy-700: #0A3F86; --color-cyan: #00BAF2;
   --color-ink: #12223F;   --color-slate: #56657F;    --color-mist: #8794AB;
-  --color-canvas: #F2F6FA; --color-surface: #FFFFFF;
+  --color-canvas: #F4F8FD; --color-blue: #0B72E7; --color-sky: #00BAF2; --color-sky-soft: #EAF7FE; --color-surface: #FFFFFF;
   --color-line: #E2E8F0;  --color-line-strong: #CBD5E3;
   --color-cyan-wash: #E6F8FE; --color-navy-wash: #EBF0F8;
   --color-green: #0B7A55; --color-green-wash: #E3F4EC;
@@ -33,3 +33,46 @@ body { background: var(--canvas); }
   .anim-sheet, .anim-backdrop { animation: none; }
   * { transition: none !important; }
 }
+
+/* Paytm-style surfaces and interactions */
+@utility card {
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: var(--shadow-card);
+}
+@utility lift {
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), border-color 180ms;
+  &:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
+}
+@utility press {
+  transition: transform 120ms var(--ease-out), filter 120ms;
+  &:active { transform: scale(0.97); }
+}
+@utility btn-primary {
+  background: linear-gradient(135deg, #00A8EC 0%, #0B72E7 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(11, 114, 231, 0.28);
+  transition: transform 120ms var(--ease-out), box-shadow 160ms, filter 160ms;
+  &:hover { filter: brightness(1.05); box-shadow: 0 8px 22px rgba(11, 114, 231, 0.36); }
+  &:active { transform: scale(0.97); }
+  &:disabled { background: var(--line-strong); color: var(--slate); box-shadow: none; }
+}
+@utility btn-soft {
+  background: var(--sky-soft);
+  color: var(--blue);
+  transition: transform 120ms var(--ease-out), background 160ms;
+  &:hover { background: #DDF2FD; }
+  &:active { transform: scale(0.97); }
+}
+@utility hero-glow {
+  background:
+    radial-gradient(600px 320px at 85% 10%, rgba(0, 186, 242, 0.18), transparent 70%),
+    radial-gradient(500px 300px at 0% 80%, rgba(11, 114, 231, 0.10), transparent 70%),
+    linear-gradient(180deg, #FFFFFF 0%, #F0F8FF 100%);
+}
+@keyframes toast-in { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.anim-toast { animation: toast-in 240ms var(--ease-out); }
+@keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+.anim-pop { animation: pop 320ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .anim-toast, .anim-pop { animation: none; } }
