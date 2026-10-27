@@ -1,0 +1,35 @@
+/* src/styles/globals.css (PRD 18.6) */
+@import "tailwindcss";
+@import "@fontsource/mukta/400.css";
+@import "@fontsource/mukta/500.css";
+@import "@fontsource/mukta/600.css";
+@import "@fontsource/mukta/700.css";
+@import "@fontsource/mukta/800.css";
+@import "./tokens.css";
+
+@theme {
+  --color-navy: #002E6E;  --color-navy-700: #0A3F86; --color-cyan: #00BAF2;
+  --color-ink: #12223F;   --color-slate: #56657F;    --color-mist: #8794AB;
+  --color-canvas: #F2F6FA; --color-surface: #FFFFFF;
+  --color-line: #E2E8F0;  --color-line-strong: #CBD5E3;
+  --color-cyan-wash: #E6F8FE; --color-navy-wash: #EBF0F8;
+  --color-green: #0B7A55; --color-green-wash: #E3F4EC;
+  --color-amber: #8F5300; --color-amber-wash: #FFF2D9;
+  --color-red: #B42F2F;   --color-red-wash: #FBEAEA;
+  --color-offer: #7A3A12; --color-offer-wash: #FCEDE3;
+  --font-sans: "Mukta", system-ui, sans-serif;
+  --radius-sheet: 20px; --radius-card: 12px; --radius-control: 10px; --radius-input: 8px;
+  --shadow-float: 0 6px 20px rgba(0, 46, 110, 0.12);
+  --shadow-sheet: 0 -8px 32px rgba(0, 46, 110, 0.14);
+}
+
+body { background: var(--canvas); }
+.tnum { font-feature-settings: "tnum" 1; }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.anim-sheet { animation: sheet-up 240ms var(--ease-out); }
+.anim-backdrop { animation: fade-in 200ms linear; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-sheet, .anim-backdrop { animation: none; }
+  * { transition: none !important; }
+}
