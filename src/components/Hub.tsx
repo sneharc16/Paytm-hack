@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Clock, ShieldCheck, Smartphone, Store } from "lucide-react";
 import { PakkaSeal } from "@/components/shared";
-import { sessionIdFromUrl } from "@/lib/sync/client";
+import { sessionIdFromUrl, SYNC_MODE } from "@/lib/sync/client";
 
 export default function Hub() {
   const [id, setId] = useState("DEMO-7");
@@ -16,6 +16,7 @@ export default function Hub() {
     QRCode.toDataURL(url, { margin: 1, width: 180, color: { dark: "#002E6E", light: "#FFFFFF" } }).then(setQr).catch(() => setQr(""));
   }, [id]);
   const create = async () => {
+    if (SYNC_MODE === "local") { setId(`DEMO-${10 + Math.floor(Math.random() * 90)}`); return; }
     const r = await fetch("/api/sessions", { method: "POST" }).then((x) => x.json());
     if (r.ok) setId(r.data.id);
   };
@@ -45,7 +46,11 @@ export default function Hub() {
       </ul>
       <div className="flex items-center gap-4">
         {qr && <img src={qr} alt={`QR code for session ${id}`} width={180} height={180} className="rounded-[12px] border border-line" />}
-        <p className="max-w-xs text-[15px] text-slate">Scan to open Sunita&apos;s app on a phone on the same network. Session {id}.</p>
+        <p className="max-w-xs text-[15px] text-slate">
+          {SYNC_MODE === "local"
+            ? <>Scan to open Sunita&apos;s app on a phone. The demo runs in each browser, so the phone has its own copy; tabs in this browser stay in sync. Session {id}.</>
+            : <>Scan to open Sunita&apos;s app on a phone on the same network. Session {id}.</>}
+        </p>
       </div>
     </main>
   );
