@@ -68,7 +68,8 @@ export function retrySlot(s: Session, cycleId: string, at: ISO): { slotStart: IS
 
 export function topupConfirmed(s: Session, at: ISO, cycleId: string, opts: { autoplayed?: boolean } = {}): DecisionOutcome {
   const cs = s.state.cycle(cycleId);
-  if (cs.status !== "failed_business") return { status: "ignored", reason: cs.status };
+  // After the fourth attempt the cycle is exhausted; the tap still goes to the gateway so the block is recorded.
+  if (cs.status !== "failed_business" && cs.status !== "exhausted") return { status: "ignored", reason: cs.status };
   const mandate = s.mandateOf(cycleId);
   s.emit({ actor: "customer", simAt: at, type: "topup_confirmed", subjectType: "cycle", subjectId: cycleId, payload: { cycleId, userId: mandate.userId, autoplayed: !!opts.autoplayed } });
   const { slotStart, executeAt } = retrySlot(s, cycleId, at);
@@ -245,4 +246,16 @@ export function setKillSwitch(s: Session, at: ISO, scope: string, on: boolean, r
     const a = s.state.actions.get(key);
     if (a?.replay) run(s, at, a.replay as unknown as Parameters<typeof run>[2]);
   }
+}
+
+/** The merchant withdraws a notice on its own after Pakka nudged (STALE_NOTICE_V1): the card updates, nudges stop. */
+export function merchantWithdrawNotice(s: Session, at: ISO, cycleId: string) {
+  const cs = s.state.cycle(cycleId);
+  if (cs.noticeWithdrawn || ["succeeded", "opted_out"].includes(cs.status)) return { status: "ignored" };
+  const m = s.mandateOf(cycleId);
+  s.emit({ actor: "merchant", simAt: at, type: "notice_withdrawn", subjectType: "cycle", subjectId: cycleId, payload: { cycleId, reason: "stale" } });
+  if (cs.nudges > 0) {
+    run(s, addSec(at, 1), { type: "sendNudge", ruleId: "STALE_NOTICE_V1", actor: "ai", targetId: m.userId, cycleId, discriminator: "stale", params: { userId: m.userId, kind: "stale" } });
+  }
+  return { status: "executed" };
 }

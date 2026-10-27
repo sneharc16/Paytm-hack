@@ -134,6 +134,9 @@ function chargeAttempt(s: Session, c: Cycle, attempt: number, at: ISO) {
   const m = s.idx.mandate.get(c.mandateId)!;
   if (cs.status === "failed_business") {
     run(s, addSec(at, 5), { type: "sendNudge", ruleId: "FAILED_INFORM_V1", actor: "ai", targetId: m.userId, cycleId: c.id, discriminator: `failed|${attempt}`, params: { userId: m.userId, kind: "failed" } });
+  } else if (cs.status === "exhausted") {
+    // Four attempts used: Pakka stops and the merchant takes over (PRD J3).
+    s.emit({ actor: "ai", simAt: addSec(at, 5), type: "customer_informed", ruleId: "RETRY_SCHEDULE_V1", subjectType: "cycle", subjectId: c.id, payload: { userId: m.userId, kind: "failed.limit" } });
   } else if (cs.status === "succeeded" && attempt > 1) {
     s.emit({ actor: "ai", simAt: addSec(at, 5), type: "customer_informed", ruleId: "MANDATE_SCHEDULE_V1", subjectType: "cycle", subjectId: c.id, payload: { userId: m.userId, kind: "success.title" } });
   }
