@@ -121,7 +121,10 @@ function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscal
           <div className="mx-4 mt-4 rounded-[20px] bg-gradient-to-br from-sky to-blue px-4 py-4 text-white shadow-[0_10px_24px_rgba(11,114,231,0.30)]">
             <PakkaSeal onNavy />
             <p className="mt-2 text-[17px] font-semibold leading-6">
-              {asks.length ? t(lang, "nudge.card.title", { n: soonCount }) : t(lang, "nudge.card.collect", { brand: first.merchant.brand, amount: inr(first.cycle.amount), day: relativeDay(first.cycle.dueAt, now, lang) })}
+              {asks.length ? t(lang, "nudge.card.title", { n: soonCount })
+                : first.cs.status === "failed_business" ? t(lang, "failed.title", { amount: inr(first.cycle.amount) })
+                : first.cs.status === "retry_scheduled" && first.cs.retryAt ? t(lang, "retry.done", { when: `${relativeDay(first.cs.retryAt, now, lang).toLowerCase()} ${t(lang, "row.after", { time: "9:30 PM" })}` })
+                : t(lang, "nudge.card.collect", { brand: first.merchant.brand, amount: inr(first.cycle.amount), day: relativeDay(first.cycle.dueAt, now, lang) })}
             </p>
             {asks.length > 0 && <p className="mt-1 text-[14px] text-white/80">{t(lang, "nudge.card.sub", { brand: asks[0].merchant.brand, amount: inr(asks[0].cycle.amount) })}</p>}
             <button onClick={() => (asks.length ? ask(asks[0].cycle.id) : open(first))} className="press mt-3 h-[38px] rounded-full bg-white px-5 text-[15px] font-semibold text-blue">{t(lang, "nudge.card.cta")}</button>
@@ -131,7 +134,7 @@ function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscal
         {groups.map((g) => g.rows.length > 0 && (
           <section key={g.key}>
             <h2 className="px-5 pb-2 pt-4 text-[14px] font-semibold text-slate">
-              {g.key === "soon" ? `${relativeDay(g.rows[0].cycle.dueAt, now, lang)}, ${dayMonth(g.rows[0].cycle.dueAt, lang)}` : t(lang, g.key)}
+              {g.key === "soon" ? soonLabel(g.rows[0].cycle.dueAt, now, lang) : t(lang, g.key)}
             </h2>
             <div className="card mx-4 overflow-hidden">
               {g.rows.map((r) => <MandateRow key={r.mandate.id} r={r} lang={lang} now={now} onClick={() => (needsAnswer(r) ? ask(r.cycle.id) : open(r))} />)}
@@ -143,6 +146,13 @@ function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscal
       <AskPakka s={s} userId={userId} lang={lang} onFraud={onFraud} ask={ask} />
     </div>
   );
+}
+
+/** "Kal, 27 Oct", or just "27 Oct" when the day is already a date (past or far off). */
+function soonLabel(dueAt: string, now: string, lang: Lang) {
+  const rel = relativeDay(dueAt, now, lang);
+  const date = dayMonth(dueAt, lang);
+  return rel === date ? date : `${rel}, ${date}`;
 }
 
 function MandateRow({ r, lang, now, onClick }: { r: Row; lang: Lang; now: string; onClick: () => void }) {
