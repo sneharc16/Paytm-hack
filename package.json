@@ -10,7 +10,8 @@
     "test": "vitest run",
     "bake:llm": "tsx --tsconfig tsconfig.json scripts/bake-llm.ts",
     "e2e": "playwright test",
-    "check:supabase": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts"
+    "check:supabase": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts",
+    "check:live": "tsx --tsconfig tsconfig.json scripts/check-live.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
