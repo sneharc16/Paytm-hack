@@ -7,6 +7,9 @@ const r = (hinglish: string, hi: string, en: string): Row => ({ hinglish, hi, en
 export const STRINGS = {
   "list.title": r("Meri AutoPay", "मेरी AutoPay", "My AutoPay"),
   "nudge.card.title": r("Kal {n} AutoPay katenge. Ek par aapka jawab chahiye.", "कल {n} AutoPay कटेंगे। एक पर आपका जवाब चाहिए।", "{n} AutoPay charges tomorrow. One needs your answer."),
+  "nudge.card.sub": r("{brand} ka pehla {amount} ka charge, trial ke baad", "{brand} का पहला {amount} का चार्ज, ट्रायल के बाद", "{brand}'s first {amount} charge after the trial"),
+  "nudge.card.collect": r("{brand} ka {amount} {day} katega. Account mein balance rakhein.", "{brand} का {amount} {day} कटेगा। खाते में बैलेंस रखें।", "{brand} {amount} is due {day}. Keep the balance ready."),
+  "nudge.card.title1": r("{day} {n} AutoPay katega.", "{day} {n} AutoPay कटेगा।", "{n} AutoPay charge {day}."),
   "nudge.card.cta": r("Abhi dekhein", "अभी देखें", "Take a look"),
   "pill.answer": r("Jawab chahiye", "जवाब चाहिए", "Needs your answer"),
   "pill.balance": r("Balance rakhein", "बैलेंस रखें", "Keep balance ready"),
@@ -131,6 +134,13 @@ export const STRINGS = {
   "push.failed": r("{amount} nahi kat paya, balance kam tha. Paisa daal dein toh hum dobara koshish karenge.", "{amount} नहीं कट पाया, बैलेंस कम था। पैसा डाल दें तो हम दोबारा कोशिश करेंगे।", "{amount} didn't go through, the balance was short. Add money and we'll try again."),
   "push.remind": r("{date} ko {brand} ke {amount} katenge", "{date} को {brand} के {amount} कटेंगे", "{amount} for {brand} on {date}"),
   "push.stale": r("Ab nahi katega", "अब नहीं कटेगा", "Won't be charged now"),
+  "refund.done": r("Paisa wapas aa gaya, usi UPI account mein.", "पैसा वापस आ गया, उसी UPI खाते में।", "Refunded to the same UPI account."),
+  "case.title": r("Case {code}", "केस {code}", "Case {code}"),
+  "pill.skipped": r("Skip hua", "स्किप हुआ", "Skipped"),
+  "pill.paused": r("Ruka hua", "रुका हुआ", "Paused"),
+  "pill.cancelled": r("Band", "बंद", "Cancelled"),
+  "pill.failed": r("Nahi kata", "नहीं कटा", "Didn't go through"),
+  "pill.charged": r("Kat gaya", "कट गया", "Charged"),
   "persona.switch": r("Kaun dekh raha hai", "कौन देख रहा है", "Viewing as"),
 } as const;
 

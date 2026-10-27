@@ -1,6 +1,7 @@
 "use client";
 // Client sync: each surface keeps a replica of the session (same world, same reducer) and polls the
 // server for new events. Taps are sent as commands; the UI shows results only once events arrive.
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { SESSION_START, simNow, type ClockState } from "@/engine/clock";
 import type { ClockCommand, Command } from "@/engine/commands";
@@ -83,7 +84,15 @@ export const useSync = create<SyncState>((set, get) => ({
 /** Current sim time on this device. */
 export function useSimNow(): string {
   const clock = useSync((s) => s.clock);
-  return simNow(clock, Date.now()).toISOString();
+  const [now, setNow] = useState(clock.simAnchor);
+  useEffect(() => {
+    const update = () => setNow(simNow(clock, Date.now()).toISOString());
+    update();
+    if (clock.paused) return;
+    const i = setInterval(update, 500);
+    return () => clearInterval(i);
+  }, [clock]);
+  return now;
 }
 
 export function sessionIdFromUrl(): string {
