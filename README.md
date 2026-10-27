@@ -18,6 +18,14 @@ Open http://localhost:3000. Pick a surface or use the one-laptop grid (`/demo?gr
 | `/ops` | Control room with the flight recorder |
 | `/demo` | Demo clock, story steps and counters |
 
+## One live demo across phone and laptop (optional, free)
+
+1. Create a free Supabase project and run `supabase/migrations/0001_init.sql` in its SQL Editor.
+2. In `.env.local` (and in Vercel's Environment Variables) set `NEXT_PUBLIC_SYNC=server`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`.
+3. `pnpm check:supabase` plays the whole story against the database and checks the numbers.
+
+Without these, the demo runs in each browser on its own.
+
 ## Demo in three minutes
 
 1. Open `/demo?grid=1` and press play (or use **Jump to next moment**).
@@ -38,4 +46,4 @@ Decisions where the PRD is silent are in `docs/DECISIONS.md`.
 
 ## Not built yet
 
-Live language model calls (templates and seed labels stand in), Supabase sync, the review radar page, the red-team panel UI, voice files, and the Playwright end-to-end test.
+Live model text needs a paid Anthropic key (`LLM_API_KEY`, then `pnpm bake:llm`); until then templates and the hand-checked review labels are used and labelled as such. The cheaper-plan offer is not built.

@@ -130,7 +130,8 @@ function onCutoff(s: Session, c: Cycle, at: ISO) {
 }
 
 function chargeAttempt(s: Session, c: Cycle, attempt: number, at: ISO) {
-  run(s, at, { type: "executeCharge", ruleId: "MANDATE_SCHEDULE_V1", actor: "system", targetId: c.id, cycleId: c.id, discriminator: String(attempt), params: { attempt } });
+  const r = run(s, at, { type: "executeCharge", ruleId: "MANDATE_SCHEDULE_V1", actor: "system", targetId: c.id, cycleId: c.id, discriminator: String(attempt), params: { attempt } });
+  if (r.status !== "executed") return; // already done on an earlier pass
   const cs = s.state.cycle(c.id);
   const m = s.idx.mandate.get(c.mandateId)!;
   if (cs.status === "failed_business") {

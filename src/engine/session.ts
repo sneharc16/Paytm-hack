@@ -54,8 +54,8 @@ export class Session {
   constructor(public id: string, public world: World, events: PakkaEvent[] = []) {
     this.idx = indexWorld(world);
     this.state = new EngineState(world, SESSION_START);
-    for (const e of events) { this.events.push(e); this.state.apply(e); }
-    this.processedTo = this.state.cursor;
+    this.processedTo = SESSION_START;
+    if (events.length) ingest(this, events);
   }
 
   get nextId() { return (this.events.at(-1)?.id ?? 0) + 1; }
@@ -83,10 +83,21 @@ export class Session {
 
 /** Apply events that arrived from elsewhere (the server) to a local replica. */
 export function ingest(s: Session, events: PakkaEvent[]) {
+  let added = 0;
   for (const e of events) {
     if (e.id <= (s.events.at(-1)?.id ?? 0)) continue;
     s.events.push(e);
     s.state.apply(e);
+    added++;
   }
-  s.processedTo = s.state.cursor;
+  // Some events are stamped a few seconds after the job that made them (a merchant replies 3 s later), so the
+  // latest timestamp can be ahead of what was actually processed. Re-run the last few seconds: every handler
+  // is safe to run twice.
+  if (added) {
+    const resume = new Date(new Date(s.state.cursor).getTime() - REPLAY_OVERLAP_MS).toISOString();
+    if (resume > s.processedTo) s.processedTo = resume;
+  }
 }
+
+/** Larger than the biggest offset any handler adds to an event's timestamp (5 s). */
+export const REPLAY_OVERLAP_MS = 10_000;

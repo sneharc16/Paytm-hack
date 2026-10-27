@@ -1,5 +1,7 @@
-import { createSession } from "@/lib/server/sessions";
+import { getSession, newSessionId } from "@/lib/server/sessions";
 
 export async function POST() {
-  return Response.json({ ok: true, data: { id: createSession("2711") } });
+  const id = newSessionId();
+  await getSession(id);
+  return Response.json({ ok: true, data: { id } });
 }
