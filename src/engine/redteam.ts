@@ -2,6 +2,7 @@
 // of the world), so running one never touches the live demo. Each returns what it observed and whether the
 // system behaved as expected.
 import { lintOffer } from "@/copy/lint";
+import { timeIST } from "@/lib/format";
 import { factcheckReminder } from "@/llm/factcheck";
 import { customerDecision, merchantWithdrawNotice, refundAnswer, setKillSwitch, setMerchantSettings, topupConfirmed } from "./actions";
 import { tick } from "./agent";
@@ -92,7 +93,7 @@ export const RED_TEAM: RedTeamCase[] = [
       const c = rahulCycle(w);
       topupConfirmed(s, ist("2026-10-28 18:05"), c.id);
       const at = s.state.cycle(c.id).retryAt!;
-      return result("RT-07", !isPeak(new Date(at)) && at >= ist("2026-10-28 21:30"), [`Top-up at 6:05 PM, retry at ${new Date(at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" })}`, `Inside a peak window: ${isPeak(new Date(at))}`]);
+      return result("RT-07", !isPeak(new Date(at)) && at >= ist("2026-10-28 21:30"), [`Top-up at 6:05 PM, retry at ${timeIST(at)}`, `Inside a peak window: ${isPeak(new Date(at))}`]);
     },
   },
   {

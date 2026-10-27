@@ -15,6 +15,8 @@ export function mentionsAutopay(r: Review, brand: string, legal: string) {
 type Tagger = (r: Review) => { gap: Gap; confidence: number; evidence: string; modelVersion: string };
 let tagger: Tagger = (r) => ({ gap: r.goldGap ?? "other", confidence: 1, evidence: r.text.slice(0, 120), modelVersion: "seed-labels" });
 export function setTagger(t: Tagger) { tagger = t; }
+/** The current tag for a review: model output from the cache when there is one, else the seed label. */
+export function tagReview(r: Review) { return tagger(r); }
 
 type AlertWriter = (metrics: Record<string, number | string>, tpl: { headline: string; detail: string; modelVersion: string }) => { headline: string; detail: string; modelVersion: string };
 let alertWriter: AlertWriter = (_m, tpl) => tpl;

@@ -7,6 +7,7 @@ import { inr, timeIST, dayMonth } from "@/lib/format";
 import { eventsFor, recorderRow } from "@/lib/recorder";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
 import { PakkaSeal, RuleChip, StatusPill } from "@/components/shared";
+import { AuditPage, CasesPage, RadarPage, RedTeamPanel } from "./OpsPages";
 import type { Actor } from "@/engine/types";
 
 const ACTOR: Record<Actor, { label: string; color: string }> = {
@@ -14,7 +15,9 @@ const ACTOR: Record<Actor, { label: string; color: string }> = {
   merchant: { label: "Merchant", color: "var(--actor-merchant)" }, person: { label: "Person", color: "var(--actor-person)" }, system: { label: "System", color: "var(--mist)" },
 };
 
-export default function ControlRoom({ embedded = false }: { embedded?: boolean }) {
+export type OpsPage = "overview" | "cases" | "radar" | "audit" | "redteam";
+
+export default function ControlRoom({ embedded = false, page = "overview" }: { embedded?: boolean; page?: OpsPage }) {
   const start = useSync((s) => s.start);
   const session = useSync((s) => s.session);
   useSync((s) => s.version);
@@ -24,9 +27,22 @@ export default function ControlRoom({ embedded = false }: { embedded?: boolean }
   if (!session) return <div className="p-8 text-slate">Loading</div>;
   const sunita = session.world.cycles.find((c) => c.group === "ask" && session.idx.mandate.get(c.mandateId)!.userId === "u_sunita")!;
   const sel = subject ?? { cycleId: sunita.id, label: "Sunita Verma, PadhoAI" };
+  if (page !== "overview") {
+    return (
+      <main className={`@container flex flex-col ${embedded ? "h-full overflow-y-auto" : "min-h-screen"}`}>
+        <Header s={session} now={now} page={page} embedded={embedded} />
+        <div className="flex-1 px-5 pb-8 pt-4 @min-[760px]:px-8">
+          {page === "cases" && <CasesPage s={session} />}
+          {page === "radar" && <RadarPage s={session} now={now} />}
+          {page === "audit" && <AuditPage s={session} />}
+          {page === "redteam" && <RedTeamPanel />}
+        </div>
+      </main>
+    );
+  }
   return (
     <main className={`@container flex flex-col ${embedded ? "h-full overflow-y-auto" : "min-h-screen"}`}>
-      <Header s={session} now={now} />
+      <Header s={session} now={now} page={page} embedded={embedded} />
       <div className="grid flex-1 gap-4 px-5 pb-6 pt-4 @min-[760px]:grid-cols-2 @min-[760px]:px-8 @min-[1200px]:grid-cols-[minmax(300px,1fr)_minmax(320px,1fr)_minmax(380px,1.3fr)]">
         <IncidentPanel s={session} now={now} />
         <CaseTable s={session} selected={sel.caseCode} onPick={(code) => {
@@ -42,7 +58,15 @@ export default function ControlRoom({ embedded = false }: { embedded?: boolean }
   );
 }
 
-function Header({ s, now }: { s: Session; now: string }) {
+const NAV: { id: OpsPage; label: string; href: string }[] = [
+  { id: "overview", label: "Overview", href: "/ops" },
+  { id: "cases", label: "Cases", href: "/ops/cases" },
+  { id: "radar", label: "Review Radar", href: "/ops/radar" },
+  { id: "audit", label: "Audit", href: "/ops/audit" },
+  { id: "redteam", label: "Red team", href: "/ops/audit?redteam=1" },
+];
+
+function Header({ s, now, page, embedded }: { s: Session; now: string; page: OpsPage; embedded: boolean }) {
   const send = useSync((x) => x.send);
   const on = s.state.killSwitch.global;
   const [reason, setReason] = useState("");
@@ -72,6 +96,14 @@ function Header({ s, now }: { s: Session; now: string }) {
           </div>
         </div>
       </header>
+      {!embedded && (
+        <nav className="flex gap-1 overflow-x-auto border-b border-line bg-surface px-5 @min-[760px]:px-8">
+          {NAV.map((n) => (
+            <a key={n.id} href={n.href} aria-current={page === n.id ? "page" : undefined}
+              className={`-mb-px whitespace-nowrap border-b-2 px-3 py-3 text-[14px] font-semibold ${page === n.id ? "border-blue text-blue" : "border-transparent text-slate hover:text-ink"}`}>{n.label}</a>
+          ))}
+        </nav>
+      )}
     </>
   );
 }
@@ -112,11 +144,11 @@ function IncidentPanel({ s, now }: { s: Session; now: string }) {
   );
 }
 
-const STATUS_PILL: Record<string, ["answer" | "neutral" | "done" | "muted" | "fraud", string]> = {
+export const STATUS_PILL: Record<string, ["answer" | "neutral" | "done" | "muted" | "fraud", string]> = {
   with_merchant: ["neutral", "With merchant"], with_person: ["answer", "With a person"], refunded: ["done", "Refunded"], closed: ["muted", "Closed"], upheld: ["muted", "Upheld"], open: ["neutral", "Open"],
 };
 
-function CaseTable({ s, selected, onPick, onPickSunita }: { s: Session; selected?: string; onPick: (code: string) => void; onPickSunita: () => void }) {
+export function CaseTable({ s, selected, onPick, onPickSunita }: { s: Session; selected?: string; onPick: (code: string) => void; onPickSunita: () => void }) {
   const cases = [...s.state.cases.values()].sort((a, b) => (a.status === "with_person" ? -1 : 0) - (b.status === "with_person" ? -1 : 0) || a.code.localeCompare(b.code));
   return (
     <section className="card">
@@ -143,7 +175,7 @@ function CaseTable({ s, selected, onPick, onPickSunita }: { s: Session; selected
   );
 }
 
-function CaseFile({ s, code }: { s: Session; code: string }) {
+export function CaseFile({ s, code }: { s: Session; code: string }) {
   const send = useSync((x) => x.send);
   const cs = s.state.cases.get(code)!;
   const [reason, setReason] = useState("");
@@ -182,7 +214,7 @@ function CaseFile({ s, code }: { s: Session; code: string }) {
   );
 }
 
-function FlightRecorder({ s, subject }: { s: Session; subject: { cycleId?: string; caseCode?: string; label: string } }) {
+export function FlightRecorder({ s, subject }: { s: Session; subject: { cycleId?: string; caseCode?: string; label: string } }) {
   const rows = eventsFor(s, subject).map((e) => recorderRow(s, e)).filter((r): r is NonNullable<typeof r> => !!r);
   const [open, setOpen] = useState<number | null>(null);
   return (
