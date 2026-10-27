@@ -13,7 +13,11 @@ export const Command = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("pin"), userId: z.string(), digits: z.string().max(6) }),
   z.object({ kind: z.literal("topup_confirmed"), cycleId: z.string() }),
   z.object({ kind: z.literal("refund_answer"), executionId: z.string(), yes: z.boolean() }),
-  z.object({ kind: z.literal("question"), userId: z.string(), text: z.string().min(1).max(300) }),
+  z.object({ kind: z.literal("question"), userId: z.string(), text: z.string().min(1).max(300), intake: z.object({
+    intent: z.enum(["explain_charge", "refund_request", "cancel_help", "never_approved", "failed_charge", "other"]),
+    merchant_text: z.string().nullable(), amount_rupees: z.number().nullable(), date_text: z.string().nullable(),
+    language: z.enum(["hi", "hinglish", "en"]), modelVersion: z.string().optional(),
+  }).optional() }),
   z.object({ kind: z.literal("merchant_settings"), merchantId: z.string(), by: z.string(), settings: z.object({
     askBeforeFirstCharge: z.boolean().optional(), shareUsageSignal: z.boolean().optional(), offerSkip: z.boolean().optional(),
     refundAuto: z.boolean().optional(), refundCap: z.number().int().nonnegative().optional(), refundDailyLimit: z.number().int().nonnegative().optional(),
@@ -32,7 +36,7 @@ export function applyCommand(s: Session, at: ISO, c: Command): unknown {
     case "pin": return verifyPin(s, at, c.userId, c.digits);
     case "topup_confirmed": return topupConfirmed(s, at, c.cycleId);
     case "refund_answer": return refundAnswer(s, at, c.executionId, c.yes);
-    case "question": return askQuestion(s, at, c.userId, c.text);
+    case "question": return askQuestion(s, at, c.userId, c.text, c.intake);
     case "merchant_settings": return setMerchantSettings(s, at, c.merchantId, c.settings, c.by);
     case "merchant_refund_decision": return merchantRefundDecision(s, at, c.executionId, c.decision, c.reason);
     case "person_decision": return personDecision(s, at, c.caseId, c.decision, c.reason, c.by);

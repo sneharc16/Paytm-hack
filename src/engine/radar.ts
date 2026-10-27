@@ -16,6 +16,11 @@ type Tagger = (r: Review) => { gap: Gap; confidence: number; evidence: string; m
 let tagger: Tagger = (r) => ({ gap: r.goldGap ?? "other", confidence: 1, evidence: r.text.slice(0, 120), modelVersion: "seed-labels" });
 export function setTagger(t: Tagger) { tagger = t; }
 
+type AlertWriter = (metrics: Record<string, number | string>, tpl: { headline: string; detail: string; modelVersion: string }) => { headline: string; detail: string; modelVersion: string };
+let alertWriter: AlertWriter = (_m, tpl) => tpl;
+/** Plug in the L6 model (demo cache or live). Numbers must come only from the metrics. */
+export function setAlertWriter(fn: AlertWriter) { alertWriter = fn; }
+
 export interface RadarRow { merchantId: string; count6h: number; baseline6h: number; threshold: number; gaps: Record<Gap, number>; spike: boolean }
 
 export function radarSnapshot(s: Session, at: ISO): RadarRow[] {
@@ -49,14 +54,16 @@ export function runRadar(s: Session, at: ISO) {
     const metrics = { count: row.count6h, consent: row.gaps.consent, name: row.gaps.name, ownership: row.gaps.ownership, baseline6h: Math.round(row.baseline6h * 100) / 100, threshold: row.threshold };
     run(s, at, { type: "openIncident", ruleId: "INCIDENT_V1", actor: "ai", targetId: m.id, discriminator: incidentId, params: { merchantId: m.id, incidentId, metrics } });
     const plan = s.world.plans.find((p) => p.merchantId === m.id)!;
-    // L6 merchant alert, template version: numbers only from the metrics, no adjectives about the merchant.
+    // L6 merchant alert: numbers only from the metrics, no adjectives about the merchant.
+    const alertInput = { brand: m.brand, count: row.count6h, consent: row.gaps.consent, name: row.gaps.name, ownership: row.gaps.ownership, trial_amount: inr(plan.trialAmount ?? 0), amount: inr(plan.amount) };
+    const alert = alertWriter(alertInput, {
+      modelVersion: "template",
+      headline: `${row.count6h} reviews in the last 6 hours mention your ${inr(plan.trialAmount ?? 0)} trial and AutoPay.`,
+      detail: `Only you and Paytm's merchant team can see this. ${row.gaps.consent} of them say they didn't know a ${inr(plan.amount)} charge would follow.`,
+    });
     run(s, at, {
       type: "alertMerchant", ruleId: "INCIDENT_V1", actor: "ai", targetId: m.id, discriminator: incidentId,
-      params: {
-        merchantId: m.id, incidentId, modelVersion: "template",
-        headline: `${row.count6h} reviews in the last 6 hours mention your ${inr(plan.trialAmount ?? 0)} trial and AutoPay.`,
-        detail: `Only you and Paytm's merchant team can see this. ${row.gaps.consent} of them say they didn't know a ${inr(plan.amount)} charge would follow.`,
-      },
+      params: { merchantId: m.id, incidentId, ...alert },
     });
   }
 }

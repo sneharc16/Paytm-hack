@@ -14,6 +14,9 @@ import { checkInvariants } from "@/engine/invariants";
 import { ingest, Session } from "@/engine/session";
 import type { ISO, PakkaEvent, World } from "@/engine/types";
 import { generateWorld } from "@/engine/world";
+import { installModelHooks } from "@/llm/hooks";
+
+installModelHooks();
 
 export const SYNC_MODE: "local" | "server" = process.env.NEXT_PUBLIC_SYNC === "server" ? "server" : "local";
 

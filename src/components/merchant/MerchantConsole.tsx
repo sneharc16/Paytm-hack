@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Info } from "lucide-react";
 import { lintOffer, PATTERN_NAMES } from "@/copy/lint";
+import { callModel } from "@/lib/llm-client";
 import { metrics } from "@/engine/metrics";
 import type { MerchantSettings } from "@/engine/types";
 import type { Session } from "@/engine/session";
@@ -96,7 +97,20 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
   const savedKey = JSON.stringify(saved);
   useEffect(() => { setDraft(JSON.parse(savedKey)); }, [savedKey]);
   const set = (k: Partial<MerchantSettings>) => setDraft({ ...draft, ...k });
-  const issues = offer ? lintOffer(offer) : [];
+  const [modelIssues, setModelIssues] = useState<{ text: string; issues: ReturnType<typeof lintOffer> } | null>(null);
+  const [checking, setChecking] = useState(false);
+  const issues = offer ? [...lintOffer(offer), ...(modelIssues?.text === offer ? modelIssues.issues : [])] : [];
+  // L5: after the regex pre-check passes, ask the model (debounced). Its issues block publishing too.
+  useEffect(() => {
+    if (!offer.trim() || lintOffer(offer).length) return;
+    const id = setTimeout(async () => {
+      setChecking(true);
+      const r = await callModel<{ pass: boolean; issues: ReturnType<typeof lintOffer> }>("lint", { text: offer });
+      setChecking(false);
+      setModelIssues({ text: offer, issues: r && !r.output.pass ? r.output.issues : [] });
+    }, 600);
+    return () => clearTimeout(id);
+  }, [offer]);
   const m = metrics(s);
   const dirty = JSON.stringify(draft) !== savedKey || !!offer;
   const save = async () => {
@@ -123,9 +137,11 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
           <SettingRow title="Skip this month" help="Customer keeps the plan and isn't charged this cycle." on={draft.offerSkip} onChange={(v) => set({ offerSkip: v })}>
             <label className="text-[14px] font-semibold" htmlFor="offer">Offer line shown beside Cancel (optional)</label>
             <input id="offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Is mahine skip karein, plan chalu rahega" className="mt-1 h-9 w-full rounded-[8px] border border-line-strong px-3 text-[14px]" />
+            {checking && <p className="mt-2 text-[13px] text-slate">Checking the wording for dark patterns</p>}
+            {offer && !checking && issues.length === 0 && <p className="mt-2 text-[13px] text-green">No dark patterns found.</p>}
             {issues.map((i) => (
               <div key={i.pattern + i.span} className="mt-2 text-[14px]">
-                <b>{PATTERN_NAMES[i.pattern]}</b>: <span className="bg-amber-wash">{i.span}</span>. {i.why}
+                <b>{PATTERN_NAMES[i.pattern] ?? i.pattern}</b>: <span className="bg-amber-wash">{i.span}</span>. {i.why}
                 <button onClick={() => setOffer(i.suggested_fix)} className="ml-2 font-semibold text-navy underline">Use this: {i.suggested_fix}</button>
               </div>
             ))}

@@ -98,7 +98,18 @@ export function refundAnswer(s: Session, at: ISO, executionId: string, yes: bool
   return { status: res.status, actionId: res.actionId, reason: res.reason };
 }
 
-export function caseSummary(s: Session, code: string, merchantPosition?: string) {
+export type CaseSummary = ReturnType<typeof templateSummary>;
+type Summarizer = (facts: { code: string; caseType: string; template: CaseSummary }, tpl: CaseSummary) => CaseSummary;
+let summarizer: Summarizer = (_f, tpl) => tpl;
+/** Plug in the L4 model (demo cache or live). It must return a validated summary or the template. */
+export function setSummarizer(fn: Summarizer) { summarizer = fn; }
+
+export function caseSummary(s: Session, code: string, merchantPosition?: string): CaseSummary {
+  const tpl = templateSummary(s, code, merchantPosition);
+  return summarizer({ code, caseType: s.state.cases.get(code)!.type, template: tpl }, tpl);
+}
+
+function templateSummary(s: Session, code: string, merchantPosition?: string) {
   const cs = s.state.cases.get(code)!;
   const m = s.idx.mandate.get(cs.mandateId)!;
   const mer = s.idx.merchant.get(m.merchantId)!;
@@ -115,7 +126,7 @@ export function caseSummary(s: Session, code: string, merchantPosition?: string)
       merchant_position: "Not asked. Fraud cases do not go to the merchant first.",
       evidence: [`Charge ${amount} on 25 Oct`, "No PIN authorisation on record for this mandate", "Customer statement through Pakka se poochho"],
       suggested_next_step: "Confirm with the issuer bank whether the mandate was registered with AFA, and help the customer file with 1930.",
-      suggestion_confidence: "medium", risk_flags: ["fraud_claim"], modelVersion: "template",
+      suggestion_confidence: "medium", risk_flags: ["fraud_claim"] as string[], modelVersion: "template",
     };
   }
   return {
@@ -199,6 +210,7 @@ export function intakeTemplate(text: string): Intake {
 }
 
 export function askQuestion(s: Session, at: ISO, userId: string, text: string, intake: Intake = intakeTemplate(text), opts: { autoplayed?: boolean } = {}) {
+  intake ??= intakeTemplate(text);
   s.emit({ actor: "customer", simAt: at, type: "question_asked", payload: { userId, text, autoplayed: !!opts.autoplayed } });
   const res = resolveMandate(s, userId, intake);
   s.emit({ actor: "ai", simAt: addSec(at, 1), type: "question_resolved", modelVersion: intake.modelVersion ?? "template", payload: { userId, text, intent: intake.intent, mandateId: res.mandateId, candidates: res.candidates } });

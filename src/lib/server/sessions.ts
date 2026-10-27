@@ -7,6 +7,9 @@ import { checkInvariants } from "@/engine/invariants";
 import { Session } from "@/engine/session";
 import { generateWorld } from "@/engine/world";
 import type { World } from "@/engine/types";
+import { installModelHooks } from "@/llm/hooks";
+
+installModelHooks();
 
 interface Entry { session: Session; clock: ClockState; epoch: number; invariantFailures: string[] }
 

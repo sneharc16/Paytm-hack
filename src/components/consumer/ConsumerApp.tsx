@@ -9,6 +9,7 @@ import { hasNameGap } from "@/engine/namegap";
 import type { Choice, Lang, Persona } from "@/engine/types";
 import { dayMonth, inr, relativeDay, timeIST } from "@/lib/format";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
+import { callModel } from "@/lib/llm-client";
 import { PERSONAS, isCollect, needsAnswer, pillFor, rowsFor, sectionOf, type Row } from "@/lib/views";
 import { AIFooter, Amount, DebitTimeline, KillSwitchBanner, LangToggle, MerchantTile, PakkaSeal, StatusPill } from "@/components/shared";
 import type { Session } from "@/engine/session";
@@ -581,7 +582,9 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
   const submit = async () => {
     if (!text.trim()) return;
     setBusy(true);
-    const r = (await send({ kind: "question", userId, text })) as typeof answer;
+    const live = await callModel<{ intent: "explain_charge" | "refund_request" | "cancel_help" | "never_approved" | "failed_charge" | "other"; merchant_text: string | null; amount_rupees: number | null; date_text: string | null; language: "hi" | "hinglish" | "en" }>("intake", { text });
+    const intake = live ? { ...live.output, modelVersion: live.promptVersion } : undefined;
+    const r = (await send({ kind: "question", userId, text, intake })) as typeof answer;
     setBusy(false);
     setAnswer(r);
     if (r?.intent === "never_approved") onFraud(r.caseCode, r.mandateId);
