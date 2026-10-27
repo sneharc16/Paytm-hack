@@ -24,8 +24,8 @@ export default function MerchantConsole({ embedded = false }: { embedded?: boole
   const waiting = [...session.state.refunds.values()].filter((r) => r.merchantId === MID && r.status === "with_merchant").length;
   const nav = ["Home", "Payments", "Subscriptions", "Pakka", "Refunds", "Settlements", "Settings"];
   return (
-    <main className={`flex ${embedded ? "h-full" : "min-h-screen"}`}>
-      <nav className="hidden w-[248px] shrink-0 border-r border-line bg-surface lg:block">
+    <main className={`@container flex ${embedded ? "h-full" : "min-h-screen"}`}>
+      <nav className="hidden w-[248px] shrink-0 border-r border-line bg-surface @min-[1100px]:block">
         <div className="flex items-center gap-3 border-b border-line p-4">
           <MerchantTile brand={mer.brand} tile={mer.tile} />
           <div><div className="text-[15px] font-semibold">{mer.brand}</div><div className="text-[13px] text-slate">{mer.legalName}</div></div>
@@ -44,8 +44,8 @@ export default function MerchantConsole({ embedded = false }: { embedded?: boole
           })}
         </ul>
       </nav>
-      <div className={`min-w-0 flex-1 px-8 pb-8 pt-[22px] ${embedded ? "overflow-y-auto" : ""}`}>
-        <div className="flex gap-2 lg:hidden">
+      <div className={`min-w-0 flex-1 px-5 pb-8 pt-[22px] @min-[760px]:px-8 ${embedded ? "overflow-y-auto" : ""}`}>
+        <div className="mb-3 flex gap-4 @min-[1100px]:hidden">
           <button onClick={() => setTab("pakka")} className="text-[14px] font-semibold text-navy underline">Pakka</button>
           <button onClick={() => setTab("refunds")} className="text-[14px] font-semibold text-navy underline">Refunds ({waiting})</button>
         </div>
@@ -113,7 +113,7 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
         <div className="text-right"><button disabled={!dirty || issues.length > 0} onClick={save} className="h-10 rounded-[10px] bg-navy px-4 text-[15px] font-semibold text-white disabled:bg-line-strong disabled:text-slate">Save changes</button>{msg && <p className="mt-1 text-[13px] text-slate">{msg}</p>}</div>
       </div>
       <PrivateAlert s={s} />
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+      <div className="mt-4 grid gap-4 @min-[980px]:grid-cols-[1.4fr_1fr]">
         <section className="rounded-[12px] border border-line bg-surface px-5 py-3">
           <h2 className="pt-2 text-[17px] font-semibold">Before the first charge after a trial</h2>
           <SettingRow title="Charge only after the customer says yes" help="Pakka asks 24 hours before. If they don't answer, this cycle is skipped and the plan stays active." on={draft.askBeforeFirstCharge} onChange={(v) => set({ askBeforeFirstCharge: v })} />

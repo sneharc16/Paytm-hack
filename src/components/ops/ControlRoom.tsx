@@ -25,15 +25,15 @@ export default function ControlRoom({ embedded = false }: { embedded?: boolean }
   const sunita = session.world.cycles.find((c) => c.group === "ask" && session.idx.mandate.get(c.mandateId)!.userId === "u_sunita")!;
   const sel = subject ?? { cycleId: sunita.id, label: "Sunita Verma, PadhoAI" };
   return (
-    <main className={`flex flex-col ${embedded ? "h-full overflow-y-auto" : "min-h-screen"}`}>
+    <main className={`@container flex flex-col ${embedded ? "h-full overflow-y-auto" : "min-h-screen"}`}>
       <Header s={session} now={now} />
-      <div className="grid flex-1 gap-4 px-8 pb-8 pt-4 lg:grid-cols-[minmax(300px,1fr)_minmax(320px,1fr)_minmax(380px,1.3fr)]">
+      <div className="grid flex-1 gap-4 px-5 pb-6 pt-4 @min-[760px]:grid-cols-2 @min-[760px]:px-8 @min-[1200px]:grid-cols-[minmax(300px,1fr)_minmax(320px,1fr)_minmax(380px,1.3fr)]">
         <IncidentPanel s={session} now={now} />
         <CaseTable s={session} selected={sel.caseCode} onPick={(code) => {
           const cs = session.state.cases.get(code)!;
           setSubject({ caseCode: code, label: `${code}, ${session.idx.user.get(cs.userId)!.name}` });
         }} onPickSunita={() => setSubject(null)} />
-        <section className="flex min-h-0 flex-col gap-4">
+        <section className="flex min-h-0 flex-col gap-4 @min-[760px]:col-span-2 @min-[1200px]:col-span-1">
           {sel.caseCode && <CaseFile s={session} code={sel.caseCode} />}
           <FlightRecorder s={session} subject={sel} />
         </section>
@@ -50,7 +50,7 @@ function Header({ s, now }: { s: Session; now: string }) {
   return (
     <>
       {on && <div className="flex h-9 items-center justify-center bg-amber-wash text-[14px] font-semibold text-amber">Pakka actions are paused. Customer answers are being saved.</div>}
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-surface px-8 py-4">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-surface px-5 py-4 @min-[760px]:px-8">
         <PakkaSeal />
         <h1 className="text-[22px] font-bold text-navy">Control room</h1>
         <span className="text-[14px] text-slate">Trust and merchant team, Priya Nair</span>

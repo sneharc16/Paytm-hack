@@ -14,13 +14,14 @@ import ConsumerApp from "@/components/consumer/ConsumerApp";
 import MerchantConsole from "@/components/merchant/MerchantConsole";
 import ControlRoom from "@/components/ops/ControlRoom";
 
-const STEPS = [
-  { label: "Review spike", at: ist("2026-10-26 20:58") },
-  { label: "Merchant turns on asking", at: ist("2026-10-26 21:06") },
-  { label: "Sweep", at: ist("2026-10-26 21:10") },
-  { label: "Sunita and Rahul", at: ist("2026-10-28 18:05") },
-  { label: "Refunds", at: ist("2026-10-28 21:45") },
-  { label: "A person steps in", at: ist("2026-10-29 06:00") },
+type Tab = "story" | "merchant" | "ops";
+const STEPS: { label: string; at: string; tab: Tab; say: string }[] = [
+  { label: "Review spike", at: ist("2026-10-26 20:58"), tab: "ops", say: "Review Radar catches 46 complaints about a ₹1 trial in six hours. 38 of them are a consent gap." },
+  { label: "Merchant turns on asking", at: ist("2026-10-26 21:06"), tab: "merchant", say: "PadhoAI is told privately, no public shaming, and switches on: charge only after the customer says yes. Watch the checkout badge." },
+  { label: "Sweep", at: ist("2026-10-26 21:10"), tab: "story", say: "Pakka sweeps 1,300 mandates and asks 318 people in their own language. On the phone, open Sunita's sheet and skip this month. No PIN needed." },
+  { label: "Sunita and Rahul", at: ist("2026-10-28 18:05"), tab: "ops", say: "Sunita's flight recorder shows the score, the rule and the merchant's reply. Switch the phone to Rahul: his top-up at 6:05 PM waits for the 9:30 PM off-peak slot." },
+  { label: "Refunds", at: ist("2026-10-28 21:45"), tab: "story", say: "Rahul's retry went through. 21 refunds went out under PadhoAI's own rule; anything outside it went to PadhoAI to decide." },
+  { label: "A person steps in", at: ist("2026-10-29 06:00"), tab: "ops", say: "Farhan's ₹1,499 went to Priya with the case already written, and a callback from a 1600 number. Money moved without a rule: zero." },
 ];
 
 function useCountUp(value: number) {
@@ -48,22 +49,11 @@ export default function DemoView() {
   const [grid, setGrid] = useState(false);
   useEffect(() => { start(sessionIdFromUrl()); setGrid(new URLSearchParams(window.location.search).get("grid") === "1"); }, [start]);
   if (!session) return <div className="p-8 text-slate">Loading</div>;
-  if (grid) {
-    return (
-      <main className="grid h-screen grid-cols-[390px_1fr] grid-rows-2 gap-2 bg-canvas p-2">
-        <div className="row-span-2 overflow-hidden rounded-[20px] border border-line bg-surface"><ConsumerApp embedded /></div>
-        <div className="overflow-hidden rounded-[12px] border border-line bg-surface"><Counters s={session} compact /></div>
-        <div className="grid grid-cols-2 gap-2 overflow-hidden">
-          <div className="overflow-hidden rounded-[12px] border border-line"><MerchantConsole embedded /></div>
-          <div className="overflow-hidden rounded-[12px] border border-line"><ControlRoom embedded /></div>
-        </div>
-      </main>
-    );
-  }
+  if (grid) return <Presenter s={session} />;
   return <main className="min-h-screen"><Counters s={session} /></main>;
 }
 
-function Counters({ s, compact = false }: { s: Session; compact?: boolean }) {
+function Counters({ s, compact = false, panel = false }: { s: Session; compact?: boolean; panel?: boolean }) {
   const now = useSimNow();
   const clock = useSync((x) => x.clock);
   const clockCmd = useSync((x) => x.clockCmd);
@@ -82,10 +72,10 @@ function Counters({ s, compact = false }: { s: Session; compact?: boolean }) {
   const feed = s.events.slice(-1500).reverse().filter(storyEvent).map((e) => recorderRow(s, e)).filter((r): r is NonNullable<typeof r> => !!r).slice(0, compact ? 6 : 14);
   const b = m.choiceBreakdown;
   const total = b.keep + b.skip + b.pause + b.cancel + b.none || 1;
-  const pad = compact ? "p-3" : "px-8 pb-8 pt-[22px]";
+  const pad = compact ? "p-3" : panel ? "p-5" : "px-8 pb-8 pt-[22px]";
   return (
-    <div className={`${pad} flex h-full flex-col gap-4 overflow-y-auto`}>
-      <header className="flex flex-wrap items-center gap-3">
+    <div className={`${pad} flex flex-col gap-4 ${panel ? "" : "h-full overflow-y-auto"}`}>
+      {!panel && <><header className="flex flex-wrap items-center gap-3">
         <PakkaSeal /><h1 className={`${compact ? "text-[17px]" : "text-[22px]"} font-bold text-navy`}>Demo view</h1>
         <div className="ml-auto flex items-center gap-2">
           <button onClick={() => clockCmd({ action: "restart" })} className="inline-flex h-9 items-center gap-1 rounded-[10px] border border-line-strong px-3 text-[14px] font-semibold text-navy"><RotateCcw size={16} />Restart demo</button>
@@ -107,8 +97,8 @@ function Counters({ s, compact = false }: { s: Session; compact?: boolean }) {
             <button onClick={() => clockCmd({ action: "jump", value: st.at })} className={`w-full rounded-[10px] border px-3 py-2 text-left text-[14px] ${i === current ? "border-navy font-semibold text-navy shadow-[0_0_0_1px_var(--navy)]" : i < current ? "border-line text-slate" : "border-line-strong text-ink"}`}>{st.label}</button>
           </li>
         ))}
-      </ol>
-      <div className={`grid gap-4 ${compact ? "" : "lg:grid-cols-[1fr_1fr_360px]"}`}>
+      </ol></>}
+      <div className={`grid gap-4 ${compact ? "" : panel ? "@container" : "lg:grid-cols-[1fr_1fr_360px]"}`}>
         <div className={`grid gap-4 ${compact ? "grid-cols-2" : "lg:col-span-2 lg:grid-cols-2"}`}>
           <section className="rounded-[12px] border border-line bg-surface p-5">
             <p className="text-[14px] font-semibold text-slate">For customers</p>
@@ -140,8 +130,9 @@ function Counters({ s, compact = false }: { s: Session; compact?: boolean }) {
           </section>
         </div>
         {!compact && (
-          <section className="rounded-[12px] border border-line bg-surface p-5">
+          <section className="w-full rounded-[12px] border border-line bg-surface p-5">
             <h2 className="text-[15px] font-semibold">Live</h2>
+            {feed.length === 0 && <p className="mt-2 text-[14px] text-slate">Nothing yet. Press play.</p>}
             <ol className="mt-2 divide-y divide-line">
               {feed.map((r) => (
                 <li key={r.id} className="grid grid-cols-[64px_1fr] gap-2 py-2 text-[14px]">
@@ -154,5 +145,84 @@ function Counters({ s, compact = false }: { s: Session; compact?: boolean }) {
         )}
       </div>
     </div>
+  );
+}
+
+/** /demo?grid=1: one screen for the stage. Phone on the left, one large panel on the right that follows the story. */
+function Presenter({ s }: { s: Session }) {
+  const now = useSimNow();
+  const clock = useSync((x) => x.clock);
+  const clockCmd = useSync((x) => x.clockCmd);
+  const current = STEPS.reduce((acc, st, i) => (ms(now) >= ms(st.at) ? i : acc), -1);
+  const [tab, setTab] = useState<Tab>("story");
+  const [pinned, setPinned] = useState(false);
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+    if (t === "story" || t === "merchant" || t === "ops") { setTab(t); setPinned(true); }
+  }, []);
+  useEffect(() => { setPinned(false); }, [current]);
+  const shown: Tab = pinned || current < 0 ? tab : STEPS[current].tab;
+  const nextMoment = MOMENTS.find((x) => ms(x.at) > ms(now) + 30_000);
+  const tabs: { id: Tab; label: string }[] = [{ id: "story", label: "Counters" }, { id: "merchant", label: "Merchant console" }, { id: "ops", label: "Control room" }];
+  return (
+    <main className="flex h-screen flex-col overflow-hidden bg-canvas">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-surface px-5 py-3">
+        <a href="/" aria-label="Home"><PakkaSeal /></a>
+        <h1 className="text-[17px] font-bold text-navy">The 3 minute story</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="mr-1 text-right">
+            <div className="tnum text-[20px] font-bold leading-6">{timeIST(now)}</div>
+            <div className="text-[12px] text-slate">{dayMonth(now, "en")}, demo clock</div>
+          </div>
+          <button aria-label={clock.paused ? "Play" : "Pause"} onClick={() => clockCmd({ action: clock.paused ? "play" : "pause" })} className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-navy text-white">{clock.paused ? <Play size={18} /> : <Pause size={18} />}</button>
+          <div className="flex overflow-hidden rounded-[10px] border border-line-strong">
+            {[60, 600, 3600].map((sp) => (
+              <button key={sp} onClick={() => clockCmd({ action: "speed", value: sp })} className={`h-10 px-3 text-[14px] font-semibold ${clock.speed === sp ? "bg-navy-wash text-navy" : "text-slate"}`}>{sp / 60}×</button>
+            ))}
+          </div>
+          {nextMoment && <button onClick={() => clockCmd({ action: "jump", value: nextMoment.at })} className="inline-flex h-10 items-center gap-1.5 rounded-[10px] border border-line-strong px-3 text-[14px] font-semibold text-navy" title={nextMoment.label}><SkipForward size={16} />Next moment</button>}
+          <button onClick={() => clockCmd({ action: "restart" })} aria-label="Restart demo" title="Restart demo" className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-line-strong text-navy"><RotateCcw size={16} /></button>
+        </div>
+      </header>
+
+      <div className="shrink-0 border-b border-line bg-surface px-5 py-3">
+        <ol className="flex gap-1.5">
+          {STEPS.map((st, i) => (
+            <li key={st.label} className="min-w-0 flex-1">
+              <button onClick={() => clockCmd({ action: "jump", value: st.at })} className="w-full text-left">
+                <span className={`block h-1.5 rounded-full ${i <= current ? "bg-navy" : "bg-line"}`} />
+                <span className={`mt-1.5 block truncate text-[13px] ${i === current ? "font-semibold text-navy" : i < current ? "text-slate" : "text-ink"}`}>{i + 1}. {st.label}</span>
+              </button>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-2 rounded-[10px] bg-cyan-wash px-3 py-2 text-[15px] text-navy">
+          {current < 0 ? "Press play, or Next moment, to begin. The clock starts at 8:55 PM on Monday 26 Oct." : STEPS[current].say}
+        </p>
+      </div>
+
+      <div className="flex min-h-0 flex-1 gap-4 p-4">
+        <div className="flex shrink-0 items-start justify-center">
+          <div className="h-full max-h-[844px] w-[390px] overflow-hidden rounded-[36px] border-[10px] border-ink bg-surface">
+            <ConsumerApp embedded />
+          </div>
+        </div>
+        <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[16px] border border-line bg-surface">
+          <div role="tablist" className="flex shrink-0 items-center gap-1 border-b border-line px-3">
+            {tabs.map((t) => (
+              <button key={t.id} role="tab" aria-selected={shown === t.id} onClick={() => { setTab(t.id); setPinned(true); }}
+                className={`-mb-px h-12 border-b-2 px-4 text-[15px] font-semibold ${shown === t.id ? "border-navy text-navy" : "border-transparent text-slate hover:text-ink"}`}>{t.label}</button>
+            ))}
+            {!pinned && current >= 0 && <span className="ml-auto text-[13px] text-slate">Following the story</span>}
+            {pinned && <button onClick={() => setPinned(false)} className="ml-auto text-[13px] font-semibold text-navy underline">Follow the story</button>}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {shown === "story" && <Counters s={s} panel />}
+            {shown === "merchant" && <MerchantConsole embedded />}
+            {shown === "ops" && <ControlRoom embedded />}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
