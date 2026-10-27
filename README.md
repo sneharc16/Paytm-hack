@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pakka
 
-## Getting Started
+An AI teammate for UPI AutoPay that asks before the money moves. Prototype for the Paytm Build for India AI Hackathon, Problem Statement 3. All merchants and people are fictional. No real money moves.
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm build && pnpm start      # or: pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. Pick a surface or use the one-laptop grid (`/demo?grid=1`). To put Sunita's app on a phone, connect the phone to the same Wi-Fi and scan the QR on the hub.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Route | Surface |
+|---|---|
+| `/app` | Customer app (Sunita, Rahul, Farhan, Anjali) |
+| `/merchant` | PadhoAI's merchant console |
+| `/ops` | Control room with the flight recorder |
+| `/demo` | Demo clock, story steps and counters |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Demo in three minutes
 
-## Learn More
+1. Open `/demo?grid=1` and press play (or use **Jump to next moment**).
+2. 8:58 PM: Review Radar opens INC-07. 9:06 PM: PadhoAI turns on "Charge only after the customer says yes".
+3. 9:10 PM: Sunita's phone gets the Doosri Haan sheet. Choose "Is mahine skip karo". No PIN needed.
+4. Jump to 28 Oct, 6:05 PM. Rahul taps "Paisa daal diya"; the retry is booked after 9:30 PM.
+5. Open PAK-2311 in the control room to see Farhan's case and verified callback.
+6. Jump to 29 Oct, 6:00 AM: ₹1,59,334 stopped, ₹55,016 collected, 0 money moved without a rule.
 
-To learn more about Next.js, take a look at the following resources:
+## How it works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/engine`: pure TypeScript. The world comes from `generateWorld("2711")`, and state is a replay of the event log. Every money action goes through `gateway.ts` with a rule ID and an idempotency key.
+- `src/sim`: bank, merchant and NPCI simulators that follow the real rules (off-peak windows, 4 attempts, PIN for opt-out).
+- `src/app/api`: in-memory sessions on the server. Every surface polls the same log.
+- `pnpm test`: 48 tests, including the full scenario that reproduces every counter in the PRD and checks every invariant.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Decisions where the PRD is silent are in `docs/DECISIONS.md`.
 
-## Deploy on Vercel
+## Not built yet
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Live language model calls (templates and seed labels stand in), Supabase sync, the review radar page, the red-team panel UI, voice files, and the Playwright end-to-end test.

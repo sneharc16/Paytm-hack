@@ -40,7 +40,7 @@ export function recorderRow(s: Session, e: PakkaEvent): RecorderRow | null {
     case "action_failed": return r(`Failed: ${p.reason}`, `Action ${p.actionId}`, e.ruleId);
     case "nudge_sent":
       return r(e.modelVersion === "template" ? `Reminder in ${LANG[p.language]}, from the template` : `Reminder written in ${LANG[p.language]}, facts checked`,
-        p.pushAt ? (p.pushAt === e.simAt ? `Push sent: ${p.title}` : `Quiet hours, push moved to ${timeIST(p.pushAt)}`) : "In-app card only", e.modelVersion);
+        p.pushAt ? (Math.abs(Date.parse(p.pushAt) - Date.parse(e.simAt)) < 60_000 ? `Push sent: ${p.title}` : `Quiet hours, push moved to ${timeIST(p.pushAt)}`) : "In-app card only", e.modelVersion);
     case "decision_recorded":
       if (p.refund) return r(`${first} said no to the refund`);
       return r(`${first} chose "${CHOICE[p.choice] ?? p.choice}"${p.late ? " after the cut-off" : ""}`, p.autoplayed ? "Autoplayed for the demo" : "");

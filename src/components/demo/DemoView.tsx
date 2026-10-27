@@ -73,7 +73,13 @@ function Counters({ s, compact = false }: { s: Session; compact?: boolean }) {
   const collected = useCountUp(m.atRiskCollected);
   const nextMoment = MOMENTS.find((x) => ms(x.at) > ms(now) + 30_000);
   const current = STEPS.reduce((acc, st, i) => (ms(now) >= ms(st.at) ? i : acc), -1);
-  const feed = s.events.slice(-400).reverse().map((e) => recorderRow(s, e)).filter((r): r is NonNullable<typeof r> => !!r && r.event.type !== "risk_scored" && r.event.type !== "notice_received").slice(0, compact ? 6 : 14);
+  // The feed tells the story: routine charges and reminders on ordinary mandates stay in the audit log.
+  const storyEvent = (e: (typeof s.events)[number]) => {
+    const cycleId = e.payload.cycleId ?? (e.subjectType === "cycle" ? e.subjectId : undefined);
+    const group = cycleId ? s.idx.cycle.get(cycleId)?.group : undefined;
+    return group !== "ordinary" && e.type !== "risk_scored" && e.type !== "notice_received";
+  };
+  const feed = s.events.slice(-1500).reverse().filter(storyEvent).map((e) => recorderRow(s, e)).filter((r): r is NonNullable<typeof r> => !!r).slice(0, compact ? 6 : 14);
   const b = m.choiceBreakdown;
   const total = b.keep + b.skip + b.pause + b.cancel + b.none || 1;
   const pad = compact ? "p-3" : "px-8 pb-8 pt-[22px]";
