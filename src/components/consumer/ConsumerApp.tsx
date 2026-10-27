@@ -1,7 +1,7 @@
 "use client";
 // Consumer app, /app (PRD 20.1): C1 list, C2 Doosri Haan sheet, C3 PIN pad, C4 result, C5 retry,
 // C6 refund offer and tracker, C7 and C8 case and callback, C9 detail, C10 Pakka se poochho.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Info, Lock, Mic, Phone, ShieldCheck, Clock, Volume2, Pause, Check, X } from "lucide-react";
 import { t, type StringKey } from "@/copy/strings";
 import { addMin, ms, peakWindow } from "@/engine/clock";
@@ -181,6 +181,8 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
   const [choice, setChoice] = useState<Choice | null>(cs.decision ?? null);
   const [busy, setBusy] = useState(false);
   const [audio, setAudio] = useState<"idle" | "playing" | "error">("idle");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => () => { audioRef.current?.pause(); window.speechSynthesis?.cancel(); }, []);
   const day = relativeDay(c.dueAt, now, lang);
   const amount = inr(c.amount);
   const p = { day, amount, brand: mer.brand, trialDate: m.trialStartedAt ? dayMonth(m.trialStartedAt, lang) : "", trialAmount: plan.trialAmount ? inr(plan.trialAmount) : "" };
@@ -195,10 +197,13 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
     { id: "cancel", desc: t(lang, "choice.cancel.desc", p), pin: true },
   ];
   const listen = () => {
-    if (audio === "playing") { window.speechSynthesis?.cancel(); setAudio("idle"); return; }
-    const a = new Audio("/audio/sunita-padhoai-hi.mp3");
-    a.onended = () => setAudio("idle");
-    a.play().then(() => setAudio("playing")).catch(() => {
+    if (audio === "playing") { window.speechSynthesis?.cancel(); audioRef.current?.pause(); setAudio("idle"); return; }
+    // The recorded note is Sunita's PadhoAI reminder; anything else uses the browser's Hindi voice.
+    const recorded = m.userId === "u_sunita" && mer.id === "m_padhoai" ? "/audio/sunita-padhoai-hi.m4a" : null;
+    const a = recorded ? new Audio(recorded) : null;
+    audioRef.current = a;
+    if (a) a.onended = () => setAudio("idle");
+    (a ? a.play() : Promise.reject(new Error("no recording"))).then(() => setAudio("playing")).catch(() => {
       const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
       const voice = synth?.getVoices().find((v) => v.lang.startsWith("hi"));
       if (!synth || !voice) { setAudio("error"); return; }
@@ -407,6 +412,7 @@ function RetryScreen({ s, mandateId, lang, now, back, ask }: { s: Session; manda
 
 // ---------- C9 ----------
 function DetailScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mandateId: string; lang: Lang; now: string; back: () => void; ask: (cycleId: string) => void }) {
+  const send = useSync((x) => x.send);
   const m = s.idx.mandate.get(mandateId)!;
   const mer = s.idx.merchant.get(m.merchantId)!;
   const plan = s.idx.plan.get(m.planId)!;
@@ -447,7 +453,12 @@ function DetailScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mand
           {m.irrevocable ? (
             <div className="flex justify-between card px-4 py-3 text-[15px]"><span>{t(lang, "detail.remind_when")}</span><span className="font-semibold">{t(lang, "detail.remind_value")}</span></div>
           ) : s.state.mandateStatus.get(m.id) === "active" && (
-            <button onClick={() => ask(cycle.id)} className="h-12 rounded-[10px] border border-line-strong bg-surface text-[15px] font-semibold text-navy">{t(lang, "choice.pause")} / {t(lang, "choice.cancel")}</button>
+            <>
+              <button onClick={() => ask(cycle.id)} className="press h-12 rounded-full border border-line-strong bg-surface text-[15px] font-semibold text-navy">{t(lang, "choice.pause")} / {t(lang, "choice.cancel")}</button>
+              {s.state.alwaysKeep.has(m.id)
+                ? <p className="flex items-center justify-center gap-1.5 rounded-full bg-green-wash py-3 text-[15px] font-semibold text-green"><Check size={18} aria-hidden />{t(lang, "detail.always_keep")}</p>
+                : <button onClick={() => send({ kind: "always_keep", mandateId: m.id })} className="btn-soft h-12 rounded-full text-[15px] font-semibold">{t(lang, "detail.always_keep")}</button>}
+            </>
           )}
         </div>
         {m.irrevocable && <p className="mt-3 flex gap-2 text-[14px] text-slate"><Lock size={16} className="mt-0.5" aria-hidden />{t(lang, "row.irrevocable")}</p>}

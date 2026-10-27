@@ -3,7 +3,7 @@
 import { z } from "zod";
 import {
   askQuestion, callbackDone, customerDecision, merchantRefundDecision, personDecision, refundAnswer,
-  setKillSwitch, setMerchantSettings, topupConfirmed, verifyPin,
+  setAlwaysKeep, setKillSwitch, setMerchantSettings, topupConfirmed, verifyPin,
 } from "./actions";
 import type { Session } from "./session";
 import type { ISO } from "./types";
@@ -12,6 +12,7 @@ export const Command = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("customer_decision"), cycleId: z.string(), choice: z.enum(["keep", "skip", "pause", "cancel", "downgrade"]), pinToken: z.string().optional() }),
   z.object({ kind: z.literal("pin"), userId: z.string(), digits: z.string().max(6) }),
   z.object({ kind: z.literal("topup_confirmed"), cycleId: z.string() }),
+  z.object({ kind: z.literal("always_keep"), mandateId: z.string() }),
   z.object({ kind: z.literal("refund_answer"), executionId: z.string(), yes: z.boolean() }),
   z.object({ kind: z.literal("question"), userId: z.string(), text: z.string().min(1).max(300), intake: z.object({
     intent: z.enum(["explain_charge", "refund_request", "cancel_help", "never_approved", "failed_charge", "other"]),
@@ -35,6 +36,7 @@ export function applyCommand(s: Session, at: ISO, c: Command): unknown {
     case "customer_decision": return customerDecision(s, at, c.cycleId, c.choice, { pinToken: c.pinToken });
     case "pin": return verifyPin(s, at, c.userId, c.digits);
     case "topup_confirmed": return topupConfirmed(s, at, c.cycleId);
+    case "always_keep": return setAlwaysKeep(s, at, c.mandateId);
     case "refund_answer": return refundAnswer(s, at, c.executionId, c.yes);
     case "question": return askQuestion(s, at, c.userId, c.text, c.intake);
     case "merchant_settings": return setMerchantSettings(s, at, c.merchantId, c.settings, c.by);

@@ -156,10 +156,10 @@ export class EngineState {
       }
       case "decision_recorded": {
         if (p.refund) { const r = this.refunds.get(p.executionId); if (r) r.status = "declined_by_customer"; break; }
+        if (p.choice === "always_keep") { this.alwaysKeep.add(p.mandateId); break; }
         const c = this.cycle(p.cycleId);
         if (p.late) { c.lateDecision = p.choice; break; }
         c.decision = p.choice; c.decisionAt = e.simAt;
-        if (p.choice === "always_keep") this.alwaysKeep.add(p.mandateId);
         break;
       }
       case "pin_verified":

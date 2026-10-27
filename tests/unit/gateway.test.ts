@@ -82,3 +82,18 @@ describe("gateway", () => {
     expect(s.state.cycle(sunitaCycle.id).status).toBe("skipped");
   });
 });
+
+describe("always keep", () => {
+  it("scores a kept mandate at 0 and asks nothing", async () => {
+    const { setAlwaysKeep } = await import("@/engine/actions");
+    const s = new Session("AK", world);
+    tick(s, ist("2026-10-26 21:00"));
+    const c = world.cycles.find((x) => x.group === "ask" && owner(x).userId !== "u_sunita")!;
+    setAlwaysKeep(s, ist("2026-10-26 21:01"), c.mandateId);
+    tick(s, ist("2026-10-26 21:11"));
+    const score = s.events.find((e) => e.type === "risk_scored" && e.payload.cycleId === c.id)!.payload;
+    expect(score.score).toBe(0);
+    expect(score.cappedBy).toBe("always_keep");
+    expect(s.events.some((e) => e.type === "nudge_sent" && e.payload.cycleId === c.id)).toBe(false);
+  });
+});

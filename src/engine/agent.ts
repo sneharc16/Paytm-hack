@@ -108,7 +108,8 @@ function onNotice(s: Session, c: Cycle, at: ISO) {
     run(s, t3, { type: "sendNudge", ruleId: "COLLECT_ASSIST_V1", actor: "ai", targetId: m.userId, cycleId: c.id, discriminator: "collect", params: { userId: m.userId, kind: "collect" } });
     return;
   }
-  const dh = settings.askBeforeFirstCharge && c.firstAfterTrial && !c.confirmedInMerchantAppAt;
+  // "Always keep" is the customer's standing yes, so Doosri Haan does not ask again.
+  const dh = settings.askBeforeFirstCharge && c.firstAfterTrial && !c.confirmedInMerchantAppAt && !s.state.alwaysKeep.has(m.id);
   const rule = dh ? "DH_ASK_V1" : score.band === "ask" ? "PAKKA_ASK_V1" : score.band === "tell" ? "TELL_V1" : null;
   if (!rule) return;
   run(s, t3, { type: "sendNudge", ruleId: rule, actor: "ai", targetId: m.userId, cycleId: c.id, discriminator: rule === "TELL_V1" ? "tell" : "ask", params: { userId: m.userId, kind: rule === "TELL_V1" ? "tell" : "ask", askRule: rule } });

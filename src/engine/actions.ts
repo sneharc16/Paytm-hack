@@ -259,3 +259,10 @@ export function merchantWithdrawNotice(s: Session, at: ISO, cycleId: string) {
   }
   return { status: "executed" };
 }
+
+/** "Hamesha chalne do": the customer says this mandate is wanted, so its score is 0 from now on (PRD 11.4). No PIN. */
+export function setAlwaysKeep(s: Session, at: ISO, mandateId: string) {
+  if (s.state.alwaysKeep.has(mandateId)) return { status: "duplicate" };
+  s.emit({ actor: "customer", simAt: at, type: "decision_recorded", subjectType: "mandate", subjectId: mandateId, payload: { mandateId, choice: "always_keep" } });
+  return { status: "executed" };
+}
