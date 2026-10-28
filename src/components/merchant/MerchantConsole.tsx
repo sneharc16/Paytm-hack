@@ -115,7 +115,7 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
   const dirty = JSON.stringify(draft) !== savedKey || !!offer;
   const save = async () => {
     const r = (await send({ kind: "merchant_settings", merchantId: MID, by: "Imran Sheikh", settings: {
-      askBeforeFirstCharge: draft.askBeforeFirstCharge, shareUsageSignal: draft.shareUsageSignal, offerSkip: draft.offerSkip,
+      askBeforeFirstCharge: draft.askBeforeFirstCharge, shareUsageSignal: draft.shareUsageSignal, offerSkip: draft.offerSkip, offerDowngradePlanId: draft.offerDowngradePlanId,
       refundAuto: draft.refundAuto, refundCap: draft.refundCap, refundDailyLimit: draft.refundDailyLimit, ...(offer ? { offerCopy: { hinglish: offer } } : {}),
     } })) as { ok: boolean } | null;
     setMsg(r?.ok ? `Saved at ${timeIST(now)}` : "Fix the offer copy before saving.");
@@ -146,7 +146,7 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
               </div>
             ))}
           </SettingRow>
-          <SettingRow title="Move to ₹149 monthly" help="Customer moves to a cheaper plan from the next cycle." on={false} onChange={() => undefined} />
+          <SettingRow title="Move to ₹149 monthly" help="Customer moves to PadhoAI Lite. We send a fresh notice with the new amount, at least 24 hours before the charge." on={!!draft.offerDowngradePlanId} onChange={(v) => set({ offerDowngradePlanId: v ? "p_padhoai_lite" : null })} />
           <p className="flex gap-2 py-3 text-[14px] text-slate"><Info size={18} className="shrink-0" aria-hidden />Pause and cancel always sit on the same screen as your offers, with equal weight.</p>
           <h2 className="pt-2 text-[17px] font-semibold">Refund rules</h2>
           <SettingRow title="Refund the first charge if the app wasn't opened within 48 hours" help="Money goes back to the same UPI account. Larger refunds come to you to decide." on={draft.refundAuto} onChange={(v) => set({ refundAuto: v })}>

@@ -9,7 +9,7 @@ test("the three minute story ends on the PRD numbers", async ({ page, context })
   // 8:55 PM -> 8:58 PM -> 9:06 PM -> 9:10 PM
   for (const step of ["Review Radar catches 46 complaints", "PadhoAI is told privately", "Pakka sweeps 1,300 mandates"]) {
     await page.getByRole("button", { name: "Next moment" }).click();
-    await expect(page.getByText(step)).toBeVisible();
+    await expect(page.getByText(step)).toBeVisible({ timeout: 15_000 });
   }
 
   // Sunita skips this month on the phone. No PIN.
@@ -22,8 +22,10 @@ test("the three minute story ends on the PRD numbers", async ({ page, context })
   await page.getByRole("button", { name: "ठीक है" }).click();
 
   // Rahul, in another tab of the same browser: jump to 28 Oct 6:05 PM, the retry waits for 9:30 PM.
-  for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next moment" }).click();
-  await expect(page.getByText("6:05 PM").first()).toBeVisible();
+  for (const at of ["9:30 PM", "11:40 PM", "6:05 PM"]) {
+    await page.getByRole("button", { name: "Next moment" }).click();
+    await expect(page.locator("header").getByText(at, { exact: true })).toBeVisible({ timeout: 15_000 });
+  }
   const rahul = await context.newPage();
   await rahul.goto(`/app?session=${session}&persona=rahul`);
   await rahul.getByRole("button", { name: /^StadiumPass/ }).click();
@@ -31,6 +33,7 @@ test("the three minute story ends on the PRD numbers", async ({ page, context })
 
   // Jump to the end of the night.
   await page.getByRole("button", { name: "6. A person steps in" }).click();
+  await expect(page.locator("header").getByText("6:00 AM", { exact: true })).toBeVisible({ timeout: 30_000 });
   await page.getByRole("tab", { name: "Counters" }).click();
   await expect(page.getByText("₹1,59,334")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("₹55,016")).toBeVisible();

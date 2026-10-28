@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runTask, setClientForTests } from "@/llm/client";
+import { runTask, setClientForTests, setGeminiForTests } from "@/llm/client";
 
 function fakeClient(response: unknown) {
   return { beta: { messages: { parse: vi.fn().mockResolvedValue(response) } } };
@@ -42,5 +42,28 @@ describe("model client", () => {
     expect(await runTask("lint", { text: "a" }, { useDemoCache: false })).toMatchObject({ ok: false, reason: "refusal" });
     setClientForTests(fakeClient({ stop_reason: "end_turn", model: "m", parsed_output: { pass: "yes" } }));
     expect(await runTask("lint", { text: "b" }, { useDemoCache: false })).toMatchObject({ ok: false, reason: "invalid_output" });
+  });
+});
+
+describe("Gemini provider (free tier)", () => {
+  afterEach(() => { setGeminiForTests(null); });
+
+  it("asks for JSON matching the schema and validates the answer", async () => {
+    const out = { pass: false, issues: [{ pattern: "confirm_shaming", span: "aap pachhtayenge", why: "guilt", suggested_fix: "Jab chahein wapas aa sakte hain." }] };
+    const generateContent = vi.fn().mockResolvedValue({ text: JSON.stringify(out), modelVersion: "gemini-2.5-flash-lite", candidates: [{ finishReason: "STOP" }] });
+    setGeminiForTests({ models: { generateContent } });
+    const r = await runTask("lint", { text: "aap pachhtayenge 2" }, { useDemoCache: false });
+    expect(r).toMatchObject({ ok: true, output: out, model: "gemini-2.5-flash-lite" });
+    const req = generateContent.mock.calls[0][0];
+    expect(req.config.responseMimeType).toBe("application/json");
+    expect(req.config.responseJsonSchema.properties.issues).toBeDefined();
+    expect(req.config.systemInstruction).toContain("dark pattern");
+  });
+
+  it("treats a safety stop or bad JSON as a failure", async () => {
+    setGeminiForTests({ models: { generateContent: vi.fn().mockResolvedValue({ text: "", candidates: [{ finishReason: "SAFETY" }] }) } });
+    expect(await runTask("lint", { text: "c" }, { useDemoCache: false })).toMatchObject({ ok: false, reason: "refusal" });
+    setGeminiForTests({ models: { generateContent: vi.fn().mockResolvedValue({ text: "not json", candidates: [{ finishReason: "STOP" }] }) } });
+    expect(await runTask("lint", { text: "d" }, { useDemoCache: false })).toMatchObject({ ok: false, reason: "invalid_output" });
   });
 });

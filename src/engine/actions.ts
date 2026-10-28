@@ -49,6 +49,12 @@ export function customerDecision(s: Session, at: ISO, cycleId: string, choice: C
     const r = run(s, t1, { type: "requestMerchantSkip", ruleId: "SKIP_VIA_MERCHANT_V1", actor: "rule", targetId: cycleId, cycleId, discriminator: "skip", params: { reason: "customer" } });
     return { status: r.status, actionId: r.actionId, reason: r.reason };
   }
+  if (choice === "downgrade") {
+    const planId = s.settings(mandate.merchantId).offerDowngradePlanId;
+    if (!planId) return { status: "blocked", reason: "NOT_OFFERED", actionId: rec.actionId };
+    const r = run(s, t1, { type: "requestMerchantDowngrade", ruleId: "DOWNGRADE_VIA_MERCHANT_V1", actor: "rule", targetId: cycleId, cycleId, discriminator: "downgrade", params: { planId } });
+    return { status: r.status, actionId: r.actionId, reason: r.reason };
+  }
   if (choice === "pause" || choice === "cancel") {
     const r = run(s, t1, { type: "requestUserOptOut", ruleId: "USER_OPT_OUT_V1", actor: "customer", targetId: mandate.id, cycleId, discriminator: choice, params: { kind: choice, pinToken: opts.pinToken, mandateId: mandate.id } });
     return { status: r.status, actionId: r.actionId, reason: r.reason };

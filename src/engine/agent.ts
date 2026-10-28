@@ -72,6 +72,7 @@ function handle(s: Session, j: Job) {
     case "remind": return onRemind(s, s.idx.cycle.get(j.ref)!, j.at);
     case "timer:retry": return onRetryTimer(s, j.ref, j.at);
     case "timer:refund_confirm": return onRefundConfirm(s, j.ref, j.at);
+    case "timer:charge": return onExecute(s, s.idx.cycle.get(j.ref)!, j.at);
     default: return scenario.handle(s, j);
   }
 }
@@ -147,6 +148,7 @@ function chargeAttempt(s: Session, c: Cycle, attempt: number, at: ISO) {
 function onExecute(s: Session, c: Cycle, at: ISO) {
   const cs = s.state.cycle(c.id);
   if (cs.attempts > 0) return;
+  if (cs.dueOverride && ms(at) < ms(cs.dueOverride)) return; // moved by a fresh notice; its own timer charges it
   if (s.state.mandateStatus.get(c.mandateId) !== "active") return;
   const executable = cs.status === "confirmed" || cs.status === "ready" || cs.status === "notice_received"
     || (cs.status === "awaiting_answer" && cs.askRule !== "DH_ASK_V1"); // Doosri Haan off: silence means the charge goes ahead

@@ -37,7 +37,7 @@ export function reminderFacts(s: Session, cycleId: string, kind: NudgeKind, at: 
     charge_day: relativeDay(c.dueAt, at, lang),
     charge_time_text: t(lang, "timeline.after", { time: "9:30 PM" }),
     usage: m.usageConsent && usage ? (usage.openedSinceTrial ? "opened" : "not_opened") : "unknown",
-    choices: ["keep", ...(st.offerSkip ? ["skip"] : []), "pause", "cancel"],
+    choices: ["keep", ...(st.offerSkip ? ["skip"] : []), ...(st.offerDowngradePlanId ? ["downgrade"] : []), "pause", "cancel"],
     skip_is_merchant_offer: st.offerSkip,
     no_answer_outcome: st.askBeforeFirstCharge && c.firstAfterTrial ? "not_charged" : "charged",
     cycleId,

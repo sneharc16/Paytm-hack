@@ -21,6 +21,7 @@ export const Command = z.discriminatedUnion("kind", [
   }).optional() }),
   z.object({ kind: z.literal("merchant_settings"), merchantId: z.string(), by: z.string(), settings: z.object({
     askBeforeFirstCharge: z.boolean().optional(), shareUsageSignal: z.boolean().optional(), offerSkip: z.boolean().optional(),
+    offerDowngradePlanId: z.string().nullable().optional(),
     refundAuto: z.boolean().optional(), refundCap: z.number().int().nonnegative().optional(), refundDailyLimit: z.number().int().nonnegative().optional(),
     offerCopy: z.object({ hi: z.string().max(200).optional(), hinglish: z.string().max(200).optional(), en: z.string().max(200).optional() }).optional(),
   }) }),

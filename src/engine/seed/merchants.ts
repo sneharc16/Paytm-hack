@@ -39,6 +39,7 @@ export const MANDATE_COUNTS: Record<string, number> = Object.fromEntries(MERCHAN
 const r = (n: number) => n * 100;
 export const PLANS: Plan[] = [
   { id: "p_padhoai_m", merchantId: "m_padhoai", name: "PadhoAI Pro monthly", amount: r(599), interval: "month", trialAmount: r(1), trialDays: 7 },
+  { id: "p_padhoai_lite", merchantId: "m_padhoai", name: "PadhoAI Lite monthly", amount: r(149), interval: "month", trialAmount: null, trialDays: null },
   { id: "p_padhoai_q", merchantId: "m_padhoai", name: "PadhoAI Pro quarterly", amount: r(1499), interval: "quarter", trialAmount: r(1), trialDays: 7 },
   { id: "p_stadiumpass", merchantId: "m_stadiumpass", name: "StadiumPass monthly", amount: r(299), interval: "month", trialAmount: null, trialDays: null },
   { id: "p_kathakosh", merchantId: "m_kathakosh", name: "KathaKosh quarterly", amount: r(199), interval: "quarter", trialAmount: r(1), trialDays: 7 },

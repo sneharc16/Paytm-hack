@@ -59,7 +59,7 @@ describe("catching up from the log", () => {
     (globalThis as unknown as { __pakka: { replicas: Map<string, unknown> } }).__pakka.replicas.clear();
     await clockCommand("SRV-4", { action: "jump", value: DEMO_END });
     const { s } = await replica("SRV-4");
-    expect(metrics(s).choiceBreakdown).toEqual({ keep: 52, skip: 140, pause: 61, cancel: 47, none: 18 });
+    expect(metrics(s).choiceBreakdown).toEqual({ keep: 52, skip: 140, downgrade: 0, pause: 61, cancel: 47, none: 18 });
     expect(metrics(s).unwantedStopped).toBe(15933400);
   });
 });

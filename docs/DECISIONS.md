@@ -31,3 +31,8 @@
 - On catch-up a replica re-runs the last 10 seconds of the log, because some events are stamped up to 5 s after the job that made them; every handler is safe to run twice.
 - Surfaces poll `GET /events?after=` every 0.5 s (1 s when paused) instead of using Supabase Realtime; the table is in the realtime publication for later.
 - Writes use the secret key on the server only; the publishable key can read but not append or restart.
+
+## Cheaper plan
+- PadhoAI's cheaper plan is "PadhoAI Lite", ₹149 a month (`p_padhoai_lite`), offered only when the merchant turns on "Move to ₹149 monthly". No generated mandate starts on it, so the seed counts are unchanged.
+- Choosing it withdraws the ₹599 notice and sends a fresh ₹149 notice for this cycle. The charge keeps its time when that still gives 24 hours of notice; otherwise it moves to the first off-peak minute 24 hours after the switch. No PIN: the merchant changes the charge.
+- The choice breakdown gained a `downgrade` bucket (0 in the scripted story).

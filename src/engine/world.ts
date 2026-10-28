@@ -90,7 +90,7 @@ export function generateWorld(seed = "2711"): World {
   for (const s of [...personaSpecs, ...rest]) used[s.merchantId] = (used[s.merchantId] ?? 0) + 1;
   for (const m of MERCHANTS) {
     const left = MANDATE_COUNTS[m.id] - (used[m.id] ?? 0);
-    const plans = PLANS.filter((p) => p.merchantId === m.id && p.id !== "p_fitghar_lite");
+    const plans = PLANS.filter((p) => p.merchantId === m.id && p.id !== "p_fitghar_lite" && p.id !== "p_padhoai_lite");
     for (let i = 0; i < left; i++) {
       const plan = plans.length > 1 && rng() < 0.2 ? plans[1] : plans[0];
       rest.push({ merchantId: m.id, planId: plan.id, group: "ordinary" });

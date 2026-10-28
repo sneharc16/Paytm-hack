@@ -24,6 +24,10 @@ export interface CycleState {
   topupAt?: ISO;
   noticeAt?: ISO;
   noticeWithdrawn: boolean;
+  /** Set when the customer moved to a cheaper plan: the fresh notice's amount, time and plan. */
+  amountOverride?: Paise;
+  dueOverride?: ISO;
+  planOverride?: string;
 }
 
 export interface RefundState {
@@ -196,6 +200,12 @@ export class EngineState {
               cs.status = "opted_out"; cs.optOutKind = p.kind; this.dropTimer("retry", c.id);
             }
           }
+        }
+        if (p.actionType === "requestMerchantDowngrade") {
+          const cs = this.cycle(p.cycleId);
+          cs.status = "confirmed";
+          cs.amountOverride = p.amount; cs.dueOverride = p.dueAt; cs.planOverride = p.planId;
+          this.addTimer(p.dueAt, "charge", p.cycleId);
         }
         if (p.actionType === "recordDecision" && p.choice === "keep") {
           const cs = this.cycle(p.cycleId);

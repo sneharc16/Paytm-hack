@@ -19,7 +19,7 @@ describe("full scenario, 26 Oct 8:55 PM to 29 Oct 6:00 AM, autoplayed personas",
     expect(m.refundedUnderMerchantRules).toBe(1257900);
     expect(m.casesToPerson).toBe(2);
     expect(m.movedWithoutRule).toBe(0);
-    expect(m.choiceBreakdown).toEqual({ keep: 52, skip: 140, pause: 61, cancel: 47, none: 18 });
+    expect(m.choiceBreakdown).toEqual({ keep: 52, skip: 140, downgrade: 0, pause: 61, cancel: 47, none: 18 });
   });
   it("matches the sweep and reminder counts in J1", () => {
     expect(m.sweep.dueFirst).toBe(410);

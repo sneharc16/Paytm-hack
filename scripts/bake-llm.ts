@@ -10,7 +10,7 @@ import { setAlertWriter, setTagger } from "@/engine/radar";
 import { Session } from "@/engine/session";
 import { generateWorld } from "@/engine/world";
 import { cacheKey, type CacheEntry } from "@/llm/cache";
-import { llmEnabled, runTask } from "@/llm/client";
+import { llmEnabled, provider, runTask } from "@/llm/client";
 import { factcheckReminder } from "@/llm/factcheck";
 import { reminderInput } from "@/llm/hooks";
 import { PROMPTS, type Task } from "@/llm/prompts";
@@ -33,7 +33,7 @@ for (const x of inputs.values()) counts[x.task] = (counts[x.task] ?? 0) + 1;
 console.log("Inputs to bake:", counts);
 if (process.argv.includes("--dry-run")) process.exit(0);
 if (!llmEnabled()) {
-  console.error("No model key. Set LLM_API_KEY (or ANTHROPIC_API_KEY) and LLM_PROVIDER=anthropic, then run again.");
+  console.error("No model key. Set GEMINI_API_KEY (free) or LLM_API_KEY (Anthropic) in .env.local, then run again.");
   process.exit(1);
 }
 
@@ -47,7 +47,12 @@ async function main() {
       const next = queue.shift();
       if (!next) return;
       const [key, { task, input, facts }] = next;
-      const r = await runTask(task, input, { useDemoCache: false });
+      // Free tiers allow only a few requests a minute: back off and retry on rate limits.
+    let r = await runTask(task, input, { useDemoCache: false });
+    for (let wait = 20_000; !r.ok && r.reason === "rate_limited" && wait <= 160_000; wait *= 2) {
+      await new Promise((ok) => setTimeout(ok, wait));
+      r = await runTask(task, input, { useDemoCache: false });
+    }
       done++;
       if (!r.ok) { failed[r.reason] = (failed[r.reason] ?? 0) + 1; continue; }
       if (task === "reminder" && facts) {
@@ -58,7 +63,9 @@ async function main() {
       if (done % 25 === 0) console.log(`${done}/${inputs.size}`);
     }
   }
-  await Promise.all(Array.from({ length: 6 }, worker));
+  const workers = Number(process.env.BAKE_CONCURRENCY) || (provider() === "gemini" ? 2 : 6);
+  console.log(`Baking with ${provider()}, ${workers} at a time`);
+  await Promise.all(Array.from({ length: workers }, worker));
   writeFileSync("src/llm/demo-cache.json", JSON.stringify({ generatedAt: new Date().toISOString(), entries }, null, 1) + "\n");
   console.log(`Saved ${Object.keys(entries).length} entries. Failures (templates will be used):`, failed);
 }

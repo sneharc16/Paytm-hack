@@ -72,7 +72,7 @@ function Counters({ s, compact = false, panel = false }: { s: Session; compact?:
   };
   const feed = s.events.slice(-1500).reverse().filter(storyEvent).map((e) => recorderRow(s, e)).filter((r): r is NonNullable<typeof r> => !!r).slice(0, compact ? 6 : 14);
   const b = m.choiceBreakdown;
-  const total = b.keep + b.skip + b.pause + b.cancel + b.none || 1;
+  const total = b.keep + b.skip + b.downgrade + b.pause + b.cancel + b.none || 1;
   const pad = compact ? "p-3" : panel ? "p-5" : "px-8 pb-8 pt-[22px]";
   return (
     <div className={`${pad} flex flex-col gap-4 ${panel ? "" : "h-full overflow-y-auto"}`}>
@@ -121,7 +121,7 @@ function Counters({ s, compact = false, panel = false }: { s: Session; compact?:
           <section className={`card p-5 ${compact ? "col-span-2" : "lg:col-span-2"}`}>
             <h2 className="text-[15px] font-semibold">What the 318 people chose</h2>
             <div className="mt-2 flex h-9 overflow-hidden rounded-[8px]">
-              {([["Keep", b.keep, "#002E6E"], ["Skip this month", b.skip, "#0A3F86"], ["Pause", b.pause, "#3D649F"], ["Cancel", b.cancel, "#7D98C2"], ["No answer", b.none, "#CBD5E3"]] as const).map(([l, v, c]) => v > 0 && (
+              {([["Keep", b.keep, "#002E6E"], ["Skip this month", b.skip, "#0A3F86"], ["Cheaper plan", b.downgrade, "#1F5AA8"], ["Pause", b.pause, "#3D649F"], ["Cancel", b.cancel, "#7D98C2"], ["No answer", b.none, "#CBD5E3"]] as const).map(([l, v, c]) => v > 0 && (
                 <div key={l} className="flex items-center justify-center text-[13px] font-semibold" style={{ width: `${(v / total) * 100}%`, background: c, color: c === "#CBD5E3" ? "var(--ink)" : "#fff" }} title={`${l} ${v}`}>{v}</div>
               ))}
             </div>
@@ -188,7 +188,14 @@ function useToasts(s: Session) {
 function Presenter({ s }: { s: Session }) {
   const now = useSimNow();
   const clock = useSync((x) => x.clock);
-  const clockCmd = useSync((x) => x.clockCmd);
+  const rawClockCmd = useSync((x) => x.clockCmd);
+  // One clock change at a time: in shared mode the clock moves only when the server answers.
+  const [busy, setBusy] = useState(false);
+  const clockCmd = async (c: Parameters<typeof rawClockCmd>[0]) => {
+    if (busy) return;
+    setBusy(true);
+    try { await rawClockCmd(c); } finally { setBusy(false); }
+  };
   const current = STEPS.reduce((acc, st, i) => (ms(now) >= ms(st.at) ? i : acc), -1);
   const [tab, setTab] = useState<Tab>("story");
   const [pinned, setPinned] = useState(false);
@@ -218,7 +225,7 @@ function Presenter({ s }: { s: Session }) {
               <button key={sp} onClick={() => clockCmd({ action: "speed", value: sp })} className={`press h-9 rounded-full px-3 text-[13px] font-semibold ${clock.speed === sp ? "bg-white text-blue shadow-[var(--shadow-card)]" : "text-slate"}`}>{sp / 60}×</button>
             ))}
           </div>
-          {nextMoment && <button onClick={() => clockCmd({ action: "jump", value: nextMoment.at })} className="btn-soft inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold" title={nextMoment.label}><SkipForward size={16} />Next moment</button>}
+          {nextMoment && <button disabled={busy} onClick={() => clockCmd({ action: "jump", value: nextMoment.at })} className="btn-soft inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold disabled:opacity-60" title={nextMoment.label}><SkipForward size={16} />{busy ? "Moving" : "Next moment"}</button>}
           <button onClick={() => clockCmd({ action: "restart" })} aria-label="Restart demo" title="Restart demo" className="press flex h-11 w-11 items-center justify-center rounded-full bg-white text-navy ring-1 ring-line hover:ring-blue"><RotateCcw size={16} /></button>
         </div>
       </header>

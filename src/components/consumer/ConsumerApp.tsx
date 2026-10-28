@@ -167,7 +167,7 @@ function MandateRow({ r, lang, now, onClick }: { r: Row; lang: Lang; now: string
         <div className="flex items-center gap-1 text-[14px] text-slate">{r.mandate.irrevocable && <Lock size={16} strokeWidth={1.8} aria-hidden />}<span className="truncate">{sub}</span></div>
       </div>
       <div className="flex flex-col items-end gap-1">
-        <Amount paise={r.cycle.amount} lang={lang} />
+        <Amount paise={r.cs.amountOverride ?? r.cycle.amount} lang={lang} />
         {pill ? <StatusPill kind={pill.kind}>{t(lang, pill.key as StringKey)}</StatusPill> : <span className="text-[14px] text-slate">{dayMonth(r.cycle.dueAt, lang)}</span>}
       </div>
     </button>
@@ -175,8 +175,8 @@ function MandateRow({ r, lang, now, onClick }: { r: Row; lang: Lang; now: string
 }
 
 // ---------- C2 ----------
-function choiceLabel(lang: Lang, c: Choice) {
-  return t(lang, c === "keep" ? "choice.keep" : c === "skip" ? "choice.skip" : c === "pause" ? "choice.pause" : c === "cancel" ? "choice.cancel" : "choice.skip");
+function choiceLabel(lang: Lang, c: Choice, amountFor?: string) {
+  return t(lang, c === "keep" ? "choice.keep" : c === "skip" ? "choice.skip" : c === "pause" ? "choice.pause" : c === "cancel" ? "choice.cancel" : "choice.downgrade", { amount: amountFor ?? "" });
 }
 
 function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; cycleId: string; lang: Lang; now: string; onPin: (c: "pause" | "cancel") => void; onDone: (c: Choice, status: string) => void }) {
@@ -188,13 +188,15 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
   const plan = s.idx.plan.get(m.planId)!;
   const settings = s.settings(mer.id);
   const usage = s.idx.usage.get(m.id);
+  const cheaper = settings.offerDowngradePlanId ? s.idx.plan.get(settings.offerDowngradePlanId) : undefined;
+  const label = (c: Choice) => choiceLabel(lang, c, cheaper ? inr(cheaper.amount) : undefined);
   const [choice, setChoice] = useState<Choice | null>(cs.decision ?? null);
   const [busy, setBusy] = useState(false);
   const [audio, setAudio] = useState<"idle" | "playing" | "error">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => () => { audioRef.current?.pause(); window.speechSynthesis?.cancel(); }, []);
-  const day = relativeDay(c.dueAt, now, lang);
-  const amount = inr(c.amount);
+  const day = relativeDay(cs.dueOverride ?? c.dueAt, now, lang);
+  const amount = inr(cs.amountOverride ?? c.amount);
   const p = { day, amount, brand: mer.brand, trialDate: m.trialStartedAt ? dayMonth(m.trialStartedAt, lang) : "", trialAmount: plan.trialAmount ? inr(plan.trialAmount) : "" };
   const lede = c.firstAfterTrial && m.trialStartedAt
     ? t(lang, m.usageConsent && usage && !usage.openedSinceTrial ? "sheet.lede.trial_unused" : "sheet.lede.trial", p)
@@ -203,6 +205,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
   const options: { id: Choice; desc: string; offer?: boolean; pin?: boolean }[] = [
     { id: "keep", desc: t(lang, "choice.keep.desc", p) },
     ...(settings.offerSkip ? [{ id: "skip" as Choice, desc: t(lang, "choice.skip.desc"), offer: true }] : []),
+    ...(cheaper ? [{ id: "downgrade" as Choice, desc: t(lang, "choice.downgrade.desc", { amount: inr(cheaper.amount) }), offer: true }] : []),
     { id: "pause", desc: t(lang, "choice.pause.desc"), pin: true },
     { id: "cancel", desc: t(lang, "choice.cancel.desc", p), pin: true },
   ];
@@ -251,7 +254,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
           <span>{t(lang, "namegap", { legal: mer.legalName, brand: mer.brand }).split(mer.legalName).flatMap((x, i, a) => (i < a.length - 1 ? [x, <b key={i}>{mer.legalName}</b>] : [x]))}</span>
         </div>
       )}
-      {cs.decision && <p className="text-[14px] text-slate">{t(lang, "sheet.changed", { choice: choiceLabel(lang, cs.decision) })}</p>}
+      {cs.decision && <p className="text-[14px] text-slate">{t(lang, "sheet.changed", { choice: label(cs.decision) })}</p>}
       <h3 className="text-[17px] font-semibold">{t(lang, "sheet.question")}</h3>
       <div role="radiogroup" className="flex flex-col gap-2">
         {options.map((o) => {
@@ -261,7 +264,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
               <input type="radio" name="choice" className="sr-only" checked={sel} onChange={() => setChoice(o.id)} />
               <span aria-hidden className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 ${sel ? "border-[6px] border-blue" : "border-line-strong"}`} />
               <span className="flex-1">
-                <span className="block text-[16px] font-semibold">{choiceLabel(lang, o.id)}</span>
+                <span className="block text-[16px] font-semibold">{label(o.id)}</span>
                 <span className="block text-[14px] text-slate">{o.desc}</span>
                 {(o.offer || o.pin) && (
                   <span className="mt-1 flex items-center gap-1 text-[13px] text-slate">
@@ -276,7 +279,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
       </div>
       <p className="flex gap-2 text-[14px] text-slate"><Info size={18} className="shrink-0" aria-hidden />{t(lang, dh ? "noanswer.dh" : "noanswer.default", p)}</p>
       <button disabled={!choice || busy} onClick={confirm} className={`h-12 rounded-[10px] text-[16px] font-semibold ${choice ? "btn-primary text-white" : "bg-line-strong text-slate"}`}>
-        {busy ? t(lang, "button.working") : choice ? choiceLabel(lang, choice) : t(lang, "button.choose")}
+        {busy ? t(lang, "button.working") : choice ? label(choice) : t(lang, "button.choose")}
       </button>
       <AIFooter lang={lang} />
     </div>
@@ -327,13 +330,18 @@ function ResultState({ s, cycleId, choice, status, lang, now, close }: { s: Sess
   const cs = s.state.cycle(cycleId);
   const mer = s.merchantOf(c.mandateId);
   const p = { day: relativeDay(c.dueAt, now, lang), amount: inr(c.amount), brand: mer.brand, next: dayMonth(addMin(c.dueAt, 31 * 24 * 60), lang) };
-  const verified = (choice === "skip" && cs.status === "skipped") || (choice === "keep" && cs.status === "confirmed") || ((choice === "pause" || choice === "cancel") && cs.status === "opted_out");
+  const verified = (choice === "skip" && cs.status === "skipped") || (choice === "keep" && cs.status === "confirmed") || ((choice === "pause" || choice === "cancel") && cs.status === "opted_out") || (choice === "downgrade" && !!cs.amountOverride);
   let title: string, sub = "";
   if (status === "held") title = t(lang, "result.held");
   else if (status === "late") title = t(lang, "result.late");
   else if (!verified) { title = t(lang, "button.slow"); }
   else if (choice === "skip") { title = t(lang, "result.skip", p); sub = t(lang, "result.skip.sub", p); }
   else if (choice === "keep") { title = t(lang, "result.keep", p); sub = t(lang, "result.keep.sub", p); }
+  else if (choice === "downgrade") {
+    const newDue = cs.dueOverride ?? c.dueAt;
+    title = t(lang, "result.downgrade", { ...p, day: relativeDay(newDue, now, lang), amount: inr(cs.amountOverride ?? c.amount) });
+    sub = t(lang, "result.downgrade.sub", { brand: mer.brand, plan: s.idx.plan.get(cs.planOverride ?? "")?.name ?? "" });
+  }
   else if (choice === "pause") { title = t(lang, "result.pause", p); sub = t(lang, "result.pause.sub"); }
   else { title = t(lang, "result.cancel", p); sub = t(lang, "result.cancel.sub", p); }
   return (
@@ -341,7 +349,7 @@ function ResultState({ s, cycleId, choice, status, lang, now, close }: { s: Sess
       {verified ? <span className="anim-pop flex h-14 w-14 items-center justify-center rounded-full bg-green-wash"><Check size={32} className="text-green" aria-hidden /></span> : <Clock size={40} className="text-amber" aria-hidden />}
       <h2 className="text-[20px] font-bold leading-[26px] text-navy">{title}</h2>
       {sub && <p className="text-[16px] text-slate">{sub}</p>}
-      <div className="w-full py-2"><DebitTimeline startMs={ms(c.noticeAt)} endMs={ms(addMin(c.dueAt, -130))} nowMs={ms(now)} ended={choice !== "keep"} variant="compact" /></div>
+      <div className="w-full py-2"><DebitTimeline startMs={ms(c.noticeAt)} endMs={ms(addMin(c.dueAt, -130))} nowMs={ms(now)} ended={choice !== "keep" && choice !== "downgrade"} variant="compact" /></div>
       <button onClick={close} className="h-12 w-full rounded-full btn-primary text-[16px] font-semibold text-white">{t(lang, "button.ok")}</button>
     </div>
   );

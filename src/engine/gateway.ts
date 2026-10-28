@@ -10,10 +10,10 @@ import type { Actor, ISO } from "./types";
 
 export type Tool =
   | "sendNudge" | "recordDecision" | "requestMerchantSkip" | "requestUserOptOut" | "scheduleRetry" | "requestRefund"
-  | "openCase" | "assignHuman" | "bookCallback" | "alertMerchant" | "executeCharge" | "openIncident";
+  | "openCase" | "assignHuman" | "bookCallback" | "alertMerchant" | "executeCharge" | "openIncident" | "requestMerchantDowngrade";
 
 /** Tools whose execution can move money or stop money moving. */
-export const MONEY_TOOLS = new Set<Tool>(["requestMerchantSkip", "requestUserOptOut", "requestRefund", "executeCharge"]);
+export const MONEY_TOOLS = new Set<Tool>(["requestMerchantSkip", "requestUserOptOut", "requestRefund", "executeCharge", "requestMerchantDowngrade"]);
 
 export interface PlannedAction {
   type: Tool;
@@ -69,15 +69,15 @@ export function run(s: Session, at: ISO, a: PlannedAction): GatewayResult {
   if (isPakkaInitiated(a) && (st.killSwitch.global || (merchantId && st.killSwitch.merchants.has(merchantId)))) return block("KILL_SWITCH_V1");
   const cs = a.cycleId ? st.cycle(a.cycleId) : undefined;
   const mandateActive = !mandateId || st.mandateStatus.get(mandateId) === "active";
-  if (!mandateActive && ["requestMerchantSkip", "requestUserOptOut", "executeCharge", "scheduleRetry", "sendNudge"].includes(a.type)) return block("MANDATE_INACTIVE");
-  if (mandate?.irrevocable && (a.type === "requestMerchantSkip" || a.type === "requestUserOptOut" || (a.type === "recordDecision" && p.choice !== "keep"))) return block("IRREVOCABLE");
+  if (!mandateActive && ["requestMerchantDowngrade", "requestMerchantSkip", "requestUserOptOut", "executeCharge", "scheduleRetry", "sendNudge"].includes(a.type)) return block("MANDATE_INACTIVE");
+  if (mandate?.irrevocable && (a.type === "requestMerchantSkip" || a.type === "requestMerchantDowngrade" || a.type === "requestUserOptOut" || (a.type === "recordDecision" && p.choice !== "keep"))) return block("IRREVOCABLE");
   if (a.type === "requestUserOptOut" && (!p.pinToken || !st.pinTokens.has(p.pinToken))) return block("PIN_REQUIRED");
   if (a.type === "executeCharge" && isPeak(new Date(at))) {
     st.addTimer(nextOffPeak(new Date(at)).toISOString(), "retry", a.cycleId!);
     return block("PEAK_WINDOW", { replannedTo: nextOffPeak(new Date(at)).toISOString() });
   }
   if ((a.type === "executeCharge" && p.attempt > 4) || (a.type === "scheduleRetry" && (cs?.attempts ?? 0) >= 4)) return block("RETRY_LIMIT");
-  if (a.type === "requestMerchantSkip" && cs && (cs.noticeWithdrawn || cs.status === "skipped")) return block("STALE_NOTICE");
+  if ((a.type === "requestMerchantSkip" || a.type === "requestMerchantDowngrade") && cs && (cs.noticeWithdrawn || cs.status === "skipped")) return block("STALE_NOTICE");
   if (a.type === "sendNudge" && cs && p.kind !== "stale" && p.kind !== "refund_offer" && (cs.status === "skipped" || cs.status === "opted_out")) return block("STALE_NOTICE_V1");
   if (a.type === "requestRefund" && p.path === "auto") {
     const settings = s.settings(merchantId!);
@@ -145,6 +145,20 @@ export function run(s: Session, at: ISO, a: PlannedAction): GatewayResult {
       s.emit({ actor: "merchant", simAt: addSec(at, 3), type: "notice_withdrawn", ruleId: a.ruleId, ...subject, payload: { cycleId: a.cycleId, reason: p.reason, actionId } });
       verified(addSec(at, 3), { check: "notice_withdrawn" });
       inform(addSec(at, 3), userId, "result.skip", { reason: p.reason });
+      return { status: "executed", key, actionId };
+    }
+    case "requestMerchantDowngrade": {
+      // The merchant moves the customer to the cheaper plan and sends a fresh notice with the new amount.
+      // A notice must come at least 24 hours before the charge, so the charge keeps its time when there is
+      // room, else moves to the next allowed slot.
+      const plan = s.idx.plan.get(p.planId);
+      if (!plan || plan.merchantId !== merchantId) return block("NOT_OFFERED");
+      const earliest = addMin(at, 24 * 60);
+      const dueAt = ms(cycle!.dueAt) >= ms(earliest) ? cycle!.dueAt : nextOffPeak(new Date(earliest)).toISOString();
+      exec({ cycleId: a.cycleId, planId: plan.id, amount: plan.amount, dueAt }, addSec(at, 1));
+      s.emit({ actor: "merchant", simAt: addSec(at, 3), type: "notice_received", ruleId: a.ruleId, ...subject, payload: { cycleId: a.cycleId, mandateId, fresh: true, planId: plan.id, amount: plan.amount, dueAt, legalName: s.idx.merchant.get(merchantId!)!.legalName } });
+      verified(addSec(at, 3), { check: "fresh_notice" });
+      inform(addSec(at, 3), userId, "result.downgrade", { amount: plan.amount, dueAt });
       return { status: "executed", key, actionId };
     }
     case "requestUserOptOut": {
@@ -219,7 +233,8 @@ export function run(s: Session, at: ISO, a: PlannedAction): GatewayResult {
       const executionId = `ex_${a.cycleId}_${p.attempt}`;
       s.emit({ actor: "system", ruleId: a.ruleId, simAt: at, type: "execution_attempted", ...subject, payload: { cycleId: a.cycleId, attempt: p.attempt, executionId } });
       const ok = result === "success";
-      s.emit({ actor: "system", ruleId: a.ruleId, simAt: addSec(at, 4), type: ok ? "execution_succeeded" : "execution_failed", ...subject, payload: { cycleId: a.cycleId, attempt: p.attempt, executionId, result, amount: cycle!.amount } });
+      const amount = cs?.amountOverride ?? cycle!.amount;
+      s.emit({ actor: "system", ruleId: a.ruleId, simAt: addSec(at, 4), type: ok ? "execution_succeeded" : "execution_failed", ...subject, payload: { cycleId: a.cycleId, attempt: p.attempt, executionId, result, amount } });
       exec({ executionId, result, money: ok }, addSec(at, 4));
       return { status: "executed", key, actionId };
     }

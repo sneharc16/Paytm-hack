@@ -97,3 +97,46 @@ describe("always keep", () => {
     expect(s.events.some((e) => e.type === "nudge_sent" && e.payload.cycleId === c.id)).toBe(false);
   });
 });
+
+describe("cheaper plan (DOWNGRADE_VIA_MERCHANT_V1)", async () => {
+  const { setMerchantSettings } = await import("@/engine/actions");
+  const { checkInvariants } = await import("@/engine/invariants");
+  const { isPeak, ms: toMs } = await import("@/engine/clock");
+  const withOffer = (to: string) => {
+    const s = new Session("DG", world);
+    tick(s, ist("2026-10-26 21:07"));
+    setMerchantSettings(s, ist("2026-10-26 21:07:30"), "m_padhoai", { offerDowngradePlanId: "p_padhoai_lite" }, "Imran Sheikh");
+    tick(s, to);
+    return s;
+  };
+
+  it("charges ₹149 at the original time when there are 24 hours of notice, with no PIN", () => {
+    const s = withOffer(ist("2026-10-26 21:11"));
+    const r = customerDecision(s, ist("2026-10-26 21:12"), sunitaCycle.id, "downgrade");
+    expect(r.status).toBe("executed");
+    expect(s.events.some((e) => e.type === "notice_received" && e.payload.fresh && e.payload.amount === 14900)).toBe(true);
+    tick(s, ist("2026-10-28 00:00"));
+    const charged = s.events.find((e) => e.type === "execution_succeeded" && e.payload.cycleId === sunitaCycle.id)!;
+    expect(charged.payload.amount).toBe(14900);
+    expect(charged.ruleId).toBe("MANDATE_SCHEDULE_V1");
+    expect(s.events.filter((e) => e.type === "execution_attempted" && e.payload.cycleId === sunitaCycle.id)).toHaveLength(1);
+    expect(checkInvariants(s)).toEqual([]);
+  });
+
+  it("moves the charge to keep 24 hours of notice when the switch comes late", () => {
+    const s = withOffer(ist("2026-10-27 21:59"));
+    const c = world.cycles.find((x) => x.group === "ask" && world.scripted.find((y) => y.cycleId === x.id)?.answer?.choice === "none")!;
+    customerDecision(s, ist("2026-10-27 22:00"), c.id, "downgrade");
+    const due = s.state.cycle(c.id).dueOverride!;
+    expect(toMs(due) - toMs(ist("2026-10-27 22:00"))).toBeGreaterThanOrEqual(24 * 3_600_000);
+    expect(isPeak(new Date(due))).toBe(false);
+    tick(s, ist("2026-10-29 06:00"));
+    const charges = s.events.filter((e) => e.type === "execution_succeeded" && e.payload.cycleId === c.id);
+    expect(charges.map((e) => [e.simAt.slice(0, 16), e.payload.amount])).toEqual([[new Date(toMs(due) + 4000).toISOString().slice(0, 16), 14900]]);
+  });
+
+  it("is not offered unless the merchant turned it on", () => {
+    const s = fresh();
+    expect(customerDecision(s, ist("2026-10-26 21:12"), sunitaCycle.id, "downgrade").reason).toBe("NOT_OFFERED");
+  });
+});

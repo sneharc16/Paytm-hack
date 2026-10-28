@@ -7,7 +7,7 @@ import { dayMonth, inr, timeIST } from "./format";
 
 export interface RecorderRow { id: number; at: string; actor: Actor; title: string; detail: string; chip?: string; event: PakkaEvent }
 
-const CHOICE: Record<string, string> = { keep: "Chalne do", skip: "Is mahine skip karo", pause: "Pause karo", cancel: "AutoPay band karo" };
+const CHOICE: Record<string, string> = { keep: "Chalne do", skip: "Is mahine skip karo", downgrade: "Sasta plan lo", pause: "Pause karo", cancel: "AutoPay band karo" };
 const LANG: Record<string, string> = { hi: "Hindi", hinglish: "Hinglish", en: "English" };
 const HIDDEN = new Set(["action_executed", "action_verified", "customer_informed", "refund_reserved", "review_tagged"]);
 
@@ -21,7 +21,9 @@ export function recorderRow(s: Session, e: PakkaEvent): RecorderRow | null {
   const first = user?.name.split(" ")[0] ?? "Customer";
   const r = (title: string, detail = "", chip?: string): RecorderRow => ({ id: e.id, at: e.simAt, actor: e.actor, title, detail, chip, event: e });
   switch (e.type) {
-    case "notice_received": return r("Pre-debit notice read", `${inr(p.amount)}, ${mer?.brand}, due after 9:30 PM on ${dayMonth(p.dueAt, "en")}`);
+    case "notice_received":
+      if (p.fresh) return r(`Fresh notice from ${mer?.brand}: ${inr(p.amount)}`, `New plan from this charge, due ${timeIST(p.dueAt)} on ${dayMonth(p.dueAt, "en")}`, e.ruleId);
+      return r("Pre-debit notice read", `${inr(p.amount)}, ${mer?.brand}, due after 9:30 PM on ${dayMonth(p.dueAt, "en")}`);
     case "risk_scored":
       if (p.band === "remind_only") return r("Irrevocable mandate, no score", "Remind only", "mandate-risk-v1");
       return r(`Risk score ${p.score}`, (p.contributions as { label: string; points: number }[]).map((c, i) => `${i ? c.label.toLowerCase() : c.label} ${c.points > 0 ? "+" : ""}${c.points}`).join(", "), "mandate-risk-v1");

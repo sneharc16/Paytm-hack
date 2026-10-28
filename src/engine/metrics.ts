@@ -13,7 +13,7 @@ export interface Metrics {
   refundedUnderMerchantRules: number;
   casesToPerson: number;
   movedWithoutRule: number;
-  choiceBreakdown: { keep: number; skip: number; pause: number; cancel: number; none: number };
+  choiceBreakdown: { keep: number; skip: number; downgrade: number; pause: number; cancel: number; none: number };
   asked: number;
   sweep: { active: number; dueFirst: number; confirmed: number; needYes: number; remindersByLang: Record<Lang, number> };
 }
@@ -22,12 +22,12 @@ export function metrics(s: Session): Metrics {
   const st = s.state;
   const ask = s.world.cycles.filter((c) => c.group === "ask" && inWindow(c.dueAt));
   const stopped = ask.filter((c) => { const x = st.cycle(c.id).status; return x === "skipped" || x === "opted_out"; });
-  const choice = { keep: 0, skip: 0, pause: 0, cancel: 0, none: 0 };
+  const choice = { keep: 0, skip: 0, downgrade: 0, pause: 0, cancel: 0, none: 0 };
   let kept = 0;
   for (const c of ask) {
     const cs = st.cycle(c.id);
     const d = cs.decision;
-    if (d === "keep" || d === "skip" || d === "pause" || d === "cancel") choice[d]++; else choice.none++;
+    if (d === "keep" || d === "skip" || d === "downgrade" || d === "pause" || d === "cancel") choice[d]++; else choice.none++;
     if ((cs.status === "skipped" && cs.skipReason === "customer") || (cs.status === "opted_out" && cs.optOutKind === "pause")) kept++;
   }
   const collect = s.world.cycles.filter((c) => c.group === "collect" && inWindow(c.dueAt));
