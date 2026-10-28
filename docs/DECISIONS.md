@@ -36,3 +36,9 @@
 - PadhoAI's cheaper plan is "PadhoAI Lite", ₹149 a month (`p_padhoai_lite`), offered only when the merchant turns on "Move to ₹149 monthly". No generated mandate starts on it, so the seed counts are unchanged.
 - Choosing it withdraws the ₹599 notice and sends a fresh ₹149 notice for this cycle. The charge keeps its time when that still gives 24 hours of notice; otherwise it moves to the first off-peak minute 24 hours after the switch. No PIN: the merchant changes the charge.
 - The choice breakdown gained a `downgrade` bucket (0 in the scripted story).
+
+## Gemini demo cache (free tier)
+- The free key had real capacity only on `gemini-3.5-flash-lite`; the stronger models answered 503 or 429 throughout. Every baked text was written by the lite model.
+- The model gets the amounts pre-formatted (`amount_text`, `trial_amount_text`) beside the raw numbers; the PRD's L1 prompt is unchanged.
+- Only upcoming-charge messages (ask, tell, follow-up, collect, remind) are model-written, because the L1 prompt is about an upcoming charge. Refund offers and failed-charge notices keep their templates: the model described past charges as future ones.
+- Result: all Hinglish and English reminders pass the fact-check; all 22 Hindi reminders came back in Latin script and fail, so Hindi uses the hand-written templates. Review tags (205, all agreeing with the hand labels), the merchant alert and both case summaries are model-written.

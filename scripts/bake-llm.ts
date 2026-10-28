@@ -1,7 +1,7 @@
 // Bake the demo cache: run the whole demo story once, record every model input it needs (reminders, review
 // tags, case summaries, merchant alerts), ask the model once per unique input, and save to src/llm/demo-cache.json.
 // Usage: LLM_API_KEY=... pnpm bake:llm      (add --dry-run to only count the inputs)
-import { writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { setSummarizer } from "@/engine/actions";
 import { tick } from "@/engine/agent";
 import { DEMO_END } from "@/engine/clock";
@@ -12,13 +12,13 @@ import { generateWorld } from "@/engine/world";
 import { cacheKey, type CacheEntry } from "@/llm/cache";
 import { llmEnabled, provider, runTask } from "@/llm/client";
 import { factcheckReminder } from "@/llm/factcheck";
-import { reminderInput } from "@/llm/hooks";
+import { MODEL_KINDS, reminderInput } from "@/llm/hooks";
 import { PROMPTS, type Task } from "@/llm/prompts";
 
 const inputs = new Map<string, { task: Task; input: unknown; facts?: ReminderFacts }>();
 const record = (task: Task, input: unknown, facts?: ReminderFacts) => inputs.set(cacheKey(task, input), { task, input, facts });
 
-setWriter((facts, tpl) => { record("reminder", reminderInput(facts), facts); return tpl; });
+setWriter((facts, tpl) => { if (MODEL_KINDS.has(facts.kind)) record("reminder", reminderInput(facts), facts); return tpl; });
 setTagger((r) => { record("tagger", { text: r.text }); return { gap: r.goldGap ?? "other", confidence: 1, evidence: "", modelVersion: "seed-labels" }; });
 setSummarizer((facts, tpl) => { record("case_summary", facts); return tpl; });
 setAlertWriter((metrics, tpl) => { record("alert", metrics); return tpl; });
@@ -37,10 +37,19 @@ if (!llmEnabled()) {
   process.exit(1);
 }
 
+const CACHE_FILE = "src/llm/demo-cache.json";
+
 async function main() {
-  const entries: Record<string, CacheEntry> = {};
+  // Resumable: keep what earlier runs baked and save as we go, so a stop or crash loses at most a few texts.
+  const previous = existsSync(CACHE_FILE) ? (JSON.parse(readFileSync(CACHE_FILE, "utf8")).entries ?? {}) : {};
+  // BAKE_REDO_FAILED=1 asks again only for reminders that fail the fact-check (for example after changing models).
+  const redo = process.env.BAKE_REDO_FAILED === "1";
+  const failsCheck = (e: CacheEntry) => e.task === "reminder" && factcheckReminder(e.input as Parameters<typeof factcheckReminder>[0], e.output as Parameters<typeof factcheckReminder>[1]).length > 0;
+  const entries: Record<string, CacheEntry> = Object.fromEntries(Object.entries(previous as Record<string, CacheEntry>).filter(([k, e]) => inputs.has(k) && !(redo && failsCheck(e))));
+  const save = () => writeFileSync(CACHE_FILE, JSON.stringify({ generatedAt: new Date().toISOString(), entries }, null, 1) + "\n");
+  console.log(`Already baked: ${Object.keys(entries).length}`);
   const failed: Record<string, number> = {};
-  const queue = [...inputs.entries()];
+  const queue = [...inputs.entries()].filter(([k]) => !entries[k]);
   let done = 0;
   async function worker() {
     for (;;) {
@@ -49,7 +58,7 @@ async function main() {
       const [key, { task, input, facts }] = next;
       // Free tiers allow only a few requests a minute: back off and retry on rate limits.
     let r = await runTask(task, input, { useDemoCache: false });
-    for (let wait = 20_000; !r.ok && r.reason === "rate_limited" && wait <= 160_000; wait *= 2) {
+    for (let wait = 20_000; !r.ok && ["rate_limited", "api_503", "api_504", "timeout"].includes(r.reason) && wait <= 160_000; wait *= 2) {
       await new Promise((ok) => setTimeout(ok, wait));
       r = await runTask(task, input, { useDemoCache: false });
     }
@@ -60,13 +69,13 @@ async function main() {
         if (fails.length) { failed[`factcheck:${fails[0].split(":")[0]}`] = (failed[`factcheck:${fails[0].split(":")[0]}`] ?? 0) + 1; }
       }
       entries[key] = { task, model: r.model, promptVersion: PROMPTS[task].version, input, output: r.output, createdAt: new Date().toISOString() };
-      if (done % 25 === 0) console.log(`${done}/${inputs.size}`);
+      if (done % 10 === 0) { save(); console.log(`${Object.keys(entries).length}/${inputs.size} saved`); }
     }
   }
   const workers = Number(process.env.BAKE_CONCURRENCY) || (provider() === "gemini" ? 2 : 6);
   console.log(`Baking with ${provider()}, ${workers} at a time`);
   await Promise.all(Array.from({ length: workers }, worker));
-  writeFileSync("src/llm/demo-cache.json", JSON.stringify({ generatedAt: new Date().toISOString(), entries }, null, 1) + "\n");
+  save();
   console.log(`Saved ${Object.keys(entries).length} entries. Failures (templates will be used):`, failed);
 }
 

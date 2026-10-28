@@ -11,7 +11,7 @@ export interface Written { title: string; body: string; voice?: string; language
 
 export interface ReminderFacts {
   language: Lang; kind: NudgeKind; brand: string; registered_name: string; brand_verified: boolean;
-  amount_rupees: number; trial_amount_rupees: number | null; trial_date: string | null; charge_day: string;
+  amount_rupees: number; amount_text: string; trial_amount_rupees: number | null; trial_amount_text: string | null; trial_date: string | null; charge_day: string;
   charge_time_text: string; usage: string; choices: string[]; skip_is_merchant_offer: boolean; no_answer_outcome: string;
   cycleId: string;
 }
@@ -32,7 +32,9 @@ export function reminderFacts(s: Session, cycleId: string, kind: NudgeKind, at: 
   const lang = u.lang;
   return {
     language: lang, kind, brand: mer.brand, registered_name: mer.legalName, brand_verified: mer.brandVerified,
-    amount_rupees: c.amount / 100, trial_amount_rupees: plan.trialAmount !== null && c.firstAfterTrial ? plan.trialAmount / 100 : null,
+    amount_rupees: c.amount / 100, amount_text: inr(c.amount),
+    trial_amount_rupees: plan.trialAmount !== null && c.firstAfterTrial ? plan.trialAmount / 100 : null,
+    trial_amount_text: plan.trialAmount !== null && c.firstAfterTrial ? inr(plan.trialAmount) : null,
     trial_date: m.trialStartedAt && c.firstAfterTrial ? dayMonth(m.trialStartedAt, lang) : null,
     charge_day: relativeDay(c.dueAt, at, lang),
     charge_time_text: t(lang, "timeline.after", { time: "9:30 PM" }),

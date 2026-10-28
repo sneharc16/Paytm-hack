@@ -17,6 +17,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/llm/[task]">) {
   const recent = (hits.get(parsed.data.session) ?? []).filter((t) => now - t < 60_000);
   if (recent.length >= LIMIT) return Response.json({ ok: false, error: { code: "RATE_LIMITED", message: "Too many model calls this minute" } }, { status: 429 });
   hits.set(parsed.data.session, [...recent, now]);
-  const r = await runTask(task as Task, parsed.data.input);
+  // A person is waiting: give up quickly and let the page use its template.
+  const r = await runTask(task as Task, parsed.data.input, { timeoutMs: 12_000 });
   return Response.json({ ok: true, data: r.ok ? { output: r.output, model: r.model, promptVersion: r.promptVersion, cacheHit: r.cacheHit } : { fallback: r.reason, promptVersion: r.promptVersion } });
 }

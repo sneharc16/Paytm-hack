@@ -31,7 +31,7 @@ const isFastTask = (task: Task) => task === "tagger" || task === "intake" || tas
 
 /** Writing tasks use the main model; tagging, intake and lint use the fast one. */
 export function modelFor(task: Task, p: Provider = provider()): string {
-  if (p === "gemini") return isFastTask(task) ? process.env.GEMINI_MODEL_FAST || "gemini-2.5-flash-lite" : process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  if (p === "gemini") return isFastTask(task) ? process.env.GEMINI_MODEL_FAST || "gemini-3.5-flash-lite" : process.env.GEMINI_MODEL || "gemini-3.5-flash";
   return isFastTask(task) ? process.env.LLM_MODEL_FAST || "claude-haiku-5-5" : process.env.LLM_MODEL || "claude-sonnet-5-5";
 }
 
@@ -48,7 +48,7 @@ function getClient(): Anthropic {
 }
 let gemini: GoogleGenAI | null = null;
 function getGemini(): GoogleGenAI {
-  gemini ??= new GoogleGenAI({ apiKey: geminiKey(), httpOptions: { timeout: 15_000 } });
+  gemini ??= new GoogleGenAI({ apiKey: geminiKey() });
   return gemini;
 }
 /** Tests swap in fakes. */
@@ -93,12 +93,25 @@ function jsonSchemaFor(task: Task) {
   return schema;
 }
 
-async function callGemini(task: Task, model: string, user: string): Promise<Call> {
+const TRANSIENT = new Set(["api_503", "api_504", "timeout", "rate_limited"]);
+
+async function callGemini(task: Task, model: string, user: string, timeoutMs: number): Promise<Call> {
+  const first = await callGeminiOnce(task, model, user, timeoutMs);
+  // The free tier is often busy: retry once on the lighter model before giving up.
+  const fast = modelFor("tagger", "gemini");
+  if (!first.ok && TRANSIENT.has(first.reason) && model !== fast) return callGeminiOnce(task, fast, user, timeoutMs);
+  return first;
+}
+
+async function callGeminiOnce(task: Task, model: string, user: string, timeoutMs: number): Promise<Call> {
   try {
     const response = await getGemini().models.generateContent({
       model,
       contents: user,
-      config: { systemInstruction: PROMPTS[task].system, responseMimeType: "application/json", responseJsonSchema: jsonSchemaFor(task), maxOutputTokens: 2000 },
+      config: {
+        systemInstruction: PROMPTS[task].system, responseMimeType: "application/json", responseJsonSchema: jsonSchemaFor(task),
+        maxOutputTokens: 2000, abortSignal: AbortSignal.timeout(timeoutMs),
+      },
     });
     if (response.promptFeedback?.blockReason) return { ok: false, reason: "refusal" };
     const finish = response.candidates?.[0]?.finishReason;
@@ -115,7 +128,8 @@ async function callGemini(task: Task, model: string, user: string): Promise<Call
     if (error instanceof ApiError) {
       return { ok: false, reason: error.status === 429 ? "rate_limited" : error.status === 401 || error.status === 403 ? "auth" : error.status === 400 ? "bad_request" : `api_${error.status}` };
     }
-    return { ok: false, reason: (error as Error)?.name === "AbortError" ? "timeout" : "connection" };
+    const name = (error as Error)?.name;
+    return { ok: false, reason: name === "AbortError" || name === "TimeoutError" ? "timeout" : "connection" };
   }
 }
 
@@ -131,7 +145,7 @@ function userContent(task: Task, input: unknown): string {
   }
 }
 
-export async function runTask(task: Task, input: unknown, opts: { useDemoCache?: boolean } = {}): Promise<TaskResult> {
+export async function runTask(task: Task, input: unknown, opts: { useDemoCache?: boolean; timeoutMs?: number } = {}): Promise<TaskResult> {
   const promptVersion = PROMPTS[task].version;
   if (opts.useDemoCache ?? process.env.LLM_USE_DEMO_CACHE !== "false") {
     const hit = lookup(task, input);
@@ -145,7 +159,7 @@ export async function runTask(task: Task, input: unknown, opts: { useDemoCache?:
   const p = client ? "anthropic" : gemini ? "gemini" : provider();
   const model = modelFor(task, p);
   const started = Date.now();
-  const call = p === "gemini" ? await callGemini(task, model, userContent(task, input)) : await callAnthropic(task, model, userContent(task, input));
+  const call = p === "gemini" ? await callGemini(task, model, userContent(task, input), opts.timeoutMs ?? 45_000) : await callAnthropic(task, model, userContent(task, input));
   const latencyMs = Date.now() - started;
   if (!call.ok) {
     console.warn(JSON.stringify({ llm: task, model, promptVersion, fallback: call.reason }));

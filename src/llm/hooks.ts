@@ -16,12 +16,17 @@ export function reminderInput(f: ReminderFacts) {
   return facts;
 }
 
+/** The L1 prompt is about an upcoming charge, so only those messages are model-written. Refund offers and
+ *  failed-charge notices describe something that already happened and keep their templates. */
+export const MODEL_KINDS = new Set(["ask", "tell", "follow_up", "collect", "remind"]);
+
 let installed = false;
 export function installModelHooks() {
   if (installed) return;
   installed = true;
 
   setWriter((facts, tpl) => {
+    if (!MODEL_KINDS.has(facts.kind)) return tpl;
     const hit = lookup("reminder", reminderInput(facts));
     if (!hit) return tpl;
     const out = ReminderOut.safeParse(hit.output);
