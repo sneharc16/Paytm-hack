@@ -18,33 +18,41 @@ import type { AgentRole, ISO, PaymentIntent, Verdict } from "./types";
 const agentId = (t: Treasury, role: AgentRole) => t.world.agents.find((a) => a.companyId === t.companyId && a.role === role)!;
 
 /** Who owns the payables queue: the company's maker. */
-const makerOf = (t: Treasury) => t.world.people.find((p) => p.companyId === t.companyId && p.roles.includes("maker"))!.id;
+const makerOf = (t: Treasury) => t.world.people.find((p) => p.companyId === t.companyId && p.roles.includes("maker"))?.id ?? "unassigned";
 
-export function propose(t: Treasury, invoiceId: string, at: ISO, attempt = 1): string | null {
+/** The intent the payables agent would sign for an invoice: payee from the vendor master, never from email. */
+export function buildIntent(t: Treasury, invoiceId: string, at: ISO, opts: { useEmailAccount?: boolean } = {}): { intent: PaymentIntent } | { hold: string } {
   const st = t.state, w = t.world;
   const inv = w.invoices.find((i) => i.id === invoiceId)!;
   const vendor = w.vendors.find((v) => v.id === inv.vendorId)!;
   const ben = st.activeBeneficiary(vendor.id, at);
-  if (!ben) {
-    t.emit({ at, type: "invoice_held", actor: "agent", ruleId: "BANK_CHANGE_VERIFY_V1", payload: { invoiceId, reasons: ["No approved bank account on file for this vendor yet"] } });
-    return null;
-  }
+  if (!ben) return { hold: "No approved bank account on file for this vendor yet" };
+  const proposer = w.agents.find((a) => a.companyId === t.companyId && a.role === "proposer" && st.agentStatus.get(a.id) === "active");
+  if (!proposer) return { hold: "No active payables agent" };
   // A compromised proposer (red-team and the "fooled agent" demo) follows the bank details in the email.
-  const email = t.compromised.proposer ? st.changeRequests.get(`cr_${invoiceId}`) : undefined;
+  const email = opts.useEmailAccount ? st.changeRequests.get(`cr_${invoiceId}`) : undefined;
   const tds = tdsOn(st.policy, vendor.category, inv.taxable);
   const amount = inv.total - tds;
   const nonce = st.nonceCounter + 1;
-  const proposer = agentId(t, "proposer");
   const intent: PaymentIntent = {
-    v: 1, domain: "PAKKA_B2B_INTENT_V1", intentId: `pi_${nonce}_${invoiceId.slice(4)}`, companyId: t.companyId, vendorId: vendor.id,
+    v: 1, domain: "PAKKA_B2B_INTENT_V1", intentId: `pi_${nonce}_${invoiceId.slice(4).toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 30)}`, companyId: t.companyId, vendorId: vendor.id,
     beneficiaryId: ben.id, accountHash: email ? accountHash(email.ifsc, email.accountNo) : ben.accountHash,
     amount, tds, invoiceIds: [invoiceId], rail: railFor(st.policy, amount), nonce,
     policyVersion: st.policy.version, policyHash: policyHash(st.policy), modelHash: proposer.modelHash,
     preparedFor: makerOf(t), createdAt: at, expiresAt: addMin(at, st.policy.intentTtlMinutes),
   };
-  const hash = intentHash(intent);
-  t.emit({ at, type: "intent_proposed", actor: "agent", ruleId: "RECEIPT_V1", payload: { intentHash: hash, intent, attempt } });
-  sign(t, "proposer", hash, "approve", [email ? "Bank details from the email" : "Matched invoice, account on file"], at);
+  return { intent };
+}
+
+export function propose(t: Treasury, invoiceId: string, at: ISO, attempt = 1): string | null {
+  const b = buildIntent(t, invoiceId, at, { useEmailAccount: t.compromised.proposer });
+  if ("hold" in b) {
+    t.emit({ at, type: "invoice_held", actor: "agent", ruleId: "BANK_CHANGE_VERIFY_V1", payload: { invoiceId, reasons: [b.hold] } });
+    return null;
+  }
+  const hash = intentHash(b.intent);
+  t.emit({ at, type: "intent_proposed", actor: "agent", ruleId: "RECEIPT_V1", payload: { intentHash: hash, intent: b.intent, attempt } });
+  sign(t, "proposer", hash, "approve", [t.compromised.proposer && b.intent.accountHash !== t.state.beneficiaries.get(b.intent.beneficiaryId)?.accountHash ? "Bank details from the email" : "Matched invoice, account on file"], at);
   return hash;
 }
 

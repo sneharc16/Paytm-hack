@@ -4,7 +4,7 @@
 // while checking is a "no" (fail closed). It can verify signatures but cannot make them: it never imports keys.ts.
 import { istDay } from "@/engine/clock";
 import { inr } from "@/lib/format";
-import { approveMessage, attestMessage, verifySig } from "./crypto";
+import { approveMessage, attestMessage, verifyPersonSig, verifySig } from "./crypto";
 import { hoursBetween, inReleaseWindow, nextIstMidnight, nextReleaseOpen } from "./clock";
 import { IntentSchema, intentHash } from "./intent";
 import { rolesFor, tdsOn, tierFor, type Tier } from "./policy";
@@ -23,7 +23,7 @@ export interface GuardContext { world: BusinessWorld; state: TreasuryState; comp
 
 /** Codes that stop a payout for good. Anything else (freeze, window, cooling, limits, missing approvals) waits. */
 const DEFERRABLE = new Set(["COOLING", "RELEASE_WINDOW", "DAILY_LIMIT", "VELOCITY"]);
-const RETRYABLE = new Set(["NOT_FROZEN", "FUNDS", "NO_OPEN_BANK_CHANGE"]);
+const RETRYABLE = new Set(["NOT_FROZEN", "FUNDS", "NO_OPEN_BANK_CHANGE", "ORG_SEALED"]);
 
 export function verifyReceipt(ctx: GuardContext, r: Receipt, at: ISO): GuardVerdict {
   const checks: Check[] = [];
@@ -34,6 +34,7 @@ export function verifyReceipt(ctx: GuardContext, r: Receipt, at: ISO): GuardVerd
     const { state: st, world: w, companyId } = ctx;
     const pol = st.policy;
     add("NOT_FROZEN", !st.frozen.on, st.frozen.on ? `Frozen by ${st.frozen.by}: ${st.frozen.reason}` : undefined);
+    add("ORG_SEALED", st.sealed, st.sealed ? undefined : "Setup is not sealed yet: no payouts until three governors, a maker, a checker, a CFO and three agents are in place");
 
     const parsed = IntentSchema.safeParse(r?.intent);
     if (!parsed.success) {
@@ -138,7 +139,7 @@ export function verifyReceipt(ctx: GuardContext, r: Receipt, at: ISO): GuardVerd
       if (!person || person.companyId !== companyId) { apProblems.push(`${ap.personId}: not in this company`); continue; }
       if (!person.roles.includes(ap.role)) { apProblems.push(`${person.name}: not a ${ap.role}`); continue; }
       if (ap.intentHash !== hash || ap.companyId !== companyId) { apProblems.push(`${person.name}: approved a different intent`); continue; }
-      if (!verifySig(person.publicKey, approveMessage(ap), ap.sig)) { apProblems.push(`${person.name}: signature does not verify`); continue; }
+      if (!verifyPersonSig(person, approveMessage(ap), ap, st.rp, st.requirePasskey)) { apProblems.push(`${person.name}: ${st.requirePasskey && !ap.webauthn ? "not signed with a passkey" : "signature does not verify"}`); continue; }
       if (ap.at < it.createdAt || ap.at > at || hoursBetween(ap.at, at) * 60 > pol.approvalTtlMinutes) { apProblems.push(`${person.name}: approval outside its time`); continue; }
       if (person.id === it.preparedFor) { apProblems.push(`${person.name}: prepared this payout (SOD_V1)`); continue; }
       if (ben && ben.addedVia === "change_request" && ben.approvedBy === person.id && hoursBetween(ben.addedAt, at) <= pol.sodLookbackDays * 24) { apProblems.push(`${person.name}: approved this bank account (SOD_V1)`); continue; }

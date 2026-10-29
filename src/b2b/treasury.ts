@@ -30,9 +30,24 @@ export class Treasury {
   autoplay: boolean;
   private replans = new Map<string, number>();
 
-  constructor(public world: BusinessWorld, public companyId: string, opts: { autoplay?: boolean } = {}) {
-    this.state = new TreasuryState(world, companyId, B2B_START);
-    this.autoplay = opts.autoplay ?? true;
+  readonly mode: "sim" | "live";
+
+  /** Simulation: a seeded world on the demo clock. Live: an empty company built from its own ledger, on the wall
+   *  clock, where external agents propose and sign through the API (see live.ts). */
+  constructor(public world: BusinessWorld, public companyId: string, opts: { autoplay?: boolean; mode?: "sim" | "live"; start?: ISO } = {}) {
+    this.mode = opts.mode ?? "sim";
+    const start = opts.start ?? B2B_START;
+    this.state = new TreasuryState(world, companyId, start, this.mode);
+    this.processedTo = start;
+    this.autoplay = this.mode === "sim" && (opts.autoplay ?? true);
+  }
+
+  /** Rebuild a live treasury from its stored ledger. State is a pure function of the events. */
+  static fromLedger(world: BusinessWorld, companyId: string, events: LedgerEvent[]): Treasury {
+    const t = new Treasury(world, companyId, { mode: "live", start: events[0]?.at });
+    for (const e of events) { t.events.push(e); t.state.apply(e); }
+    if (events.length) t.processedTo = events.at(-1)!.at;
+    return t;
   }
 
   get head() { return this.events.at(-1)?.hash ?? GENESIS; }
@@ -46,6 +61,7 @@ export class Treasury {
   }
 
   private jobs(): Job[] {
+    if (this.mode === "live") return [];
     let byCo = jobCache.get(this.world);
     if (!byCo) { byCo = new Map(); jobCache.set(this.world, byCo); }
     const hit = byCo.get(this.companyId);
@@ -66,9 +82,9 @@ export class Treasury {
 
   /** Run every job and timer due in (processedTo, to], in time order. Safe to call repeatedly. */
   advance(to: ISO) {
-    if (to > B2B_END) to = B2B_END;
+    if (this.mode === "sim" && to > B2B_END) to = B2B_END;
     if (to <= this.processedTo) return;
-    const jobs = this.jobs();
+    const jobs = this.mode === "live" ? liveJobs(this.processedTo, to) : this.jobs();
     let i = jobs.findIndex((j) => j.at > this.processedTo);
     if (i < 0) i = jobs.length;
     for (let guard = 0; guard < 100_000; guard++) {
@@ -148,7 +164,7 @@ export class Treasury {
     }
     if (kind === "expire") {
       const it = st.intents.get(ref);
-      if (!it || !["attesting", "awaiting_approval", "deferred", "blocked"].includes(it.status) || (it.status === "blocked" && !["NOT_FROZEN", "FUNDS", "NO_OPEN_BANK_CHANGE"].includes(it.block?.code ?? ""))) return;
+      if (!it || !["attesting", "awaiting_approval", "deferred", "blocked"].includes(it.status) || (it.status === "blocked" && !["NOT_FROZEN", "FUNDS", "NO_OPEN_BANK_CHANGE", "ORG_SEALED"].includes(it.block?.code ?? ""))) return;
       this.emit({ at, type: "intent_expired", actor: "guard", ruleId: "RECEIPT_V1", payload: { intentHash: ref, why: "Not released within its lifetime" } });
       this.process(it.intent.invoiceIds[0], at, it.attempt);
       return;
@@ -172,7 +188,7 @@ export class Treasury {
     }
   }
 
-  private arrive(invoiceId: string, at: ISO) {
+  arrive(invoiceId: string, at: ISO) {
     const inv = this.world.invoices.find((i) => i.id === invoiceId)!;
     const vendor = this.world.vendors.find((v) => v.id === inv.vendorId)!;
     const r = readInvoiceEmail(inv, vendor);
@@ -222,6 +238,8 @@ export class Treasury {
       this.emit({ at, type: "invoice_held", actor: "agent", ruleId: "HOLD_MATCH_V1", payload: { invoiceId, reasons: ["Waiting for the goods receipt"] } });
       return;
     }
+    // Live: the external payables agent proposes through the API. The invoice waits for it, open and matched.
+    if (this.mode === "live") return;
     const hash = propose(this, invoiceId, at, attempt);
     if (!hash) return;
     const findings = runCompliance(this, hash, at);
@@ -301,7 +319,7 @@ export class Treasury {
   /** Re-check every intent waiting on something a command may have changed (unfreeze, a new approval). */
   retryWaiting(at: ISO) {
     for (const it of [...this.state.intents.values()]) {
-      if (it.status === "blocked" && it.block && ["NOT_FROZEN", "FUNDS", "NO_OPEN_BANK_CHANGE"].includes(it.block.code)) this.release(it.hash, at);
+      if (it.status === "blocked" && it.block && ["NOT_FROZEN", "FUNDS", "NO_OPEN_BANK_CHANGE", "ORG_SEALED"].includes(it.block.code)) this.release(it.hash, at);
       else if (it.status === "deferred" && it.deferredUntil && it.deferredUntil <= at) this.release(it.hash, at);
     }
   }
@@ -310,3 +328,17 @@ export class Treasury {
 }
 
 export const B2B_DEFAULT_END = B2B_END;
+
+/** Live mode's only scheduled jobs: the MSME sweep each morning and the ledger anchor each night (IST). */
+function liveJobs(from: ISO, to: ISO): Job[] {
+  const jobs: Job[] = [];
+  const days = new Set([istDay(from), istDay(to)]);
+  for (let t = ms(from); t <= ms(to); t += 86_400_000) days.add(istDay(new Date(t).toISOString()));
+  for (const d of [...days].sort()) {
+    for (const [time, kind, pri] of [["08:50", "msme", 0], ["23:59", "anchor", 9]] as const) {
+      const at = ist(`${d} ${time}`);
+      if (at > from && at <= to) jobs.push({ at, pri, kind, ref: d });
+    }
+  }
+  return jobs.sort((a, b) => ms(a.at) - ms(b.at) || a.pri - b.pri);
+}

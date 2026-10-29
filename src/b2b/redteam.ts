@@ -40,7 +40,7 @@ function signedReceipt(t: Treasury, tag: string, at: string): Receipt {
 function resignAll(t: Treasury, intent: PaymentIntent, at: string, co = t.companyId): Receipt {
   const h = intentHash(intent);
   const ids = t.world.agents.filter((a) => a.companyId === co);
-  return { intent, attestations: ids.map((a) => attest(t.world.seed, a.id, a.role, h, "approve", ["ok"], at)), approvals: [] };
+  return { intent, attestations: ids.flatMap((a) => (a.role === "erp" ? [] : [attest(t.world.seed, a.id, a.role, h, "approve", ["ok"], at)])), approvals: [] };
 }
 
 const T1 = ist("2026-10-26 11:49"); // Godavari (CFO tier) and Ganga (checker) are waiting for people

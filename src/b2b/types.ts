@@ -1,6 +1,8 @@
 // src/b2b/types.ts: Pakka for Business. An AI accounts-payable team that can propose vendor payouts but can
 // never release one: every rupee leaves only through guard.ts, and only with a receipt that the guard can check
 // without trusting the agents, the host they run on, or the invoice they read. Pure data types, no logic.
+import type { PasskeyCredential, WebAuthnSig } from "./crypto";
+
 export type Paise = number; // integer
 export type ISO = string; // UTC
 
@@ -38,10 +40,13 @@ export interface Invoice {
 }
 
 export type PersonRole = "maker" | "checker" | "cfo" | "governor";
-export interface Person { id: string; companyId: string; name: string; roles: PersonRole[]; publicKey: string; title: string }
+/** publicKey is the simulation's device key; live people sign with passkeys (credentials) instead. */
+export interface Person { id: string; companyId: string; name: string; roles: PersonRole[]; publicKey: string; title: string; email?: string; credentials?: PasskeyCredential[] }
 
 export type AgentRole = "proposer" | "compliance" | "risk";
-export interface Agent { id: string; companyId: string; role: AgentRole; name: string; publicKey: string; modelHash: string; modelLabel: string }
+/** "erp" clients push orders, receipts and invoices; they never sign payment intents. */
+export type ClientRole = AgentRole | "erp";
+export interface Agent { id: string; companyId: string; role: ClientRole; name: string; publicKey: string; modelHash: string; modelLabel: string; apiKeyHash?: string; apiKeyPrefix?: string }
 
 /** Bank directory the penny-drop simulator reads: who really owns an account. */
 export interface BankAccountRecord { accountNo: string; ifsc: string; holder: string }
@@ -90,7 +95,7 @@ export type Verdict = "approve" | "escalate" | "reject";
 export interface Attestation {
   signerId: string; role: AgentRole; verdict: Verdict; reasons: string[]; intentHash: string; signedAt: ISO; sig: string;
 }
-export interface Approval { personId: string; role: "checker" | "cfo"; intentHash: string; companyId: string; at: ISO; sig: string }
+export interface Approval { personId: string; role: "checker" | "cfo"; intentHash: string; companyId: string; at: ISO; sig: string; webauthn?: WebAuthnSig }
 
 export interface Receipt { intent: PaymentIntent; attestations: Attestation[]; approvals: Approval[] }
 

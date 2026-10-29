@@ -5,7 +5,8 @@ import { defaultPolicy, type Policy, type PolicyDiff, type Tier } from "./policy
 import { policyHash } from "./policy";
 import type { BankBookEntry } from "./sim/bank";
 import { ALLOWED_MODELS } from "./world";
-import type { Approval, Attestation, Beneficiary, BusinessWorld, ISO, LedgerEvent, Paise, PaymentIntent } from "./types";
+import type { RelyingParty } from "./crypto";
+import type { Agent, Approval, Attestation, Beneficiary, BusinessWorld, ISO, LedgerEvent, Paise, PaymentIntent, Person } from "./types";
 
 export type InvoiceStatus = "not_arrived" | "received" | "held" | "rejected" | "proposed" | "awaiting_approval" | "deferred" | "paying" | "paid";
 export interface InvoiceState { status: InvoiceStatus; flags: string[]; reasons: string[]; ruleId?: string; intentHash?: string; utr?: string; paidAt?: ISO; receivedAt?: ISO; msmeAlerted?: boolean }
@@ -24,11 +25,13 @@ export interface ChangeRequest {
 }
 
 export interface Proposal {
-  id: string; kind: "policy" | "unfreeze" | "reinstate"; agentId?: string; policy: Policy; hash: string; diff: PolicyDiff[]; loosening: boolean; by: string; at: ISO;
+  id: string; kind: "policy" | "unfreeze" | "reinstate" | "register_agent"; agentId?: string; agent?: Agent; signedParams?: unknown; policy: Policy; hash: string; diff: PolicyDiff[]; loosening: boolean; by: string; at: ISO;
   sigs: Record<string, string>; status: "proposed" | "scheduled" | "active" | "vetoed" | "superseded"; effectiveAt?: ISO; vetoedBy?: string;
 }
 
 export interface Case { id: string; kind: "fraud_attempt" | "mismatch" | "bank_failure"; vendorId: string; invoiceId?: string; requestId?: string; amount: Paise; summary: string; openedAt: ISO; status: "open" | "closed" }
+
+export interface Invite { id: string; name: string; title: string; email: string; roles: Person["roles"]; tokenHash: string; expiresAt: ISO; by: string; status: "open" | "used" | "revoked" }
 
 export interface Timer { at: ISO; kind: "release" | "poll" | "activate" | "expire" | "retry"; ref: string }
 
@@ -62,10 +65,18 @@ export class TreasuryState {
   timers: Timer[] = [];
   refusedCommands = 0;
   stopped: { invoiceId?: string; requestId?: string; amount: Paise; reason: string }[] = [];
+  // Live mode only. A live company starts empty and is built entirely from its ledger.
+  rp: RelyingParty | null = null;
+  requirePasskey = false;
+  /** Payouts are possible only once setup is sealed: three governors, a maker, a checker, a CFO and three agents. */
+  sealed = true;
+  founder?: string;
+  invites = new Map<string, Invite>();
 
-  constructor(public world: BusinessWorld, public companyId: string, start: ISO) {
+  constructor(public world: BusinessWorld, public companyId: string, start: ISO, public mode: "sim" | "live" = "sim") {
     this.cursor = start;
-    this.policy = defaultPolicy(companyId, ALLOWED_MODELS);
+    this.policy = defaultPolicy(companyId, mode === "live" ? [] : ALLOWED_MODELS);
+    if (mode === "live") { this.sealed = false; this.requirePasskey = true; }
     this.policyHashActive = policyHash(this.policy);
     this.policyLog.push({ version: 1, hash: this.policyHashActive, at: start });
     for (const a of world.agents) if (a.companyId === companyId) this.agentStatus.set(a.id, "active");
@@ -88,6 +99,32 @@ export class TreasuryState {
     if (e.at > this.cursor) this.cursor = e.at;
     const p = e.payload;
     switch (e.type) {
+      // ---- live registry: everything a live company knows arrives through these ----
+      case "org_created": this.rp = p.rp; this.founder = p.founder.id; this.world.people.push({ ...p.founder }); break;
+      case "person_invited": this.invites.set(p.invite.id, { ...p.invite, status: "open" }); break;
+      case "invite_revoked": this.invites.get(p.inviteId)!.status = "revoked"; break;
+      case "person_registered": this.world.people.push({ ...p.person }); if (p.inviteId) this.invites.get(p.inviteId)!.status = "used"; break;
+      case "passkey_added": { const who = this.world.people.find((x) => x.id === p.personId)!; who.credentials = [...(who.credentials ?? []), p.credential]; break; }
+      case "agent_registered": {
+        this.world.agents.push({ ...p.agent });
+        this.agentStatus.set(p.agent.id, "active");
+        if (p.agent.role !== "erp" && !this.policy.allowedModels.includes(p.agent.modelHash)) {
+          // Registering an agent is itself an authorised act; its model joins the policy as a new version.
+          this.policy = { ...this.policy, version: this.policy.version + 1, allowedModels: [...this.policy.allowedModels, p.agent.modelHash].sort() };
+          this.policyHashActive = policyHash(this.policy);
+          this.policyLog.push({ version: this.policy.version, hash: this.policyHashActive, at: e.at });
+        }
+        break;
+      }
+      case "api_key_rotated": Object.assign(this.world.agents.find((a) => a.id === p.agentId)!, { apiKeyHash: p.apiKeyHash, apiKeyPrefix: p.apiKeyPrefix }); break;
+      case "org_sealed": this.sealed = true; break;
+      case "sandbox_funded": this.balance += p.amount; break;
+      case "sandbox_account_created": this.world.bankDirectory.push({ accountNo: p.accountNo, ifsc: p.ifsc, holder: p.holder }); break;
+      case "vendor_registered": this.world.vendors.push({ ...p.vendor }); break;
+      case "po_created": this.world.pos.push({ ...p.po }); break;
+      case "grn_created": this.world.grns.push({ ...p.grn }); this.grns.add(p.grn.id); break;
+      case "invoice_submitted": this.world.invoices.push({ ...p.invoice }); this.invoices.set(p.invoice.id, { status: "not_arrived", flags: [], reasons: [] }); break;
+      // ---- shared ----
       case "invoice_received": Object.assign(this.inv(p.invoiceId), { status: "received", flags: p.flags, receivedAt: e.at, reasons: [] }); break;
       case "grn_received": this.grns.add(p.grnId); break;
       case "invoice_held": Object.assign(this.inv(p.invoiceId), { status: "held", reasons: p.reasons, ruleId: e.ruleId }); break;
