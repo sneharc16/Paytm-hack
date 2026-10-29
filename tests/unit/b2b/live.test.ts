@@ -167,3 +167,18 @@ describe("live company", () => {
     expect(t.state.policy.allowedModels).toHaveLength(4);
   });
 });
+
+describe("starting rules", () => {
+  it("can be set by the founder only before sealing", () => {
+    const pk = new SoftPasskey("rules", rp);
+    const t = createOrg("co_rules", { legalName: "Rules Pvt Ltd", brand: "Rules", gstin: makeGstin("27", "AAACR1111R"), city: "Pune", founder: { name: "R", title: "Founder", email: "r@x.example" } }, "p_r", pk.credential, rp, at(0));
+    const r = person(t, "p_r", pk)({ kind: "set_initial_policy", changes: { coolingHoursNew: 0, releaseStartMin: 0, releaseEndMin: 1440 } }, at(1));
+    expect(r.ok, r.reason).toBe(true);
+    expect(t.state.policy.coolingHoursNew).toBe(0);
+    expect(loadOrg(t.events).state.policyHashActive).toBe(t.state.policyHashActive);
+  });
+  it("is refused after sealing", () => {
+    const s = setup();
+    expect(s.meera({ kind: "set_initial_policy", changes: { coolingHoursNew: 0 } }, at(10)).reason).toBe("ALREADY_SEALED");
+  });
+});

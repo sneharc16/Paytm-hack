@@ -3,7 +3,7 @@
 // the red team and the ledger.
 import { useMemo, useState } from "react";
 import { Bot, Download, Fingerprint, KeyRound, Mail, Snowflake, Swords } from "lucide-react";
-import { approveMessage, attestMessage, verifySig } from "@/b2b/crypto";
+import { approveMessage, attestMessage, verifyPersonSig, verifySig } from "@/b2b/crypto";
 import { verifyChain } from "@/b2b/ledger";
 import { diffPolicy, isLoosening } from "@/b2b/policy";
 import { RED_TEAM_B2B, type RedTeamResult } from "@/b2b/redteam";
@@ -45,7 +45,7 @@ function useAct(t: Treasury) {
 }
 
 // ---------------- Payables ----------------
-export function PayablesPage({ t }: { t: Treasury }) {
+export function PayablesPage({ t, at }: { t: Treasury; at: string }) {
   const [filter, setFilter] = useState<"all" | InvoiceStatus>("all");
   const [open, setOpen] = useState<string | null>(null);
   const invoices = t.world.invoices.filter((i) => i.companyId === t.companyId && t.state.invoices.get(i.id)!.status !== "not_arrived").reverse();
@@ -85,13 +85,12 @@ export function PayablesPage({ t }: { t: Treasury }) {
           </div>
         )}
       </Card>
-      {open ? <ReceiptInspector t={t} invoiceId={open} onClose={() => setOpen(null)} /> : <Card title="Receipt inspector"><p className="text-[14px] text-slate">Pick an invoice to see its email, the plan the agents signed, every signature and every check the guard ran.</p></Card>}
+      {open ? <ReceiptInspector t={t} at={at} invoiceId={open} onClose={() => setOpen(null)} /> : <Card title="Receipt inspector"><p className="text-[14px] text-slate">Pick an invoice to see its email, the plan the agents signed, every signature and every check the guard ran.</p></Card>}
     </div>
   );
 }
 
-function ReceiptInspector({ t, invoiceId, onClose }: { t: Treasury; invoiceId: string; onClose: () => void }) {
-  const at = useB2B((s) => s.doc.at);
+export function ReceiptInspector({ t, at, invoiceId, onClose }: { t: Treasury; at: string; invoiceId: string; onClose: () => void }) {
   const inv = t.world.invoices.find((i) => i.id === invoiceId)!;
   const v = t.world.vendors.find((x) => x.id === inv.vendorId)!;
   const s = t.state.invoices.get(invoiceId)!;
@@ -153,8 +152,8 @@ function IntentView({ t, it }: { t: Treasury; it: IntentState }) {
         })}
         {it.approvals.map((a, n) => {
           const p = t.world.people.find((x) => x.id === a.personId);
-          const ok = !!p && verifySig(p.publicKey, approveMessage(a), a.sig);
-          return <CheckRow key={`p${n}`} ok={ok} label={`${p?.name ?? a.personId} as ${a.role}`} detail={`Signed ${timeIST(a.at)} on their own device key`} />;
+          const ok = !!p && verifyPersonSig(p, approveMessage(a), a, t.state.rp, t.state.requirePasskey);
+          return <CheckRow key={`p${n}`} ok={ok} label={`${p?.name ?? a.personId} as ${a.role}`} detail={`Signed ${timeIST(a.at)} ${a.webauthn ? "with a passkey" : "on their own device key"}`} />;
         })}
         {it.status === "awaiting_approval" && it.needs.filter((r) => !it.approvals.some((a) => a.role === r)).map((r) => <li key={r} className="py-1 text-[14px] text-amber">Waiting for the {r}: {it.needReasons.join("; ")}</li>)}
       </ul>

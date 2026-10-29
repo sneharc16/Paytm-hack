@@ -13,7 +13,9 @@
     "check:supabase": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts",
     "check:live": "tsx --tsconfig tsconfig.json scripts/check-live.ts",
     "try:hindi": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-hindi.ts",
-    "b2b:story": "tsx --tsconfig tsconfig.json scripts/b2b-story.ts"
+    "b2b:story": "tsx --tsconfig tsconfig.json scripts/b2b-story.ts",
+    "agents": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/agents/pakka-agents.ts",
+    "b2b:live-demo": "tsx --tsconfig tsconfig.json scripts/b2b-live-demo.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

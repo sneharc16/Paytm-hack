@@ -6,7 +6,7 @@ import { dayMonth, inr, timeIST } from "@/lib/format";
 const when = (iso: string) => `${dayMonth(iso, "en")}, ${timeIST(iso)}`;
 
 const CHECK_TEXT: Record<string, string> = {
-  NOT_FROZEN: "Payouts not frozen", WELL_FORMED: "Intent well formed", TENANT: "For this company", PLANNED_IN_LEDGER: "Planned in this ledger",
+  NOT_FROZEN: "Payouts not frozen", ORG_SEALED: "Setup sealed", WELL_FORMED: "Intent well formed", TENANT: "For this company", PLANNED_IN_LEDGER: "Planned in this ledger",
   NOT_REPLAYED: "Not paid before", NONCE_ISSUED: "Nonce was issued", NOT_EXPIRED: "Within its lifetime", POLICY_CURRENT: "Signed under the current policy",
   SIGNATURES_VALID: "Agent signatures verify", AGENT_QUORUM: "All three agents signed", NO_AGENT_REJECTED: "No agent refused", MODEL_ALLOWED: "Model on the approved list",
   PAYEE_ON_FILE: "Payee is the approved account", ACCOUNT_BOUND: "Account matches what was signed", INVOICES_OPEN: "Invoice open and unpaid",
@@ -64,6 +64,19 @@ export function describe(t: Treasury, e: LedgerEvent): string {
     case "policy_signed": return `${personName(t, p.by)} signed ${p.proposalId}`;
     case "policy_scheduled": return `${p.proposalId} has two signatures; it takes effect at ${when(p.effectiveAt)} unless a governor vetoes it`;
     case "policy_activated": return `Policy v${p.version} is now active`;
+    case "policy_initialised": return `Starting rules set before sealing (policy v${p.policy.version})${p.diff.length ? `: ${p.diff.map((d: { field: string; to: unknown }) => `${d.field} ${String(d.to)}`).join(", ")}` : ""}`;
+    case "org_created": return `${p.company.legalName} created by ${p.founder.name}`;
+    case "person_invited": return `${personName(t, p.invite.by)} invited ${p.invite.name} as ${p.invite.roles.join(", ")}`;
+    case "person_registered": return `${p.person.name} joined with a passkey`;
+    case "passkey_added": return `${personName(t, p.personId)} added a passkey`;
+    case "agent_registered": return `Agent ${p.agent.name} (${p.agent.role}) registered with its own key`;
+    case "org_sealed": return "Setup sealed. Payouts can start";
+    case "sandbox_funded": return `Sandbox account funded with ${inr(p.amount)} (simulated)`;
+    case "sandbox_account_created": return `Sandbox bank account opened for ${p.holder}`;
+    case "vendor_registered": return `Vendor ${p.vendor.brand} added`;
+    case "po_created": return `Purchase order ${p.po.id} from the ERP`;
+    case "grn_created": return `Goods receipt ${p.grn.id} from the ERP`;
+    case "invoice_submitted": return `Invoice ${p.invoice.number} submitted by ${t.world.agents.find((a) => a.id === p.by)?.name ?? p.by}`;
     case "policy_vetoed": return `${p.byName} vetoed ${p.proposalId}`;
     case "proposal_executed": return `${p.proposalId} carried out`;
     case "freeze": return p.on ? `${p.by} froze all payouts: ${p.reason}` : `Payouts unfrozen by ${p.by}`;

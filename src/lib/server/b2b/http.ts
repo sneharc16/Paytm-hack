@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { NotFound } from "./runtime";
 
 // JSON responses for the business API. Errors carry a stable code; internals and stack traces never leave.
@@ -23,6 +24,7 @@ export async function guarded(fn: () => Promise<Response>): Promise<Response> {
   try {
     return await fn();
   } catch (e) {
+    unstable_rethrow(e); // Next's own control flow (prerender bail-outs) must pass through
     if (e instanceof NotFound) return errJson(404, "NOT_FOUND");
     console.error("[b2b]", e);
     return errJson(500, "INTERNAL");

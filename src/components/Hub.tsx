@@ -188,7 +188,7 @@ export default function Hub() {
           <div className="flex-1">
             <h3 className="text-[19px] font-bold text-ink">Pakka for Business</h3>
             <p className="text-[14px] font-medium text-blue">Finance teams paying vendors</p>
-            <p className="mt-2 text-[15px] leading-6 text-slate">AI agents plan vendor payouts in rupees. Money leaves only with a signed receipt the treasury guard checks itself, so a phishing email or a hijacked agent cannot redirect a payment.</p>
+            <p className="mt-2 text-[15px] leading-6 text-slate">AI agents plan vendor payouts in rupees. Money leaves only with a signed receipt the treasury guard checks itself, so a phishing email or a hijacked agent cannot redirect a payment. Try the three-day simulation, or the live system with passkeys and your own agents over the API.</p>
           </div>
           <span className="inline-flex items-center gap-1 text-[15px] font-semibold text-navy">Open<ChevronRight size={18} className="transition-transform group-hover:translate-x-1" aria-hidden /></span>
         </a>

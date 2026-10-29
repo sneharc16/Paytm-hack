@@ -118,6 +118,7 @@ export class TreasuryState {
       }
       case "api_key_rotated": Object.assign(this.world.agents.find((a) => a.id === p.agentId)!, { apiKeyHash: p.apiKeyHash, apiKeyPrefix: p.apiKeyPrefix }); break;
       case "org_sealed": this.sealed = true; break;
+      case "policy_initialised": this.policy = p.policy; this.policyHashActive = policyHash(p.policy); this.policyLog.push({ version: p.policy.version, hash: this.policyHashActive, at: e.at }); break;
       case "sandbox_funded": this.balance += p.amount; break;
       case "sandbox_account_created": this.world.bankDirectory.push({ accountNo: p.accountNo, ifsc: p.ifsc, holder: p.holder }); break;
       case "vendor_registered": this.world.vendors.push({ ...p.vendor }); break;

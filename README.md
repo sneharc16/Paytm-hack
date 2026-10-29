@@ -56,3 +56,19 @@ The same idea for B2B payouts in INR. Three AI agents (payables, compliance, ris
 - Story: Saanjh Distributors and Kaveri Fresh, 26 to 28 Oct 2026. A phishing email with a prompt injection asks to pay ₹4,19,905 to a new account; it is quarantined, the callback to the number on file exposes it, and the real invoice is paid to the real account.
 - Red team: 34 attacks run for real in the browser and in `pnpm test` (forged and replayed receipts, stolen agent keys, all agents compromised, split payments, self-approval, a single governor loosening policy, bank timeouts, ledger edits).
 - `pnpm b2b:story` prints what happened to every invoice.
+
+### Live mode (`/business/live`): real people, real agents, simulated money
+
+- People sign in and sign every approval with passkeys. Agents run outside the app and use the API with their own Ed25519 keys (`docs/AGENT_API.md`). Ledgers persist to Supabase (`supabase/migrations/0002_b2b.sql`) or `.pakka-data/`. Only money is simulated, by a sandbox bank.
+- Try it in five commands against `pnpm dev`:
+
+```bash
+pnpm b2b:live-demo
+pnpm agents run
+pnpm agents erp-demo erp v_1 --gstin=<printed GSTIN>
+pnpm agents erp-demo erp v_1 --gstin=<printed GSTIN> --phish
+pnpm b2b:live-demo approve
+```
+
+- Or create your own company at `/business/live` with your own passkey, invite people by link, and register agents made with `pnpm agents keygen <name>`.
+- Production: set `PAKKA_SESSION_SECRET`, `PAKKA_ORIGINS` (and `PAKKA_RP_ID` if different from the origin's host), the Supabase keys, and `CRON_SECRET` for `/api/v1/live/cron`.

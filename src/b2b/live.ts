@@ -210,6 +210,7 @@ export const PersonCommand = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("register_agent"), agentId: z.string().regex(/^a_[a-z0-9_]{4,40}$/), name: z.string().trim().min(2).max(60), role: z.enum(["proposer", "compliance", "risk", "erp"]), modelLabel: z.string().trim().min(2).max(80), publicKey: z.string().regex(/^[0-9a-f]{64}$/), apiKeyHash: z.string().regex(/^[0-9a-f]{64}$/), apiKeyPrefix: z.string().max(24), auth }),
   z.strictObject({ kind: z.literal("rotate_api_key"), agentId: z.string(), apiKeyHash: z.string().regex(/^[0-9a-f]{64}$/), apiKeyPrefix: z.string().max(24), auth }),
   z.strictObject({ kind: z.literal("seal_org"), auth }),
+  z.strictObject({ kind: z.literal("set_initial_policy"), changes: PolicyChanges, auth }),
   z.strictObject({ kind: z.literal("fund_sandbox"), amount: money.max(100_00_00_000_00), auth }),
   z.strictObject({ kind: z.literal("sandbox_account"), accountNo: z.string().regex(/^\d{9,18}$/), ifsc: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/), holder: z.string().trim().min(2).max(80), auth }),
   z.strictObject({ kind: z.literal("add_vendor"), vendor: z.strictObject({
@@ -313,6 +314,16 @@ export function personCommand(t: Treasury, at: ISO, personId: string, raw: unkno
       if (missing.length) return { ok: false, reason: "NOT_READY", data: { missing } };
       t.emit({ at, type: "org_sealed", actor: "person", ruleId: "GOVERNANCE_V1", payload: { by: personId, governors: governors().map((g) => g.id), sig: sigRecord("action") } });
       return ok();
+    }
+    case "set_initial_policy": {
+      // Before sealing no money can move, so the founder sets the starting rules directly. After sealing every
+      // change needs two governors, and looser ones the timelock.
+      if (personId !== st.founder) return refuse(t, at, kind, personId, "ONLY_FOUNDER");
+      if (st.sealed) return refuse(t, at, kind, personId, "ALREADY_SEALED");
+      const policy: Policy = { ...st.policy, ...c.changes, version: st.policy.version + 1 };
+      if (policy.releaseStartMin >= policy.releaseEndMin) return refuse(t, at, kind, personId, "BAD_RELEASE_WINDOW");
+      t.emit({ at, type: "policy_initialised", actor: "person", ruleId: "GOVERNANCE_V1", payload: { policy, diff: diffPolicy(st.policy, policy), by: personId, sig: sigRecord("action") } });
+      return ok({ version: policy.version });
     }
     case "fund_sandbox": {
       if (!has("governor") && !has("cfo")) return refuse(t, at, kind, personId, "WRONG_ROLE");

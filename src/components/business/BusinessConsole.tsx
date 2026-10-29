@@ -80,7 +80,7 @@ export default function BusinessConsole() {
             {NAV.map(({ id, label }) => <button key={id} onClick={() => setPage(id)} className={`h-8 shrink-0 rounded-full px-3 text-[13.5px] font-semibold ${page === id ? "bg-navy text-white" : "border border-line bg-surface text-slate"}`}>{label}</button>)}
           </div>
           {page === "overview" && <Overview t={t} go={setPage} />}
-          {page === "payables" && <PayablesPage t={t} />}
+          {page === "payables" && <PayablesPage t={t} at={useB2B.getState().doc.at} />}
           {page === "approvals" && <ApprovalsPage t={t} me={me} />}
           {page === "bank" && <BankChangesPage t={t} me={me} />}
           {page === "governance" && <GovernancePage t={t} me={me} />}
@@ -111,6 +111,8 @@ function Header({ t, co, setCo, me, setMe, people }: { t: Treasury; co: string; 
     <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur">
       <div className="mx-auto flex min-h-[64px] max-w-[1400px] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2 sm:px-8">
         <Link href="/" className="flex items-center gap-2"><PakkaSeal /><span className="text-[14px] font-semibold text-slate">for Business</span></Link>
+        <span className="rounded-full bg-amber-wash px-2 text-[12.5px] font-semibold text-amber">Simulation</span>
+        <Link href="/business/live" className="text-[13.5px] font-semibold text-navy underline">Open the live system</Link>
         <div className="flex rounded-full border border-line p-0.5" role="tablist" aria-label="Company">
           {[SAANJH, KAVERI].map((c) => (
             <button key={c} role="tab" aria-selected={co === c} onClick={() => setCo(c)} className={`h-8 rounded-full px-3 text-[13.5px] font-semibold ${co === c ? "bg-navy text-white" : "text-slate"}`}>

@@ -20,6 +20,7 @@ export const PolicyChanges = z.strictObject({
   checkerFrom: money.optional(), cfoFrom: money.optional(), firstPaymentCap: money.optional(),
   coolingHoursNew: z.number().int().min(0).max(720).optional(), coolingHoursChanged: z.number().int().min(0).max(720).optional(),
   maxPaymentsPerVendorPerDay: z.number().int().min(1).max(50).optional(),
+  releaseStartMin: z.number().int().min(0).max(1440).optional(), releaseEndMin: z.number().int().min(0).max(1440).optional(),
 });
 
 export const B2BCommand = z.discriminatedUnion("kind", [
