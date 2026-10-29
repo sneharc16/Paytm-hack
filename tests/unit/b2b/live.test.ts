@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ed25519 } from "@noble/curves/ed25519.js";
 import { attestMessage, toHex, type RelyingParty } from "@/b2b/crypto";
 import { verifyChain } from "@/b2b/ledger";
-import { acceptInvite, agentCommand, createOrg, loadOrg, messageFor, personCommand, workFor } from "@/b2b/live";
+import { acceptInvite, agentCommand, createOrg, loadOrg, messageFor, personCommand, proposeQueue, workFor } from "@/b2b/live";
 import { makeGstin } from "@/b2b/gstin";
 import { SoftPasskey } from "@/b2b/testing/softPasskey";
 import type { Treasury } from "@/b2b/treasury";
@@ -94,7 +94,7 @@ describe("live company", () => {
     const inv = erp({ kind: "submit_invoice", invoice: { number: "KP/1", vendorId, poId: "PO-1", date: at(day - 60), gstin: makeGstin("27", "AABCK5678L"), lines: [{ sku: "BOX", qty: 50, rate: 1_200_00 }], gst: 7_200_00 } }, day);
     expect(inv.ok, inv.reason).toBe(true);
     const invoiceId = String(inv.data!.invoiceId);
-    expect(workFor(t, "proposer").map((w) => w.invoiceId)).toContain(invoiceId);
+    expect(proposeQueue(t).map((w) => w.invoiceId)).toContain(invoiceId);
     const p = agentCommand(t, at(day + 1), "a_acme_proposer", { kind: "propose", invoiceId });
     expect(p.ok, p.reason).toBe(true);
     const h = String(p.data!.intentHash);

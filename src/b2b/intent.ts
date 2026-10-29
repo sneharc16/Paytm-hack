@@ -12,7 +12,7 @@ export const IntentSchema = z.strictObject({
   v: z.literal(1),
   domain: z.literal("PAKKA_B2B_INTENT_V1"),
   intentId: z.string().regex(/^pi_[a-z0-9_]{1,40}$/),
-  companyId: z.string().regex(/^co_[a-z]+$/),
+  companyId: z.string().regex(/^co_[a-z0-9]+$/),
   vendorId: z.string().regex(/^v_[a-z0-9_]+$/),
   beneficiaryId: z.string().min(1).max(60),
   accountHash: hex64,

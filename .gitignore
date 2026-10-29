@@ -47,3 +47,7 @@ next-env.d.ts
 
 # llm bake progress
 /bake.log
+
+# Pakka for Business live data and local agent keys
+.pakka-data/
+.pakka-agents/

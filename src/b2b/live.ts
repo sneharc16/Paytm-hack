@@ -502,11 +502,13 @@ function proposalParams(pr: import("./state").Proposal): unknown {
 }
 
 /** Which agents of which role still need to sign each open intent; what the API's work queue returns. */
-export function workFor(t: Treasury, role: AgentRole) {
+export function proposeQueue(t: Treasury) {
+  const st = t.state;
+  return t.world.invoices.filter((i) => st.invoices.get(i.id)!.status === "received").map((i) => ({ kind: "propose" as const, invoiceId: i.id, invoice: i, flags: st.invoices.get(i.id)!.flags }));
+}
+
+export function workFor(t: Treasury, role: "compliance" | "risk") {
   const st = t.state, w = t.world;
-  if (role === "proposer") {
-    return w.invoices.filter((i) => st.invoices.get(i.id)!.status === "received").map((i) => ({ kind: "propose" as const, invoiceId: i.id, invoice: i, flags: st.invoices.get(i.id)!.flags }));
-  }
   return [...st.intents.values()]
     .filter((it) => it.status === "attesting" && !it.attestations.some((a) => a.role === role) && (role !== "risk" || it.attestations.some((a) => a.role === "compliance")) && it.attestations.some((a) => a.role === "proposer"))
     .map((it) => {
