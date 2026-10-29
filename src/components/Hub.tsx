@@ -62,6 +62,7 @@ export default function Hub() {
             <a href="#how" className="hover:text-navy">How it works</a>
             <a href="#surfaces" className="hover:text-navy">Screens</a>
             <a href="#join" className="hover:text-navy">On your phone</a>
+            <a href="/business" className="hover:text-navy">For business</a>
           </div>
           <a href={`/demo?${q}&grid=1`} className="btn-primary ml-auto inline-flex h-10 items-center gap-2 rounded-full px-5 text-[15px] font-semibold md:ml-0">
             <Play size={16} aria-hidden />Open the demo
@@ -182,6 +183,15 @@ export default function Hub() {
             </li>
           ))}
         </ul>
+        <a href="/business" className="card lift group mt-5 flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-navy text-white"><Building2 size={22} strokeWidth={1.9} aria-hidden /></span>
+          <div className="flex-1">
+            <h3 className="text-[19px] font-bold text-ink">Pakka for Business</h3>
+            <p className="text-[14px] font-medium text-blue">Finance teams paying vendors</p>
+            <p className="mt-2 text-[15px] leading-6 text-slate">AI agents plan vendor payouts in rupees. Money leaves only with a signed receipt the treasury guard checks itself, so a phishing email or a hijacked agent cannot redirect a payment.</p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-[15px] font-semibold text-navy">Open<ChevronRight size={18} className="transition-transform group-hover:translate-x-1" aria-hidden /></span>
+        </a>
       </section>
 
       {/* Join */}
