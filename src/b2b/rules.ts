@@ -1,0 +1,27 @@
+// src/b2b/rules.ts: every business rule has an ID. Every money action and every block carries one.
+export const B2B_RULES = {
+  PAYOUT_AGENTS_V1: "Small matched payout, agent quorum only",
+  PAYOUT_CHECKER_V1: "Payout approved by a checker",
+  PAYOUT_CFO_V1: "Payout approved by a checker and the CFO",
+  HOLD_MATCH_V1: "Held: invoice does not match the order and the goods received",
+  HOLD_DUPLICATE_V1: "Rejected: invoice already paid or accepted",
+  HOLD_GSTIN_V1: "Held: GSTIN on the invoice is invalid or not the vendor's",
+  INJECTION_QUARANTINE_V1: "Instructions inside an email are read as data, never obeyed",
+  BANK_CHANGE_VERIFY_V1: "New bank details need a penny drop, a callback to the number on file and a checker",
+  COOLING_V1: "New or changed bank account waits before its first payout",
+  FIRST_PAYMENT_CAP_V1: "First payout to a new account is capped",
+  STRUCTURING_V1: "Payouts to one vendor in 24 hours are added up to decide who approves",
+  AGENT_CAP_V1: "Agents alone may release only a fixed amount per day",
+  RELEASE_WINDOW_V1: "Payouts leave only inside the release window",
+  MSME_45_V1: "MSME vendors are paid within 45 days",
+  BANK_STATUS_V1: "A payout with unknown status is checked, never sent again",
+  RETRY_AFTER_FAIL_V1: "A failed payout is planned again with a new nonce",
+  FREEZE_V1: "Payouts frozen",
+  GOVERNANCE_V1: "Policy changes need two of three governors",
+  TIMELOCK_V1: "A looser policy waits 24 hours and any governor can veto it",
+  SOD_V1: "No one approves a payout they prepared or a bank account they approved",
+  DAILY_LIMIT_V1: "Daily payout limit",
+  KEY_SUSPEND_V1: "A suspected agent key is suspended",
+  RECEIPT_V1: "Every payout carries a receipt the guard checks before money moves",
+} as const;
+export type B2BRuleId = keyof typeof B2B_RULES;
