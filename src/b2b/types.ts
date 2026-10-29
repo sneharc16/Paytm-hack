@@ -41,12 +41,12 @@ export interface Invoice {
 
 export type PersonRole = "maker" | "checker" | "cfo" | "governor";
 /** publicKey is the simulation's device key; live people sign with passkeys (credentials) instead. */
-export interface Person { id: string; companyId: string; name: string; roles: PersonRole[]; publicKey: string; title: string; email?: string; credentials?: PasskeyCredential[] }
+export interface Person { id: string; companyId: string; name: string; roles: PersonRole[]; publicKey: string; title: string; email?: string; credentials?: PasskeyCredential[]; removedAt?: ISO }
 
 export type AgentRole = "proposer" | "compliance" | "risk";
 /** "erp" clients push orders, receipts and invoices; they never sign payment intents. */
 export type ClientRole = AgentRole | "erp";
-export interface Agent { id: string; companyId: string; role: ClientRole; name: string; publicKey: string; modelHash: string; modelLabel: string; apiKeyHash?: string; apiKeyPrefix?: string }
+export interface Agent { id: string; companyId: string; role: ClientRole; name: string; publicKey: string; modelHash: string; modelLabel: string; apiKeyHash?: string; apiKeyPrefix?: string; webhookUrl?: string | null }
 
 /** Bank directory the penny-drop simulator reads: who really owns an account. */
 export interface BankAccountRecord { accountNo: string; ifsc: string; holder: string }

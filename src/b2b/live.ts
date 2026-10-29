@@ -210,6 +210,7 @@ export const PersonCommand = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("register_agent"), agentId: z.string().regex(/^a_[a-z0-9_]{4,40}$/), name: z.string().trim().min(2).max(60), role: z.enum(["proposer", "compliance", "risk", "erp"]), modelLabel: z.string().trim().min(2).max(80), publicKey: z.string().regex(/^[0-9a-f]{64}$/), apiKeyHash: z.string().regex(/^[0-9a-f]{64}$/), apiKeyPrefix: z.string().max(24), auth }),
   z.strictObject({ kind: z.literal("rotate_api_key"), agentId: z.string(), apiKeyHash: z.string().regex(/^[0-9a-f]{64}$/), apiKeyPrefix: z.string().max(24), auth }),
   z.strictObject({ kind: z.literal("seal_org"), auth }),
+  z.strictObject({ kind: z.literal("set_webhook"), agentId: z.string(), url: z.url().max(300).nullable(), auth }),
   z.strictObject({ kind: z.literal("set_initial_policy"), changes: PolicyChanges, auth }),
   z.strictObject({ kind: z.literal("fund_sandbox"), amount: money.max(100_00_00_000_00), auth }),
   z.strictObject({ kind: z.literal("sandbox_account"), accountNo: z.string().regex(/^\d{9,18}$/), ifsc: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/), holder: z.string().trim().min(2).max(80), auth }),
@@ -228,6 +229,8 @@ export const PersonCommand = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("sign_proposal"), proposalId: z.string(), auth }),
   z.strictObject({ kind: z.literal("veto_proposal"), proposalId: z.string(), auth }),
   z.strictObject({ kind: z.literal("freeze"), reason: z.string().trim().min(3).max(200), auth }),
+  z.strictObject({ kind: z.literal("remove_person"), personId: z.string(), reason: z.string().trim().min(3).max(200), auth }),
+  z.strictObject({ kind: z.literal("revoke_passkey"), personId: z.string(), credentialId: z.string().max(400), auth }),
   z.strictObject({ kind: z.literal("suspend_agent"), agentId: z.string(), reason: z.string().trim().min(3).max(200), auth }),
 ]);
 export type PersonCommand = z.infer<typeof PersonCommand>;
@@ -254,7 +257,7 @@ export function personCommand(t: Treasury, at: ISO, personId: string, raw: unkno
   if (!parsed.success) return { ok: false, reason: `INVALID: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ").slice(0, 300)}` };
   const c = parsed.data;
   const st = t.state, w = t.world;
-  const me = w.people.find((p) => p.id === personId && p.companyId === t.companyId);
+  const me = w.people.find((p) => p.id === personId && p.companyId === t.companyId && !p.removedAt);
   if (!me) return { ok: false, reason: "NOT_IN_COMPANY" };
   // The signature: fresh, for exactly this command, from one of this person's passkeys.
   const skewOk = c.auth.at <= addMin(at, 1) && new Date(at).getTime() - new Date(c.auth.at).getTime() <= SKEW_MS;
@@ -299,6 +302,17 @@ export function personCommand(t: Treasury, at: ISO, personId: string, raw: unkno
       if (!has("governor")) return refuse(t, at, kind, personId, "NOT_A_GOVERNOR");
       if (!w.agents.some((a) => a.id === c.agentId && a.companyId === t.companyId)) return refuse(t, at, kind, personId, "UNKNOWN_AGENT");
       t.emit({ at, type: "api_key_rotated", actor: "person", payload: { agentId: c.agentId, apiKeyHash: c.apiKeyHash, apiKeyPrefix: c.apiKeyPrefix, by: personId } });
+      return ok();
+    }
+    case "set_webhook": {
+      if (!has("governor")) return refuse(t, at, kind, personId, "NOT_A_GOVERNOR");
+      if (!w.agents.some((a) => a.id === c.agentId && a.companyId === t.companyId)) return refuse(t, at, kind, personId, "UNKNOWN_AGENT");
+      if (c.url) {
+        const u = new URL(c.url);
+        const local = u.hostname === "localhost" || u.hostname === "127.0.0.1";
+        if (!(u.protocol === "https:" || (u.protocol === "http:" && local)) || u.username || u.password) return refuse(t, at, kind, personId, "WEBHOOK_MUST_BE_HTTPS");
+      }
+      t.emit({ at, type: "webhook_set", actor: "person", payload: { agentId: c.agentId, url: c.url, by: personId, sig: sigRecord("action") } });
       return ok();
     }
     case "seal_org": {
@@ -443,6 +457,29 @@ export function personCommand(t: Treasury, at: ISO, personId: string, raw: unkno
       t.emit({ at, type: "freeze", actor: "person", ruleId: "FREEZE_V1", payload: { on: true, by: me.name, reason: c.reason, sig: sigRecord("action") } });
       return ok();
     }
+    case "remove_person": {
+      const target = w.people.find((p) => p.id === c.personId && p.companyId === t.companyId && !p.removedAt);
+      if (!has("governor")) return refuse(t, at, kind, personId, "NOT_A_GOVERNOR");
+      if (!target) return refuse(t, at, kind, personId, "UNKNOWN_PERSON");
+      if (target.id === personId) return refuse(t, at, kind, personId, "CANNOT_REMOVE_SELF");
+      if (st.sealed && target.roles.includes("governor")) return refuse(t, at, kind, personId, "GOVERNORS_ARE_FIXED_AFTER_SEAL");
+      if (!st.sealed) {
+        if (personId !== st.founder) return refuse(t, at, kind, personId, "ONLY_FOUNDER_BEFORE_SEAL");
+        t.emit({ at, type: "person_removed", actor: "person", ruleId: "GOVERNANCE_V1", payload: { personId: target.id, name: target.name, reason: c.reason, by: personId, sig: sigRecord("action") } });
+        return ok();
+      }
+      // After sealing, taking away someone's authority is a two-governor decision.
+      return propose(t, at, me, "remove_person", st.policy, { personId: target.id }, sigRecord("action"), params);
+    }
+    case "revoke_passkey": {
+      // A lost or stolen device: its owner, or any governor, revokes it at once. Revoking only takes power away.
+      const target = w.people.find((p) => p.id === c.personId && p.companyId === t.companyId && !p.removedAt);
+      if (!target || !target.credentials?.some((x) => x.id === c.credentialId)) return refuse(t, at, kind, personId, "UNKNOWN_PASSKEY");
+      if (target.id !== personId && !has("governor")) return refuse(t, at, kind, personId, "NOT_A_GOVERNOR");
+      if (target.id === personId && (target.credentials?.length ?? 0) < 2) return refuse(t, at, kind, personId, "LAST_PASSKEY");
+      t.emit({ at, type: "passkey_revoked", actor: "person", ruleId: "KEY_SUSPEND_V1", payload: { personId: target.id, credentialId: c.credentialId, by: personId, sig: sigRecord("action") } });
+      return ok();
+    }
     case "suspend_agent": {
       const a = w.agents.find((x) => x.id === c.agentId && x.companyId === t.companyId);
       if (!has("governor")) return refuse(t, at, kind, personId, "NOT_A_GOVERNOR");
@@ -453,7 +490,7 @@ export function personCommand(t: Treasury, at: ISO, personId: string, raw: unkno
   }
 }
 
-function propose(t: Treasury, at: ISO, me: Person, kind: "policy" | "unfreeze" | "reinstate" | "register_agent", policy: Policy, extra: { agentId?: string; agent?: Agent } | null, sig: string, params: unknown): LiveResult {
+function propose(t: Treasury, at: ISO, me: Person, kind: "policy" | "unfreeze" | "reinstate" | "register_agent" | "remove_person", policy: Policy, extra: { agentId?: string; agent?: Agent; personId?: string } | null, sig: string, params: unknown): LiveResult {
   const st = t.state;
   const id = `GOV-${100 + st.proposals.size + 1}`;
   const diff = kind === "policy" ? diffPolicy(st.policy, policy) : [];
@@ -468,13 +505,13 @@ function maybeCarry(t: Treasury, at: ISO, proposalId: string): LiveResult {
   const pr = st.proposals.get(proposalId)!;
   let valid = 0;
   for (const [pid, raw] of Object.entries(pr.sigs)) {
-    const g = w.people.find((p) => p.id === pid && p.companyId === t.companyId && p.roles.includes("governor"));
+    const g = w.people.find((p) => p.id === pid && p.companyId === t.companyId && p.roles.includes("governor") && !p.removedAt);
     if (!g) continue;
     try {
       const s = JSON.parse(raw) as { kind: "action" | "govern"; at: string; webauthn: WebAuthnSig };
       const message = s.kind === "govern"
         ? governMessage({ companyId: t.companyId, proposalHash: pr.hash, personId: pid })
-        : actionMessage({ companyId: t.companyId, personId: pid, kind: pr.kind === "policy" ? "propose_policy" : pr.kind === "unfreeze" ? "propose_unfreeze" : pr.kind === "reinstate" ? "propose_reinstate" : "register_agent", params: pr.signedParams ?? proposalParams(pr), at: s.at });
+        : actionMessage({ companyId: t.companyId, personId: pid, kind: pr.kind === "policy" ? "propose_policy" : pr.kind === "unfreeze" ? "propose_unfreeze" : pr.kind === "reinstate" ? "propose_reinstate" : pr.kind === "remove_person" ? "remove_person" : "register_agent", params: pr.signedParams ?? proposalParams(pr), at: s.at });
       if (verifyPersonSig(g, message, { webauthn: s.webauthn }, st.rp, true)) valid++;
     } catch { /* an unreadable signature does not count */ }
   }
@@ -488,6 +525,10 @@ function maybeCarry(t: Treasury, at: ISO, proposalId: string): LiveResult {
     t.emit({ at, type: "proposal_executed", actor: "system", ruleId: "GOVERNANCE_V1", payload: { proposalId: pr.id } });
     t.emit({ at, type: "freeze", actor: "system", ruleId: "FREEZE_V1", payload: { on: false, by: "two governors", reason: "Released by two of three governors" } });
     t.retryWaiting(at);
+  } else if (pr.kind === "remove_person") {
+    const target = w.people.find((p) => p.id === pr.personId);
+    t.emit({ at, type: "proposal_executed", actor: "system", ruleId: "GOVERNANCE_V1", payload: { proposalId: pr.id } });
+    if (target && !target.removedAt) t.emit({ at, type: "person_removed", actor: "system", ruleId: "GOVERNANCE_V1", payload: { personId: target.id, name: target.name, reason: "Two governors agreed", by: "two governors" } });
   } else if (pr.kind === "reinstate") {
     t.emit({ at, type: "proposal_executed", actor: "system", ruleId: "GOVERNANCE_V1", payload: { proposalId: pr.id } });
     t.emit({ at, type: "agent_reinstated", actor: "system", ruleId: "KEY_SUSPEND_V1", payload: { agentId: pr.agentId } });

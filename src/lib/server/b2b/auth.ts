@@ -52,10 +52,11 @@ export async function authAgent(req: Request, rawBody: string): Promise<AgentAut
 
 export type PersonAuth = { ok: true; orgId: string; person: Person; t: Treasury };
 export async function authPerson(req: Request): Promise<PersonAuth | AuthFail> {
-  const s = readToken<{ o: string; p: string }>("session", readCookie(req, SESSION_COOKIE));
-  if (!s) return { ok: false, status: 401, code: "SIGN_IN" };
+  const s = readToken<{ o: string; p: string; sid?: string }>("session", readCookie(req, SESSION_COOKIE));
+  if (!s || !s.sid) return { ok: false, status: 401, code: "SIGN_IN" };
+  if (await b2bStore().seen(`signout:${s.sid}`)) return { ok: false, status: 401, code: "SIGN_IN" };
   const t = await readOrg(s.o);
-  const person = t?.world.people.find((p) => p.id === s.p);
+  const person = t?.world.people.find((p) => p.id === s.p && !p.removedAt && (p.credentials?.length ?? 0) > 0);
   if (!t || !person) return { ok: false, status: 401, code: "SIGN_IN" };
   return { ok: true, orgId: s.o, person, t };
 }

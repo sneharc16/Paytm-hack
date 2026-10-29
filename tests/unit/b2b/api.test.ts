@@ -7,7 +7,7 @@ import { SoftPasskey } from "@/b2b/testing/softPasskey";
 import * as H from "@/lib/server/b2b/handlers";
 import { readOrg } from "@/lib/server/b2b/runtime";
 import { MemoryStore, setB2BStoreForTests } from "@/lib/server/b2b/store";
-import { generateAgentKey, PakkaAgent } from "@/sdk/pakka-agent";
+import { generateAgentKey, PakkaAgent, verifyWebhook } from "@/sdk/pakka-agent";
 
 const BASE = "http://localhost:3000";
 const rp: RelyingParty = { rpId: "localhost", origins: [BASE] };
@@ -33,8 +33,10 @@ async function call(method: string, path: string, body?: unknown, j?: Jar, heade
 }
 
 // The SDK's fetch goes to the handlers in this process.
+const hooks: { body: string; timestamp: string | null; signature: string | null }[] = [];
 vi.stubGlobal("fetch", async (url: URL | string, init: RequestInit) => {
   const req = new Request(url, init);
+  if (new URL(req.url).port === "4100") { hooks.push({ body: await req.text(), timestamp: req.headers.get("x-pakka-webhook-timestamp"), signature: req.headers.get("x-pakka-webhook-signature") }); return new Response("ok"); }
   return ROUTES[new URL(req.url).pathname][req.method](req);
 });
 
@@ -107,6 +109,23 @@ describe("live business API", () => {
     expect((await call("GET", "/api/v1/live/me", undefined, jar())).error?.code).toBe("SIGN_IN");
   });
 
+  it("uses each passkey signature once and revokes sessions on sign-out", async () => {
+    const at = new Date().toISOString();
+    const command = { kind: "sandbox_account", accountNo: "111122223333", ifsc: "NRMB0009999", holder: "Replay Test" };
+    const message = actionMessage({ companyId: orgId, personId: people.asha.id, kind: command.kind, params: command, at });
+    const body = { command: { ...command, auth: { at, webauthn: people.asha.key.sign(message) } } };
+    expect((await call("POST", "/api/v1/live/commands", body, people.asha.jar)).ok).toBe(true);
+    expect((await call("POST", "/api/v1/live/commands", body, people.asha.jar)).error?.code).toBe("REPLAYED_SIGNATURE");
+    // A copied session cookie stops working once its owner signs out.
+    const j = jar();
+    const so = await call("POST", "/api/v1/live/session/options", {}, j);
+    await call("POST", "/api/v1/live/session", { assertion: people.om.key.assert(so.data.options.challenge, `${orgId}:${people.om.id}`) }, j);
+    const copy = new Map(j);
+    expect((await call("GET", "/api/v1/live/me", undefined, copy)).ok).toBe(true);
+    await call("DELETE", "/api/v1/live/session", undefined, j);
+    expect((await call("GET", "/api/v1/live/me", undefined, copy)).error?.code).toBe("SIGN_IN");
+  });
+
   const agents: Record<string, PakkaAgent> = {};
   it("registers external agents with their own keys and seals the company", async () => {
     for (const role of ["proposer", "compliance", "risk", "erp"]) {
@@ -122,6 +141,10 @@ describe("live business API", () => {
     expect((await signed(people.asha, { kind: "fund_sandbox", amount: 25_00_000_00 })).ok).toBe(true);
     const me = await agents.compliance.me();
     expect(me.ok && me.data.agent.role).toBe("compliance");
+    // The compliance agent gets a signed webhook instead of polling.
+    const agentId = me.ok ? me.data.agent.id : "";
+    expect((await signed(people.asha, { kind: "set_webhook", agentId, url: "ftp://x.example/hook" })).error?.code).toBe("WEBHOOK_MUST_BE_HTTPS");
+    expect((await signed(people.asha, { kind: "set_webhook", agentId, url: "http://localhost:4100/hook" })).ok).toBe(true);
   });
 
   it("refuses unsigned, tampered, replayed and stale agent requests", async () => {
@@ -169,6 +192,12 @@ describe("live business API", () => {
     const hash = p.ok ? p.data.intentHash : "";
     expect((await agents.proposer.attest(hash, "approve", ["matched"])).ok).toBe(true);
     expect((await agents.compliance.attest(hash, "approve", ["checked"])).ok).toBe(true);
+    await new Promise((r) => setTimeout(r, 50));
+    const hook = hooks.find((x) => x.body.includes(hash.slice(0, 0)) && JSON.parse(x.body).role === "compliance");
+    expect(hook, "compliance webhook").toBeTruthy();
+    const key = (await H.webhookKey()).publicKey;
+    expect(verifyWebhook(hook!.body, hook!, key)).toBe(true);
+    expect(verifyWebhook(hook!.body.replace("compliance", "complianc3"), hook!, key)).toBe(false);
     const r = await agents.risk.attest(hash, "approve", ["no signals"]);
     expect(r.ok && r.data.status).toBe("awaiting_approval");
     // The compliance agent cannot sign twice.

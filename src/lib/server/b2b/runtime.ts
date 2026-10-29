@@ -3,7 +3,15 @@
 // (the engine is deterministic for the same ledger, time and input).
 import { loadOrg } from "@/b2b/live";
 import type { Treasury } from "@/b2b/treasury";
+import { after } from "next/server";
 import { b2bStore, ConflictError } from "./store";
+import { deliverWebhooks } from "./webhooks";
+
+/** Send webhooks after the response when inside a request; otherwise (scripts, tests) in the background. */
+function notify(t: Treasury, fresh: import("@/b2b/types").LedgerEvent[]) {
+  const job = () => deliverWebhooks(t, fresh).then(() => undefined, () => undefined);
+  try { after(job); } catch { void job(); }
+}
 
 const cache = new Map<string, Treasury>();
 export const nowIso = () => new Date().toISOString();
@@ -39,6 +47,7 @@ export async function writeOrg<R>(orgId: string, fn: (t: Treasury, now: string) 
     if (!fresh.length) return result;
     try {
       await b2bStore().append(orgId, before, fresh);
+      notify(t, fresh);
       return result;
     } catch (e) {
       cache.delete(orgId);

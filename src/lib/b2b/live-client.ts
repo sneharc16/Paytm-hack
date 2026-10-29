@@ -32,6 +32,8 @@ interface LiveState {
   now: () => string;
   /** Sign `command` with a passkey and send it. */
   act: (command: Record<string, unknown> & { kind: string }) => Promise<Api<Record<string, unknown>>>;
+  /** A passkey signature over any message (used for the signed audit export). */
+  sign: (message: string) => Promise<WebAuthnSig>;
   signOut: () => Promise<void>;
 }
 
@@ -67,6 +69,11 @@ export const useLive = create<LiveState>((set, get) => ({
     set({ t: next, version: get().version + 1, ...(fresh && me ? { me: { ...me, person: { ...me.person, roles: fresh.roles, credentials: fresh.credentials } } } : {}) });
   },
   now: () => new Date(Date.now() + get().skewMs).toISOString(),
+  async sign(message) {
+    const me = get().me!;
+    const a = await startAuthentication({ optionsJSON: { challenge: challengeFor(message), rpId: me.rp.rpId, userVerification: "required", timeout: 120_000, allowCredentials: (me.person.credentials ?? []).map((c) => ({ id: c.id, type: "public-key" as const })) } });
+    return { credentialId: a.id, authenticatorData: a.response.authenticatorData, clientDataJSON: a.response.clientDataJSON, signature: a.response.signature };
+  },
   async act(command) {
     const { t, me } = get();
     if (!t || !me) return { ok: false, error: { code: "SIGN_IN", message: "Sign in first" } };
@@ -74,8 +81,7 @@ export const useLive = create<LiveState>((set, get) => ({
     const message = messageFor(t, me.person.id, command, at);
     let webauthn: WebAuthnSig;
     try {
-      const a = await startAuthentication({ optionsJSON: { challenge: challengeFor(message), rpId: me.rp.rpId, userVerification: "required", timeout: 120_000, allowCredentials: (me.person.credentials ?? []).map((c) => ({ id: c.id, type: "public-key" as const })) } });
-      webauthn = { credentialId: a.id, authenticatorData: a.response.authenticatorData, clientDataJSON: a.response.clientDataJSON, signature: a.response.signature };
+      webauthn = await get().sign(message);
     } catch (e) {
       return { ok: false, error: { code: "PASSKEY_CANCELLED", message: String((e as Error).message ?? e).slice(0, 160) } };
     }

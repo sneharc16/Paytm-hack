@@ -21,7 +21,7 @@ function withCookies(res: Response, cookies: string[]): Response {
   for (const c of cookies) h.append("set-cookie", c);
   return new Response(res.body, { status: res.status, headers: h });
 }
-const session = (req: Request, orgId: string, personId: string) => cookie(SESSION_COOKIE, signToken("session", { o: orgId, p: personId }, SESSION_TTL), SESSION_TTL, req);
+const session = (req: Request, orgId: string, personId: string) => cookie(SESSION_COOKIE, signToken("session", { o: orgId, p: personId, sid: randomToken(16) }, SESSION_TTL), SESSION_TTL, req);
 const clearChal = (req: Request) => cookie(CHAL, "", 0, req);
 
 // ---------------- company creation ----------------
@@ -71,7 +71,12 @@ export const signInFinish = (req: Request) => guarded(async () => {
   return withCookies(okJson({ orgId: who.orgId, personId: who.personId }), [session(req, who.orgId, who.personId), clearChal(req)]);
 });
 
-export const signOut = (req: Request) => withCookies(okJson({}), [cookie(SESSION_COOKIE, "", 0, req)]);
+/** Sign-out revokes the session on the server too, so a copied cookie stops working. */
+export const signOut = (req: Request) => guarded(async () => {
+  const s = readToken<{ sid?: string; exp: number }>("session", readCookie(req, SESSION_COOKIE));
+  if (s?.sid) await b2bStore().useOnce(`signout:${s.sid}`, new Date(s.exp + 60_000).toISOString());
+  return withCookies(okJson({}), [cookie(SESSION_COOKIE, "", 0, req)]);
+});
 
 // ---------------- people ----------------
 export const me = (req: Request) => guarded(async () => {
@@ -95,7 +100,13 @@ export const command = (req: Request) => guarded(async () => {
   if (!a.ok) return fail(a);
   const j = await readJson(req);
   if (!j) return errJson(400, "BAD_JSON");
-  const r = await writeOrg(a.orgId, (t, now) => personCommand(t, now, a.person.id, (j.body as { command?: unknown }).command));
+  const cmd = (j.body as { command?: { auth?: { webauthn?: { clientDataJSON?: string } } } }).command;
+  // A passkey signature works once. Its challenge commits to the exact action and time, so a captured request
+  // cannot be sent again inside the five minute window.
+  const cd = cmd?.auth?.webauthn?.clientDataJSON;
+  if (typeof cd !== "string") return errJson(400, "INVALID", "auth.webauthn missing");
+  if (!(await b2bStore().useOnce(`act:${a.orgId}:${sha256(cd)}`, new Date(Date.now() + 15 * 60_000).toISOString()))) return errJson(409, "REPLAYED_SIGNATURE");
+  const r = await writeOrg(a.orgId, (t, now) => personCommand(t, now, a.person.id, cmd));
   return fromResult(r);
 });
 
@@ -224,3 +235,5 @@ export const agentIntent = (req: Request) => guarded(async () => {
   if (!it) return errJson(404, "UNKNOWN_INTENT");
   return okJson({ intentHash: hash, intent: it.intent, status: it.status, attestations: it.attestations, approvals: it.approvals.map((a) => ({ personId: a.personId, role: a.role, at: a.at })), needs: it.needs, block: it.block ?? null, utr: it.utr ?? null, checks: it.checks ?? [] });
 });
+
+export const webhookKey = async () => ({ publicKey: (await import("./webhooks")).webhookPublicKey() });

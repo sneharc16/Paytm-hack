@@ -3,7 +3,7 @@
 //
 //   pnpm agents keygen <name>                 make a key pair; register the public key in the console
 //   pnpm agents set-key <name> <apiKey> [url] save the API key the console showed (url defaults to localhost:3000)
-//   pnpm agents run                           run every configured agent until stopped
+//   pnpm agents run [--listen 4100]           run every configured agent until stopped (optionally on webhooks)
 //   pnpm agents erp-demo <name> <vendorId> [--phish]   push a purchase order, goods receipt and invoice as the ERP
 //
 // Keys live in .pakka-agents/<name>.json (git-ignored). The secret key never leaves this machine.
@@ -15,7 +15,7 @@ import { z } from "zod";
 import { isGstin } from "@/b2b/gstin";
 import { findDuplicate, threeWayMatch } from "@/b2b/match";
 import type { GoodsReceipt, Invoice, PaymentIntent, PurchaseOrder, Vendor } from "@/b2b/types";
-import { generateAgentKey, PakkaAgent } from "@/sdk/pakka-agent";
+import { generateAgentKey, PakkaAgent, verifyWebhook } from "@/sdk/pakka-agent";
 
 const DIR = path.join(process.cwd(), ".pakka-agents");
 interface Saved { name: string; secretKey: string; publicKey: string; apiKey?: string; baseUrl?: string }
@@ -164,11 +164,36 @@ async function main() {
       agents.push({ name: s.name, role: m.data.agent.role, a });
       log(s.name, `ready as ${m.data.agent.role}`);
     }
-    for (;;) {
+    const cycle = async () => {
       for (const role of ["proposer", "compliance", "risk"]) for (const x of agents.filter((g) => g.role === role)) {
         try { await (role === "proposer" ? proposer : role === "compliance" ? compliance : risk)(x.a, x.name); } catch (e) { log(x.name, `error: ${String(e).slice(0, 120)}`); }
       }
-      await new Promise((r) => setTimeout(r, 4000));
+    };
+    // --listen <port>: take signed webhooks from Pakka and work at once; polling slows to a 30 second backstop.
+    const li = args.indexOf("--listen");
+    let pollMs = 4000;
+    if (li >= 0 && agents.length) {
+      const port = Number(args[li + 1] ?? 4100);
+      const base = all[0].baseUrl!;
+      const key = (await (await fetch(new URL("/api/v1/live/webhook-key", base))).json()).data.publicKey as string;
+      const { createServer } = await import("node:http");
+      let running = false;
+      createServer((req, res) => {
+        let body = "";
+        req.on("data", (c) => { body += c; if (body.length > 64_000) req.destroy(); });
+        req.on("end", () => {
+          const ok = verifyWebhook(body, { timestamp: String(req.headers["x-pakka-webhook-timestamp"] ?? ""), signature: String(req.headers["x-pakka-webhook-signature"] ?? "") }, key);
+          res.writeHead(ok ? 204 : 401).end();
+          if (!ok) return log("webhook", "rejected a request with a bad signature");
+          log("webhook", `work for ${JSON.parse(body).role}: ${JSON.parse(body).events.map((e: { type: string }) => e.type).join(", ")}`);
+          if (!running) { running = true; void cycle().finally(() => { running = false; }); }
+        });
+      }).listen(port, () => log("webhook", `listening on http://localhost:${port}; set it as each agent's webhook in the console`));
+      pollMs = 30_000;
+    }
+    for (;;) {
+      await cycle();
+      await new Promise((r) => setTimeout(r, pollMs));
     }
   }
   console.log("pnpm agents keygen <name> | set-key <name> <apiKey> [url] | run | erp-demo <name> <vendorId> [--phish] [--gstin=...]");

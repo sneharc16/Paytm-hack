@@ -4,7 +4,7 @@
 // the only simulated thing (a sandbox bank).
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bot, FileText, Gavel, KeyRound, Landmark, LayoutDashboard, Link2, ListChecks, LogOut, ShieldCheck, Snowflake, Users } from "lucide-react";
+import { Bot, FileCheck, FileText, Swords, Gavel, KeyRound, Landmark, LayoutDashboard, Link2, ListChecks, LogOut, ShieldCheck, Snowflake, Users } from "lucide-react";
 import { verifyChain } from "@/b2b/ledger";
 import { b2bMetrics } from "@/b2b/metrics";
 import type { Treasury } from "@/b2b/treasury";
@@ -14,9 +14,9 @@ import { inr, timeIST } from "@/lib/format";
 import { PakkaSeal } from "@/components/shared";
 import { LedgerPage, PayablesPage } from "../BusinessPages";
 import { Card, Hash, Pill, Rule } from "../ui";
-import { AgentApiPage, LiveApprovals, LiveBanks, LivePeople, LivePolicy, SetupPage } from "./LivePages";
+import { AgentApiPage, LiveApprovals, LiveAudit, LiveBanks, LivePeople, LivePolicy, LiveRedTeam, SetupPage } from "./LivePages";
 
-type Page = "setup" | "overview" | "payables" | "approvals" | "banks" | "people" | "policy" | "ledger" | "api";
+type Page = "setup" | "overview" | "payables" | "approvals" | "banks" | "people" | "policy" | "ledger" | "audit" | "redteam" | "api";
 const NAV: { id: Page; label: string; Icon: typeof Users }[] = [
   { id: "setup", label: "Setup", Icon: ListChecks },
   { id: "overview", label: "Overview", Icon: LayoutDashboard },
@@ -26,6 +26,8 @@ const NAV: { id: Page; label: string; Icon: typeof Users }[] = [
   { id: "people", label: "People and agents", Icon: Users },
   { id: "policy", label: "Policy and keys", Icon: ShieldCheck },
   { id: "ledger", label: "Ledger", Icon: Link2 },
+  { id: "audit", label: "Audit export", Icon: FileCheck },
+  { id: "redteam", label: "Red team", Icon: Swords },
   { id: "api", label: "Agent API", Icon: Bot },
 ];
 
@@ -83,6 +85,8 @@ export default function LiveConsole() {
           {current === "policy" && <LivePolicy t={t} />}
           {current === "ledger" && <LedgerPage t={t} />}
           {current === "api" && <AgentApiPage t={t} />}
+          {current === "audit" && <LiveAudit t={t} />}
+          {current === "redteam" && <LiveRedTeam t={t} />}
         </main>
       </div>
     </div>

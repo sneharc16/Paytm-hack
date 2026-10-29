@@ -71,6 +71,17 @@ PAKKA_B2B_ATTEST_V1|<intentHash>|<agentId>|<role>|<verdict>|<reasons joined by "
 
 Frozen or not, setup sealed, intent well formed, for this company, planned in this ledger, not paid before, nonce issued, within its lifetime, signed under the current policy, three valid agent signatures from three roles with no refusal, model allowed, payee is the approved account on file and matches what was signed, invoices open and unpaid, amount exactly what is owed after TDS, no disputed bank change for the vendor, per-payout cap, rail, first-payout cap, people's passkey signatures valid with segregation of duties, everyone required has signed, account out of cooling, daily limit, payouts per vendor per day, release window, funds.
 
+## Webhooks
+
+A governor can set a webhook URL for each agent (https, or http on localhost for development). When the ledger changes in a way that agent cares about, Pakka POSTs a small notice: `{ companyId, agentId, role, head, total, events: [{ seq, type, at }] }`. It carries no secrets; fetch the work with `GET /api/v1/agent/work`.
+
+Each notice is signed by the server's Ed25519 webhook key, published at `GET /api/v1/live/webhook-key`:
+
+- `x-pakka-webhook-timestamp`: ISO time
+- `x-pakka-webhook-signature`: hex Ed25519 over `PAKKA_B2B_WEBHOOK_V1|<timestamp>|<sha256 hex of body>`
+
+Check it with `verifyWebhook(rawBody, { timestamp, signature }, serverPublicKey)` from the SDK, and refuse anything older than 5 minutes. Delivery is best effort with a 5 second timeout and no redirects; keep a slow poll as a backstop. In production, webhooks to private or local addresses are not sent. `pnpm agents run --listen 4100` runs the reference agents on webhooks.
+
 ## SDK
 
 ```ts

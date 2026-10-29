@@ -137,6 +137,7 @@ export function verifyReceipt(ctx: GuardContext, r: Receipt, at: ISO): GuardVerd
     for (const ap of r.approvals ?? []) {
       const person = w.people.find((x) => x.id === ap.personId);
       if (!person || person.companyId !== companyId) { apProblems.push(`${ap.personId}: not in this company`); continue; }
+      if (person.removedAt) { apProblems.push(`${person.name}: removed from the company`); continue; }
       if (!person.roles.includes(ap.role)) { apProblems.push(`${person.name}: not a ${ap.role}`); continue; }
       if (ap.intentHash !== hash || ap.companyId !== companyId) { apProblems.push(`${person.name}: approved a different intent`); continue; }
       if (!verifyPersonSig(person, approveMessage(ap), ap, st.rp, st.requirePasskey)) { apProblems.push(`${person.name}: ${st.requirePasskey && !ap.webauthn ? "not signed with a passkey" : "signature does not verify"}`); continue; }

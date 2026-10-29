@@ -25,7 +25,7 @@ export interface ChangeRequest {
 }
 
 export interface Proposal {
-  id: string; kind: "policy" | "unfreeze" | "reinstate" | "register_agent"; agentId?: string; agent?: Agent; signedParams?: unknown; policy: Policy; hash: string; diff: PolicyDiff[]; loosening: boolean; by: string; at: ISO;
+  id: string; kind: "policy" | "unfreeze" | "reinstate" | "register_agent" | "remove_person"; personId?: string; agentId?: string; agent?: Agent; signedParams?: unknown; policy: Policy; hash: string; diff: PolicyDiff[]; loosening: boolean; by: string; at: ISO;
   sigs: Record<string, string>; status: "proposed" | "scheduled" | "active" | "vetoed" | "superseded"; effectiveAt?: ISO; vetoedBy?: string;
 }
 
@@ -104,6 +104,8 @@ export class TreasuryState {
       case "person_invited": this.invites.set(p.invite.id, { ...p.invite, status: "open" }); break;
       case "invite_revoked": this.invites.get(p.inviteId)!.status = "revoked"; break;
       case "person_registered": this.world.people.push({ ...p.person }); if (p.inviteId) this.invites.get(p.inviteId)!.status = "used"; break;
+      case "person_removed": Object.assign(this.world.people.find((x) => x.id === p.personId)!, { removedAt: e.at, roles: [] }); break;
+      case "passkey_revoked": { const who = this.world.people.find((x) => x.id === p.personId)!; who.credentials = (who.credentials ?? []).filter((c) => c.id !== p.credentialId); break; }
       case "passkey_added": { const who = this.world.people.find((x) => x.id === p.personId)!; who.credentials = [...(who.credentials ?? []), p.credential]; break; }
       case "agent_registered": {
         this.world.agents.push({ ...p.agent });
@@ -116,6 +118,7 @@ export class TreasuryState {
         }
         break;
       }
+      case "webhook_set": this.world.agents.find((a) => a.id === p.agentId)!.webhookUrl = p.url; break;
       case "api_key_rotated": Object.assign(this.world.agents.find((a) => a.id === p.agentId)!, { apiKeyHash: p.apiKeyHash, apiKeyPrefix: p.apiKeyPrefix }); break;
       case "org_sealed": this.sealed = true; break;
       case "policy_initialised": this.policy = p.policy; this.policyHashActive = policyHash(p.policy); this.policyLog.push({ version: p.policy.version, hash: this.policyHashActive, at: e.at }); break;

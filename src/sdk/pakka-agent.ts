@@ -2,7 +2,8 @@
 // browsers. The agent's Ed25519 secret key never leaves the agent: every request and every attestation is signed
 // locally, and the server holds only the public key and a hash of the API key.
 import { ed25519 } from "@noble/curves/ed25519.js";
-import { attestMessage, fromHex, requestMessage, toHex } from "@/b2b/crypto";
+import { attestMessage, fromHex, requestMessage, toHex, verifySig } from "@/b2b/crypto";
+import { sha256 } from "@/lib/hash";
 import type { PaymentIntent, Verdict } from "@/b2b/types";
 
 export interface AgentConfig { baseUrl: string; apiKey: string; secretKey: string }
@@ -68,3 +69,11 @@ export class PakkaAgent {
 
 export interface IntentView { intentHash: string; intent: PaymentIntent; status: string; attestations: unknown[]; needs: string[]; block: { code: string; detail: string } | null; utr: string | null }
 export type WorkItem = Record<string, unknown> & { kind: "propose" | "attest" };
+
+/** Check a webhook from Pakka: the server's signature over time and body, and that it is fresh. */
+export function verifyWebhook(rawBody: string, headers: { timestamp?: string | null; signature?: string | null }, serverPublicKey: string, maxSkewMs = 5 * 60_000): boolean {
+  const ts = headers.timestamp ?? "";
+  const t = Date.parse(ts);
+  if (!Number.isFinite(t) || Math.abs(Date.now() - t) > maxSkewMs) return false;
+  return verifySig(serverPublicKey, `PAKKA_B2B_WEBHOOK_V1|${ts}|${sha256(rawBody)}`, headers.signature ?? "");
+}

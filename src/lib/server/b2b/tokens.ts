@@ -5,6 +5,7 @@ import path from "node:path";
 import { b64uDecode, b64uEncode } from "@/b2b/crypto";
 
 let cached: Buffer | null = null;
+export const serverSecret = () => secret();
 /** PAKKA_SESSION_SECRET in production. On a laptop a random secret is created once under the data folder. */
 function secret(): Buffer {
   if (cached) return cached;

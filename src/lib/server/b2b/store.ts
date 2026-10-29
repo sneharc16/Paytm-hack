@@ -16,6 +16,8 @@ export interface B2BStore {
   orgIds(): Promise<string[]>;
   /** Record a one-time value (request nonce, used challenge). False if it was already used. */
   useOnce(key: string, expiresAt: string): Promise<boolean>;
+  /** Whether a one-time value has been recorded (and not expired). */
+  seen(key: string): Promise<boolean>;
 }
 
 export class MemoryStore implements B2BStore {
@@ -38,6 +40,7 @@ export class MemoryStore implements B2BStore {
     this.persistOnce();
     return true;
   }
+  async seen(key: string) { const exp = this.once.get(key); return !!exp && exp >= new Date().toISOString(); }
   protected persist(orgId: string) { void orgId; }
   protected persistOnce() {}
 }
@@ -84,6 +87,11 @@ export class SupabaseStore implements B2BStore {
     const { data, error } = await this.db.from("b2b_orgs").select("id");
     if (error) throw new Error(error.message);
     return (data as { id: string }[]).map((r) => r.id);
+  }
+  async seen(key: string) {
+    const { data, error } = await this.db.from("b2b_once").select("key").eq("key", key).gte("expires_at", new Date().toISOString()).maybeSingle();
+    if (error) throw new Error(error.message);
+    return !!data;
   }
   async useOnce(key: string, expiresAt: string) {
     await this.db.from("b2b_once").delete().lt("expires_at", new Date().toISOString());

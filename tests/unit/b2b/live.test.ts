@@ -7,6 +7,7 @@ import { makeGstin } from "@/b2b/gstin";
 import { SoftPasskey } from "@/b2b/testing/softPasskey";
 import type { Treasury } from "@/b2b/treasury";
 import { checkB2BInvariants } from "@/b2b/invariants";
+import { exportMessage, verifyExport, EXPORT_FORMAT } from "@/b2b/audit";
 import { sha256 } from "@/lib/hash";
 
 const rp: RelyingParty = { rpId: "localhost", origins: ["http://localhost:3000"] };
@@ -180,5 +181,73 @@ describe("starting rules", () => {
   it("is refused after sealing", () => {
     const s = setup();
     expect(s.meera({ kind: "set_initial_policy", changes: { coolingHoursNew: 0 } }, at(10)).reason).toBe("ALREADY_SEALED");
+  });
+});
+
+describe("offboarding", () => {
+  it("removes people after sealing only with two governors, and their approvals stop counting", () => {
+    const s = setup();
+    const { t } = s;
+    const p = s.meera({ kind: "remove_person", personId: "p_arjun", reason: "Left the company" }, at(10));
+    expect(p.ok, p.reason).toBe(true);
+    expect(t.world.people.find((x) => x.id === "p_arjun")!.removedAt).toBeUndefined();
+    expect(s.sana({ kind: "sign_proposal", proposalId: String(p.data!.proposalId) }, at(11)).ok).toBe(true);
+    expect(t.world.people.find((x) => x.id === "p_arjun")!.removedAt).toBeTruthy();
+    // Arjun's passkey no longer acts for the company.
+    expect(s.arjun({ kind: "freeze", reason: "after leaving" }, at(12)).reason).toBe("NOT_IN_COMPANY");
+    // Governors are fixed after sealing.
+    expect(s.meera({ kind: "remove_person", personId: "p_vikram", reason: "x".repeat(5) }, at(13)).reason).toBe("GOVERNORS_ARE_FIXED_AFTER_SEAL");
+  });
+
+  it("revokes a lost passkey at once, but never someone's last one by themselves", () => {
+    const s = setup();
+    const { t } = s;
+    expect(s.arjun({ kind: "revoke_passkey", personId: "p_arjun", credentialId: s.pk.arjun.credential.id }, at(10)).reason).toBe("LAST_PASSKEY");
+    const r = s.vikram({ kind: "revoke_passkey", personId: "p_arjun", credentialId: s.pk.arjun.credential.id }, at(11));
+    expect(r.ok, r.reason).toBe(true);
+    expect(t.world.people.find((x) => x.id === "p_arjun")!.credentials).toEqual([]);
+    expect(s.arjun({ kind: "freeze", reason: "with the lost phone" }, at(12)).reason).toBe("BAD_PASSKEY_SIGNATURE");
+  });
+});
+
+describe("audit export", () => {
+  it("verifies offline, and any edit or a forged exporter signature fails", () => {
+    const s = setup();
+    const { t } = s;
+    s.vikram({ kind: "propose_policy", changes: { dailyLimit: 1_00_00_000_00 } }, at(10));
+    s.sana({ kind: "sign_proposal", proposalId: "GOV-101" }, at(11));
+    const base = { format: EXPORT_FORMAT as typeof EXPORT_FORMAT, companyId: t.companyId, head: t.head, count: t.events.length, exportedBy: "p_meera", exportedAt: at(12), events: t.events };
+    const good = { ...base, signature: { at: at(12), webauthn: s.pk.founder.sign(exportMessage(base, at(12))) } } as const;
+    const r = verifyExport(good);
+    expect(r.checks.filter((c) => !c.ok), JSON.stringify(r.checks)).toEqual([]);
+    const edited = structuredClone(good);
+    edited.events[5].payload.name = "Someone else";
+    expect(verifyExport(edited).checks.find((c) => c.name === "Hash chain")!.ok).toBe(false);
+    const forged = { ...good, signature: { at: at(12), webauthn: s.pk.neha.sign(exportMessage(base, at(12))) } };
+    expect(verifyExport(forged).checks.find((c) => c.name.startsWith("Exporter"))!.ok).toBe(false);
+  });
+});
+
+describe("live red team", () => {
+  it("defends every attack on a real ledger, and skips honestly when there is nothing to attack", async () => {
+    const { runLiveAttacks } = await import("@/b2b/liveRedteam");
+    const empty = setup();
+    const r0 = runLiveAttacks(empty.t.events, at(30), new Uint8Array(32).fill(7));
+    expect(r0.filter((r) => r.outcome === "breach")).toEqual([]);
+    expect(r0.some((r) => r.outcome === "skipped")).toBe(true);
+    const s = setup();
+    const { vendorId } = vendorWithAccount(s, 10);
+    const erp = (cmd: unknown, m: number) => agentCommand(s.t, at(m), "a_acme_erp", cmd);
+    erp({ kind: "submit_po", po: { id: "PO-1", vendorId, lines: [{ sku: "BOX", qty: 50, rate: 1_200_00 }] } }, 20);
+    erp({ kind: "submit_grn", grn: { id: "GRN-1", poId: "PO-1", lines: [{ sku: "BOX", qty: 50 }] } }, 21);
+    const inv = erp({ kind: "submit_invoice", invoice: { number: "KP/1", vendorId, poId: "PO-1", date: at(1400), gstin: makeGstin("27", "AABCK5678L"), lines: [{ sku: "BOX", qty: 50, rate: 1_200_00 }], gst: 7_200_00 } }, 1500);
+    const h = String(agentCommand(s.t, at(1501), "a_acme_proposer", { kind: "propose", invoiceId: String(inv.data!.invoiceId) }).data!.intentHash);
+    agentSign(s.t, "a_acme_proposer", s.ak.proposer.sk, h, "approve", ["m"], at(1501));
+    agentSign(s.t, "a_acme_compliance", s.ak.compliance.sk, h, "approve", ["c"], at(1502));
+    agentSign(s.t, "a_acme_risk", s.ak.risk.sk, h, "approve", ["r"], at(1502));
+    s.arjun({ kind: "approve", intentHash: h, role: "checker" }, at(1503));
+    const r = runLiveAttacks(s.t.events, at(1504), new Uint8Array(32).fill(9));
+    expect(r.filter((x) => x.outcome !== "defended"), JSON.stringify(r.filter((x) => x.outcome !== "defended"))).toEqual([]);
+    expect(r).toHaveLength(12);
   });
 });

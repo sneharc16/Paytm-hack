@@ -3,6 +3,8 @@
 // action in this browser, and sends it; the server and the guard verify the signature again.
 import { useState } from "react";
 import { Bot, CircleCheck, CircleX, Copy, KeyRound, Snowflake } from "lucide-react";
+import { EXPORT_FORMAT, exportMessage, verifyExport, type AuditReport, type LedgerExport } from "@/b2b/audit";
+import { runLiveAttacks, type LiveAttackResult } from "@/b2b/liveRedteam";
 import { diffPolicy, isLoosening } from "@/b2b/policy";
 import type { IntentState } from "@/b2b/state";
 import type { Treasury } from "@/b2b/treasury";
@@ -126,7 +128,18 @@ export function LivePeople({ t }: { t: Treasury }) {
       <h1 className="text-[24px] font-bold text-navy">People and agents</h1>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="People">
-          <ul className="divide-y divide-line">{t.world.people.map((p) => <li key={p.id} className="flex flex-wrap items-center gap-2 py-2 text-[14px]"><b>{p.name}</b><span className="text-slate">{p.title}</span><span className="ml-auto flex gap-1">{p.roles.map((r) => <Pill key={r} tone="navy">{r}</Pill>)}</span><span className="w-full text-[12.5px] text-slate"><KeyRound size={12} className="mr-1 inline" aria-hidden />{p.credentials?.length ?? 0} passkey{(p.credentials?.length ?? 0) === 1 ? "" : "s"}</span></li>)}</ul>
+          <ul className="divide-y divide-line">{t.world.people.filter((p) => !p.removedAt).map((p) => (
+            <li key={p.id} className="py-2 text-[14px]">
+              <div className="flex flex-wrap items-center gap-2"><b>{p.name}</b><span className="text-slate">{p.title}</span><span className="ml-auto flex gap-1">{p.roles.map((r) => <Pill key={r} tone="navy">{r}</Pill>)}</span>
+                {gov && p.id !== me().person.id && !(t.state.sealed && p.roles.includes("governor")) && <button disabled={a.busy} onClick={() => void a.run({ kind: "remove_person", personId: p.id, reason: "Left the company" }, t.state.sealed ? "Proposed. A second governor must sign." : "Removed")} className="text-[12.5px] font-semibold text-red underline">Remove</button>}
+              </div>
+              <ul className="mt-1 text-[12.5px] text-slate">{(p.credentials ?? []).map((c) => (
+                <li key={c.id} className="flex items-center gap-2"><KeyRound size={12} aria-hidden />Passkey added {whenIST(c.addedAt)} <Hash value={c.id} n={8} />
+                  {(p.id === me().person.id ? (p.credentials?.length ?? 0) > 1 : gov) && <button disabled={a.busy} onClick={() => void a.run({ kind: "revoke_passkey", personId: p.id, credentialId: c.id }, "Passkey revoked")} className="font-semibold text-red underline">Revoke</button>}
+                </li>
+              ))}{!p.credentials?.length && <li className="text-red">No passkey: cannot sign in or approve</li>}</ul>
+            </li>
+          ))}</ul>
           <button onClick={() => void addDevice().then((r) => a.setToast(r.ok ? { text: "Passkey added", tone: "green" } : { text: r.error.code, tone: "red" }))} className="mt-3 text-[13.5px] font-semibold text-navy underline">Add a passkey on another device</button>
         </Card>
         <Card title="Invite someone">
@@ -158,7 +171,8 @@ export function LivePeople({ t }: { t: Treasury }) {
                     {gov && on && <button onClick={() => void a.run({ kind: "suspend_agent", agentId: x.id, reason: "Suspected compromise" }, "Agent suspended")} className="ml-auto text-[13px] font-semibold text-red underline">Suspend</button>}
                     {gov && !on && <button onClick={() => void a.run({ kind: "propose_reinstate", agentId: x.id }, "Proposed. A second governor must sign.")} className="ml-auto text-[13px] font-semibold text-navy underline">Propose reinstating</button>}
                   </div>
-                  <div className="text-[12.5px] text-slate">{x.modelLabel} · key <Hash value={x.publicKey} n={16} /> · API key {x.apiKeyPrefix}...</div>
+                  <div className="text-[12.5px] text-slate">{x.modelLabel} · key <Hash value={x.publicKey} n={16} /> · API key {x.apiKeyPrefix}...{x.webhookUrl ? ` · webhook ${x.webhookUrl}` : ""}</div>
+                  {gov && on && <WebhookForm agentId={x.id} current={x.webhookUrl ?? ""} run={a.run} busy={a.busy} />}
                 </li>
               );
             })}</ul>
@@ -188,6 +202,16 @@ export function LivePeople({ t }: { t: Treasury }) {
   );
 }
 
+function WebhookForm({ agentId, current, run, busy }: { agentId: string; current: string; run: ReturnType<typeof useAction>["run"]; busy: boolean }) {
+  const [url, setUrl] = useState(current);
+  return (
+    <div className="mt-1 flex gap-2">
+      <input placeholder="Webhook URL (https)" value={url} onChange={(e) => setUrl(e.target.value)} className="h-8 flex-1 rounded-[8px] border border-line px-2 text-[13px]" />
+      <button disabled={busy || url === current} onClick={() => void run({ kind: "set_webhook", agentId, url: url.trim() || null }, url.trim() ? "Webhook set; notices are signed by this server" : "Webhook removed")} className="h-8 rounded-full border border-line-strong px-3 text-[12.5px] font-semibold text-navy">Save</button>
+    </div>
+  );
+}
+
 // ---------------- approvals ----------------
 export function LiveApprovals({ t }: { t: Treasury }) {
   const a = useAction();
@@ -203,13 +227,28 @@ export function LiveApprovals({ t }: { t: Treasury }) {
         const v = t.world.vendors.find((x) => x.id === it.intent.vendorId)!;
         const ben = t.state.beneficiaries.get(it.intent.beneficiaryId);
         const r = role(it);
+        const v0 = t.check(it.hash, useLive.getState().now());
+        const after = v0.needs.filter((n) => !it.approvals.some((x) => x.role === n) && n !== r);
+        const waits = v0.checks.filter((c) => !c.ok && !["APPROVALS_COMPLETE"].includes(c.code));
+        const forecast = waits.length ? `The guard will still hold it: ${waits.map((c) => c.detail ?? c.code).join("; ")}` : after.length ? `Then it waits for the ${after.join(" and ")}.` : "Money leaves as soon as you sign.";
         return (
           <Card key={it.hash}>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="text-[13.5px] text-slate">{inv.number} · {v.brand} · {it.intent.rail} · to {ben?.nameAtBank}, ending {ben?.accountNo.slice(-4)}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[13.5px] text-slate">{inv.number} · {v.brand} · {it.intent.rail}</div>
                 <div className="text-[22px] font-bold text-navy"><Money paise={it.intent.amount} /></div>
-                <ul className="mt-1 text-[14px] text-amber">{it.needReasons.map((x) => <li key={x}>{x}</li>)}</ul>
+                <ul className="mt-1 text-[14px] text-amber">{v0.needReasons.map((x) => <li key={x}>{x}</li>)}</ul>
+                <details className="mt-2 rounded-[10px] border border-line bg-[#FBFCFE] p-3 text-[13.5px]" open>
+                  <summary className="cursor-pointer font-semibold">What your passkey signs</summary>
+                  <dl className="mt-2 grid grid-cols-[150px_1fr] gap-y-1">
+                    <dt className="text-slate">Pays</dt><dd><b>{inr(it.intent.amount)}</b> after TDS {inr(it.intent.tds)} for invoice {inv.number} ({inr(inv.total)})</dd>
+                    <dt className="text-slate">To</dt><dd>{ben?.nameAtBank}, {ben?.ifsc}, account ending {ben?.accountNo.slice(-4)}. The account on file, approved {ben ? whenIST(ben.addedAt) : ""}</dd>
+                    <dt className="text-slate">Nonce and policy</dt><dd>nonce {it.intent.nonce}, policy v{it.intent.policyVersion}</dd>
+                    <dt className="text-slate">Valid until</dt><dd>{whenIST(it.intent.expiresAt)}</dd>
+                    <dt className="text-slate">Intent</dt><dd><Hash value={it.hash} n={24} /></dd>
+                  </dl>
+                  {r && <p className="mt-2 font-semibold text-navy">{forecast}</p>}
+                </details>
                 <div className="mt-2 flex flex-wrap gap-2">{it.attestations.map((x) => <Pill key={x.signerId} tone={x.verdict === "approve" ? "green" : "amber"}>{x.role}: {x.verdict}</Pill>)}{it.needs.map((n) => <Pill key={n} tone={it.approvals.some((x) => x.role === n) ? "green" : "muted"}>{n}: {it.approvals.some((x) => x.role === n) ? "signed" : "waiting"}</Pill>)}</div>
               </div>
               {r ? (
@@ -377,6 +416,78 @@ export function AgentApiPage({ t }: { t: Treasury }) {
         <p className="mt-3 text-[13.5px] text-slate">Headers: <code>authorization: Bearer pk_...</code>, <code>x-pakka-timestamp</code>, <code>x-pakka-nonce</code>, <code>x-pakka-signature</code> = Ed25519 over <code>PAKKA_B2B_REQUEST_V1|METHOD|path|timestamp|nonce|sha256(body)</code>. Requests older than five minutes and reused nonces are refused.</p>
         <p className="mt-2 text-[13.5px] text-slate">This company: <code>{t.companyId}</code>, policy v{t.state.policy.version}, {t.world.agents.length} agents registered.</p>
       </Card>
+    </div>
+  );
+}
+
+// ---------------- red team on this company's ledger ----------------
+export function LiveRedTeam({ t }: { t: Treasury }) {
+  const [res, setRes] = useState<LiveAttackResult[] | null>(null);
+  const run = () => setRes(runLiveAttacks(t.events, useLive.getState().now(), crypto.getRandomValues(new Uint8Array(32))));
+  const breaches = res?.filter((r) => r.outcome === "breach").length ?? 0;
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div><h1 className="text-[24px] font-bold text-navy">Red team on your ledger</h1><p className="max-w-[760px] text-[14px] text-slate">These attacks run in this browser against a private copy of {t.world.companies[0].brand}&apos;s real ledger. Nothing is sent. The attacker has the ledger and their own keys, never an agent&apos;s or a person&apos;s.</p></div>
+        <button onClick={run} className="btn-primary h-10 rounded-full px-5 text-[15px] font-semibold">Run the attacks</button>
+      </div>
+      {res && <div className="grid gap-3 sm:grid-cols-3">
+        <Card><div className="text-[13.5px] text-slate">Attacks</div><div className="tnum text-[26px] font-bold text-navy">{res.length}</div></Card>
+        <Card><div className="text-[13.5px] text-slate">Got through</div><div className={`tnum text-[26px] font-bold ${breaches ? "text-red" : "text-green"}`}>{breaches}</div></Card>
+        <Card><div className="text-[13.5px] text-slate">Skipped (nothing to attack yet)</div><div className="tnum text-[26px] font-bold text-navy">{res.filter((r) => r.outcome === "skipped").length}</div></Card>
+      </div>}
+      {res && <Card><ul className="divide-y divide-line">{res.map((r) => (
+        <li key={r.id} className="grid gap-2 py-3 text-[14px] md:grid-cols-[70px_1fr_1.2fr_110px]">
+          <span className="font-mono text-[13px] text-slate">{r.id}</span><div><div className="font-semibold">{r.title}</div><div className="text-slate">{r.attack}</div></div>
+          <div className="text-[13px] text-slate">{r.observed}</div>
+          <div><Pill tone={r.outcome === "defended" ? "green" : r.outcome === "skipped" ? "muted" : "red"}>{r.outcome === "defended" ? "Defended" : r.outcome === "skipped" ? "Skipped" : "Got through"}</Pill></div>
+        </li>
+      ))}</ul></Card>}
+    </div>
+  );
+}
+
+// ---------------- audit ----------------
+export function LiveAudit({ t }: { t: Treasury }) {
+  const [msg, setMsg] = useState("");
+  const [report, setReport] = useState<AuditReport | null>(null);
+  const download = async () => {
+    setMsg("");
+    const meNow = me();
+    const base = { format: EXPORT_FORMAT as typeof EXPORT_FORMAT, companyId: t.companyId, head: t.head, count: t.events.length, exportedBy: meNow.person.id };
+    const at = useLive.getState().now();
+    try {
+      const webauthn = await useLive.getState().sign(exportMessage(base, at));
+      const file: LedgerExport = { ...base, exportedAt: at, events: t.events, signature: { at, webauthn } };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(file)], { type: "application/json" }));
+      const el = document.createElement("a");
+      el.href = url; el.download = `pakka-ledger-${t.companyId}-${t.events.length}.json`; el.click();
+      URL.revokeObjectURL(url);
+      setMsg(`Signed by you over head ${t.head.slice(0, 12)} and ${t.events.length} events.`);
+    } catch (e) { setMsg(`Not signed: ${String((e as Error).message ?? e).slice(0, 120)}`); }
+  };
+  const verify = async (f: File | undefined) => {
+    if (!f) return;
+    try { setReport(verifyExport(JSON.parse(await f.text()) as LedgerExport)); } catch { setReport({ ok: false, checks: [{ name: "Readable", ok: false, detail: "Not a ledger export" }], summary: {} }); }
+  };
+  return (
+    <div className="space-y-4">
+      <div><h1 className="text-[24px] font-bold text-navy">Audit</h1><p className="text-[14px] text-slate">Give your auditor a file they can check on their own, without trusting Pakka or you: every event, every signature, and your passkey signature over the whole thing.</p></div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card title="Signed export">
+          <p className="text-[14px] text-slate">{t.events.length} events, head <Hash value={t.head} n={16} />.</p>
+          <button onClick={() => void download()} className="btn-primary mt-3 flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-semibold"><KeyRound size={15} aria-hidden />Sign and download</button>
+          {msg && <p className="mt-2 text-[13.5px] text-slate">{msg}</p>}
+          <p className="mt-3 text-[13px] text-slate">Offline check: <code>pnpm b2b:verify pakka-ledger-....json</code></p>
+        </Card>
+        <Card title="Check an export">
+          <input type="file" accept="application/json" onChange={(e) => void verify(e.target.files?.[0])} className="text-[14px]" />
+          {report && <>
+            <p className={`mt-3 text-[15px] font-semibold ${report.ok ? "text-green" : "text-red"}`}>{report.ok ? "Intact: every check passes" : "Does not verify"}</p>
+            <ul className="mt-1">{report.checks.map((c) => <CheckRow key={c.name} ok={c.ok} label={c.name} detail={c.detail} />)}</ul>
+          </>}
+        </Card>
+      </div>
     </div>
   );
 }
