@@ -21,7 +21,7 @@ export const STRINGS = {
   "sheet.lede.trial_unused": r("{trialDate} ko aapne {trialAmount} ka trial liya tha. Uske baad {brand} app nahi khula.", "{trialDate} को आपने {trialAmount} का ट्रायल लिया था। उसके बाद {brand} ऐप नहीं खुला।", "You started a {trialAmount} trial on {trialDate}. The {brand} app hasn't been opened since."),
   "sheet.lede.trial": r("{trialDate} ko aapne {trialAmount} ka trial liya tha.", "{trialDate} को आपने {trialAmount} का ट्रायल लिया था।", "You started a {trialAmount} trial on {trialDate}."),
   "sheet.lede.first": r("Ye is AutoPay ka pehla charge hai.", "यह इस AutoPay का पहला चार्ज है।", "This is the first charge on this AutoPay."),
-  "sheet.listen": r("Hindi mein sunein", "हिंदी में सुनें", "Listen in Hindi"),
+  "sheet.listen": r("Sunein", "सुनें", "Listen"),
   "sheet.changed": r("Aapne {choice} chuna tha. Badalna hai toh naya option chuniye.", "आपने {choice} चुना था। बदलना है तो नया विकल्प चुनिए।", "You chose {choice}. To change it, pick another option."),
   "timeline.now": r("Aapko bataya", "आपको बताया", "We told you"),
   "timeline.end": r("{amount} katega", "{amount} कटेगा", "{amount} will be charged"),
@@ -146,6 +146,11 @@ export const STRINGS = {
   "pill.failed": r("Nahi kata", "नहीं कटा", "Didn't go through"),
   "pill.charged": r("Kat gaya", "कट गया", "Charged"),
   "persona.switch": r("Kaun dekh raha hai", "कौन देख रहा है", "Viewing as"),
+  "voice.listening": r("Sun rahe hain. Bolna khatam ho toh rokiye.", "सुन रहे हैं। बोलना ख़त्म हो तो रोकिए।", "Listening. Tap stop when you're done."),
+  "voice.micdenied": r("Mic ki permission nahi mili. Likh kar poochhiye.", "माइक की अनुमति नहीं मिली। लिखकर पूछिए।", "No microphone permission. Type your question instead."),
+  "voice.switch": r("{lang} mein dekhein", "{lang} में देखें", "See this in {lang}"),
+  "lang.unavailable": r("{lang} abhi taiyaar nahi hai, isliye {base} mein dikha rahe hain.", "{lang} अभी तैयार नहीं है, इसलिए {base} में दिखा रहे हैं।", "{lang} isn't ready yet, so this is in {base}."),
+  "lang.loading": r("{lang} mein badal rahe hain", "{lang} में बदल रहे हैं", "Switching to {lang}"),
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

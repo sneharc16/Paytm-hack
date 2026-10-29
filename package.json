@@ -12,7 +12,8 @@
     "e2e": "playwright test",
     "check:supabase": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts",
     "check:live": "tsx --tsconfig tsconfig.json scripts/check-live.ts",
-    "try:hindi": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-hindi.ts"
+    "try:hindi": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-hindi.ts",
+    "bake:sarvam": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-sarvam.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

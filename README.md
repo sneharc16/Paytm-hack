@@ -47,3 +47,13 @@ Decisions where the PRD is silent are in `docs/DECISIONS.md`.
 ## Not built yet
 
 Live model text needs a paid Anthropic key (`LLM_API_KEY`, then `pnpm bake:llm`); until then templates and the hand-checked review labels are used and labelled as such. The cheaper-plan offer is not built.
+
+## Regional languages and voice (Sarvam AI)
+
+Set `SARVAM_API_KEY` in `.env.local`, then:
+
+```bash
+pnpm bake:sarvam
+```
+
+That translates the customer copy into 21 more languages (Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Odia, Punjabi, Assamese, Urdu, Nepali, Konkani, Maithili, Dogri, Bodo, Sanskrit, Kashmiri, Sindhi, Manipuri, Santali) and keeps only lines that pass the checks in `src/copy/regional.ts`. The language button in the customer app lists all 24. "Listen" speaks in the chosen language (Bulbul), and the mic in Pakka se poochho understands any of them (Saaras, language detected automatically). Without a key everything falls back to Hindi, Hinglish or English.
