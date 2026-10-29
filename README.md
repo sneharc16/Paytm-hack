@@ -47,3 +47,12 @@ Decisions where the PRD is silent are in `docs/DECISIONS.md`.
 ## Not built yet
 
 Live model text needs a paid Anthropic key (`LLM_API_KEY`, then `pnpm bake:llm`); until then templates and the hand-checked review labels are used and labelled as such. The cheaper-plan offer is not built.
+
+## Pakka for Business (`/business`)
+
+The same idea for B2B payouts in INR. Three AI agents (payables, compliance, risk) read invoices and plan vendor payouts, but none of them can move money. A treasury guard releases a payout only for a receipt it checks on its own: Ed25519 signatures from each agent and from the people the amount demands, the account on file, the exact amount after TDS, a fresh nonce, the current policy and model, cooling periods, caps, the release window and the balance. It fails closed.
+
+- `src/b2b`: pure TypeScript, separate from the consumer engine. Hash-chained ledger, two-of-three governance with a 24 hour timelock on looser rules, PIN step-up with lockout, freeze.
+- Story: Saanjh Distributors and Kaveri Fresh, 26 to 28 Oct 2026. A phishing email with a prompt injection asks to pay ₹4,19,905 to a new account; it is quarantined, the callback to the number on file exposes it, and the real invoice is paid to the real account.
+- Red team: 34 attacks run for real in the browser and in `pnpm test` (forged and replayed receipts, stolen agent keys, all agents compromised, split payments, self-approval, a single governor loosening policy, bank timeouts, ledger edits).
+- `pnpm b2b:story` prints what happened to every invoice.

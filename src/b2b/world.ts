@@ -201,7 +201,7 @@ export function generateBusinessWorld(seed = "2711"): BusinessWorld {
   };
 
   // Scripted Saanjh invoices.
-  const d1 = (t: string) => ist(`2026-10-26 ${t}`), d2 = (t: string) => ist(`2026-10-27 ${t}`), d3 = (t: string) => ist(`2026-10-28 ${t}`);
+  const d1 = (t: string) => ist(`2026-10-26 ${t}`), d2 = (t: string) => ist(`2026-10-27 ${t}`);
   addInvoice({ vendorId: "v_nilgiri", total: 2_36_000_00, at: d1("08:45"), tag: "msme_due", date: ist("2026-09-12 11:00"), grn: "late", grnAt: d1("10:30") });
   addInvoice({ vendorId: "v_aravali", total: 38_400_00, at: d1("09:00"), tag: "dup_original", number: "AP/2026/118" });
   addInvoice({ vendorId: "v_trimurti", total: 48_000_00, at: d1("09:40"), tag: "split_1" });

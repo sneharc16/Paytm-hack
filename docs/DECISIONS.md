@@ -42,3 +42,18 @@
 - The model gets the amounts pre-formatted (`amount_text`, `trial_amount_text`) beside the raw numbers; the PRD's L1 prompt is unchanged.
 - Only upcoming-charge messages (ask, tell, follow-up, collect, remind) are model-written, because the L1 prompt is about an upcoming charge. Refund offers and failed-charge notices keep their templates: the model described past charges as future ones.
 - Result: all Hinglish and English reminders pass the fact-check; all 22 Hindi reminders came back in Latin script and fail, so Hindi uses the hand-written templates. Review tags (205, all agreeing with the hand labels), the merchant alert and both case summaries are model-written.
+
+## Pakka for Business (src/b2b, /business)
+- A separate engine and route. Nothing in src/engine, src/sim, src/copy or the consumer surfaces changes; the business engine only reads helpers from src/engine/clock. Its world is `generateBusinessWorld("2711")`, its store and localStorage key are its own.
+- Receipts use Ed25519 signatures (`@noble/curves`), not zero-knowledge proofs. They show that each agent and person signed this exact intent; they do not prove how a model reached its answer. Keys are derived from the world seed as stand-ins for a KMS key (agents) and a phone's secure element (people). The guard holds public keys only and never imports keys.ts (checked by a test).
+- Hashes are SHA-256 with a domain tag per kind (intent, attestation, approval, policy, governance, account, ledger), over canonical JSON that rejects floats.
+- Nonces are unique per company and consumed on payout, not a single "next nonce", so a payout waiting for the CFO does not block others. The intent's 12 hour life bounds how long a nonce stays live.
+- Approval lines: checker from ₹50,000 and CFO from ₹5,00,000, on the vendor's total for the last 24 hours (so splitting does not help). Agents alone may release ₹3,00,000 a day. First payout to a new account: checker, capped at ₹1,00,000.
+- Cooling: 24 hours for a newly onboarded account, 72 hours for a changed one. While a bank change request is open for a vendor, nothing is paid to that vendor.
+- Release window 9 AM to 7 PM IST. Outside it a payout waits; caps and approvals are worked out when the window opens.
+- TDS rates (goods 0, logistics 2%, services 10%, rent 10%) and GST rates (goods 12%, others 18%) are illustrative policy values, not tax advice.
+- Policy changes need two of three governors. A change is classed as looser by comparing each field, never by the proposer's label; looser changes wait 24 hours and any governor can veto. Freezing needs one person; lifting it needs two governors.
+- The demo PIN rule is any six digits except 000000; three misses lock the person out for 15 minutes. Scripted team actions use a fixed PIN and are marked autoplayed.
+- Bank codes in IFSCs (NRMB, DCUB, KSHB, VTRB, MLWB) and all companies, vendors and people are fictional.
+- Business console copy is English only, like the merchant console; it is not customer copy.
+- The email reader is a rule-based scanner (`rules-v1`). No language model is called in the business engine yet; if one is added it may only add evidence, never set an amount or payee.

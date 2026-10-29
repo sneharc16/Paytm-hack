@@ -3,6 +3,7 @@
 // the policy demands, and the company's current state. It trusts no agent, no host and no email. Any error
 // while checking is a "no" (fail closed). It can verify signatures but cannot make them: it never imports keys.ts.
 import { istDay } from "@/engine/clock";
+import { inr } from "@/lib/format";
 import { approveMessage, attestMessage, verifySig } from "./crypto";
 import { hoursBetween, inReleaseWindow, nextIstMidnight, nextReleaseOpen } from "./clock";
 import { IntentSchema, intentHash } from "./intent";
@@ -120,7 +121,9 @@ export function verifyReceipt(ctx: GuardContext, r: Receipt, at: ISO): GuardVerd
     const aggregate = st.vendorWindow(it.vendorId, at) + it.amount;
     let tier = tierFor(pol, aggregate, forced.length > 0);
     const reasons = [...forced];
-    if (aggregate > it.amount && aggregate >= pol.checkerFrom && it.amount < pol.checkerFrom) reasons.push(`With the last 24 hours this vendor gets ${aggregate} (STRUCTURING_V1)`);
+    if (aggregate > it.amount && aggregate >= pol.checkerFrom && it.amount < pol.checkerFrom) reasons.push(`With the last 24 hours this vendor gets ${inr(aggregate)} (STRUCTURING_V1)`);
+    else if (tier === "checker_cfo") reasons.push(`${inr(aggregate)} is at or above the CFO line of ${inr(pol.cfoFrom)}`);
+    else if (tier === "checker" && !forced.length) reasons.push(`${inr(aggregate)} is at or above the checker line of ${inr(pol.checkerFrom)}`);
     const day = istDay(at);
     if (tier === "agents" && (st.agentOnlyByDay.get(day) ?? 0) + it.amount > pol.agentOnlyDailyCap) { tier = "checker"; reasons.push("Agents' own daily cap reached (AGENT_CAP_V1)"); }
     const needs = rolesFor(tier);

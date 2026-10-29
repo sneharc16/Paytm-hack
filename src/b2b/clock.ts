@@ -33,13 +33,14 @@ export const daysBetween = (a: ISO, b: ISO) => Math.floor((ms(b) - ms(a)) / 86_4
 
 export const B2B_MOMENTS: { at: ISO; label: string }[] = [
   { at: ist("2026-10-26 09:05"), label: "Morning invoice run" },
-  { at: ist("2026-10-26 11:25"), label: "Bank change email arrives" },
+  { at: ist("2026-10-26 11:21"), label: "Phishing email arrives" },
   { at: ist("2026-10-26 12:10"), label: "Callback to the number on file" },
-  { at: ist("2026-10-26 15:00"), label: "Large payments wait for people" },
-  { at: ist("2026-10-26 19:30"), label: "Release window closes" },
-  { at: ist("2026-10-27 09:05"), label: "Next morning run" },
-  { at: ist("2026-10-27 11:30"), label: "New vendor out of cooling" },
-  { at: ist("2026-10-28 12:00"), label: "Limit increase goes live" },
+  { at: ist("2026-10-26 15:00"), label: "People sign the big payouts" },
+  { at: ist("2026-10-26 21:41"), label: "Night invoice waits" },
+  { at: ist("2026-10-27 09:01"), label: "Release window opens" },
+  { at: ist("2026-10-27 10:31"), label: "New vendor paid after cooling" },
+  { at: ist("2026-10-27 12:21"), label: "Two governors sign a higher limit" },
+  { at: ist("2026-10-28 12:21"), label: "Limit increase goes live" },
   { at: B2B_END, label: "End" },
 ];
 

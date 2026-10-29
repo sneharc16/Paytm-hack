@@ -88,6 +88,14 @@ export class Treasury {
     this.processedTo = to;
   }
 
+  /** Demo and red-team switch: from `at`, the named agents sign whatever they are shown. Written to the ledger
+   *  so a replay takes the same path. */
+  simulateTakeover(at: ISO, compromised: Treasury["compromised"]) {
+    this.advance(at);
+    this.compromised = { ...compromised };
+    this.emit({ at, type: "takeover_simulated", actor: "system", payload: { ...compromised } });
+  }
+
   command(at: ISO, cmd: B2BCommand): CommandResult {
     this.advance(at);
     return applyCommand(this, at, cmd);
