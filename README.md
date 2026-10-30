@@ -2,6 +2,10 @@
 
 An AI teammate for UPI AutoPay that asks before the money moves. Prototype for the Paytm Build for India AI Hackathon, Problem Statement 3. All merchants and people are fictional. No real money moves.
 
+## Pakka live: try it for real
+
+Open `/live`, create an account with a passkey (Touch ID, Windows Hello or your phone), pick any of 24 languages and add the AutoPays you actually have, typed or by pasting a bank SMS. Pakka then runs on the real clock: the bank notice, the risk score, a reminder written live by Sarvam in your language (and read aloud), your decision, and a pause or cancel confirmed with your passkey. Only money is simulated; nothing touches your bank. Set `SARVAM_API_KEY` for live text, translation and voice; without it the hand-written templates are used. For a hosted setup run `supabase/migrations/0003_live.sql` and call `GET /api/live/cron` every few minutes with `CRON_SECRET`.
+
 ## Run it
 
 ```bash
@@ -46,14 +50,30 @@ Decisions where the PRD is silent are in `docs/DECISIONS.md`.
 
 ## Not built yet
 
-Model text comes from Gemini's free tier (`GEMINI_API_KEY`) or Anthropic (`LLM_API_KEY`). Run `pnpm bake:llm` to write the story's texts into the demo cache, then `pnpm bake:voice` to record their voice notes. Until then templates and the hand-checked review labels are used and labelled as such.
+Model text comes from Anthropic (`LLM_API_KEY`), Gemini's free tier (`GEMINI_API_KEY`) or Sarvam 105B (`SARVAM_API_KEY`). Run `pnpm bake:llm` to write the story's texts into the demo cache. Until then templates and the hand-checked review labels are used and labelled as such.
 
 ### Privacy, review and voice
 - Every model input is masked first (phones, UPI IDs, accounts, cards, Aadhaar, PAN, OTPs, the customer's name); the model sees tokens like `<PHONE_1>`. No masking, no call.
 - Texts people read (reminders, Pakka se poochho replies, case summaries, merchant alerts) are written by one agent, checked by a second against a written rubric, and finalised by a third; the reviewer has the last word after 5 rounds, and code checks run before and after. The control room shows the review trail for every message.
-- Voice fallback order: recorded note (macOS Lekha for Hindi and Hinglish, Rishi for English), then the browser's Indian voice (hi-IN or en-IN), then text only. Never a US or UK voice. Sarvam Bulbul is planned for the next build.
+- Text sent to Sarvam for translation or speech is masked or refused the same way; spoken questions are masked once transcribed.
 
-Environment variables for the model layer: `LLM_PROVIDER` (`gemini`, `anthropic` or `none`), `GEMINI_API_KEY`, `GEMINI_MODEL` (writer, default `gemini-3.5-flash`), `GEMINI_MODEL_FAST` (reviewer and classifiers, default `gemini-3.5-flash-lite`), `LLM_API_KEY`, `LLM_MODEL`, `LLM_MODEL_FAST`, `LLM_USE_DEMO_CACHE`. No new variables for voice in this build; Sarvam will add `SARVAM_API_KEY`.
+Environment variables for the model layer: `LLM_PROVIDER` (`anthropic`, `gemini`, `sarvam` or `none`), `LLM_API_KEY`, `LLM_MODEL`, `LLM_MODEL_FAST`, `GEMINI_API_KEY`, `GEMINI_MODEL` (writer, default `gemini-3.5-flash`), `GEMINI_MODEL_FAST` (reviewer and classifiers, default `gemini-3.5-flash-lite`), `SARVAM_API_KEY`, `SARVAM_MODEL`, `LLM_USE_DEMO_CACHE`.
+
+## Regional languages and voice (Sarvam AI)
+
+Put `SARVAM_API_KEY` in `.env` (git-ignored). Check it works with one call:
+
+```bash
+pnpm sarvam:first-call
+```
+
+Then translate the customer copy:
+
+```bash
+pnpm bake:sarvam
+```
+
+That translates the customer copy into 21 more languages (Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Odia, Punjabi, Assamese, Urdu, Nepali, Konkani, Maithili, Dogri, Bodo, Sanskrit, Kashmiri, Sindhi, Manipuri, Santali) and keeps only lines that pass the checks in `src/copy/regional.ts`. The language button in the customer app lists all 24. "Listen" speaks in the chosen language (Bulbul), and the mic in Pakka se poochho understands any of them (Saaras, language detected automatically). With only a Sarvam key, Pakka se poochho's intake and the offer-copy check also run on Sarvam 105B. Without a key everything falls back to Hindi, Hinglish or English.
 
 ## Pakka for Business (`/business`)
 
@@ -66,7 +86,7 @@ The same idea for B2B payouts in INR. Three AI agents (payables, compliance, ris
 
 ### Live mode (`/business/live`): real people, real agents, simulated money
 
-- People sign in and sign every approval with passkeys. Agents run outside the app and use the API with their own Ed25519 keys (`docs/AGENT_API.md`). Ledgers persist to Supabase (`supabase/migrations/0002_b2b.sql`) or `.pakka-data/`. Only money is simulated, by a sandbox bank.
+- People sign in and sign every approval with passkeys. Agents run outside the app and use the API with their own Ed25519 keys (`docs/AGENT_API.md`; Python client and integration guide in `docs/BUSINESS_API_PYTHON.md`). Test report with screenshots: `docs/test-report/README.md`. Ledgers persist to Supabase (`supabase/migrations/0002_b2b.sql`) or `.pakka-data/`. Only money is simulated, by a sandbox bank.
 - Try it in five commands against `pnpm dev`:
 
 ```bash

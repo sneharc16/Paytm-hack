@@ -53,8 +53,9 @@ export class Session {
 
   constructor(public id: string, public world: World, events: PakkaEvent[] = []) {
     this.idx = indexWorld(world);
-    this.state = new EngineState(world, SESSION_START);
-    this.processedTo = SESSION_START;
+    const start = world.live?.startAt ?? SESSION_START;
+    this.state = new EngineState(world, start);
+    this.processedTo = start;
     if (events.length) ingest(this, events);
   }
 

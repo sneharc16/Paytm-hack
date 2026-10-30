@@ -3,7 +3,7 @@
 // (masked) output is checked and then unmasked here. Anything missing, not approved by the review loop or
 // failing a check falls back to the template, and the flight recorder says which one was used.
 import { setSummarizer } from "@/engine/actions";
-import { setWriter } from "@/engine/explain";
+import { setWriter, type ReminderFacts, type Written } from "@/engine/explain";
 import { setAlertWriter, setTagger } from "@/engine/radar";
 import type { ReviewStamp } from "@/engine/types";
 import { mask, unmask } from "@/lib/privacy/mask";
@@ -39,6 +39,18 @@ export function cached(m: ModelInput): { output: unknown; stamp?: ReviewStamp; k
   return { output: hit.output === null ? null : unmask(hit.output, vault), stamp: s, key };
 }
 
+// Pakka live: the server asks Sarvam for a message before the engine needs it (the engine itself stays
+// synchronous), keyed by the exact facts. A dry run of the tick collects which facts will be needed.
+const liveTexts = new Map<string, Written>();
+let capture: ReminderFacts[] | null = null;
+export const liveKey = (f: ReminderFacts) => JSON.stringify([f.cycleId, f.kind, f.language, reminderInput(f).input]);
+export function setLiveText(f: ReminderFacts, w: Written) { if (liveTexts.size > 5000) liveTexts.clear(); liveTexts.set(liveKey(f), w); }
+/** Run `fn` and return the reminder facts it would have asked the model for that have no live text yet. */
+export function captureReminders(fn: () => void): ReminderFacts[] {
+  capture = [];
+  try { fn(); return capture; } finally { capture = null; }
+}
+
 let installed = false;
 export function installModelHooks() {
   if (installed) return;
@@ -46,6 +58,9 @@ export function installModelHooks() {
 
   setWriter((facts, tpl) => {
     if (!MODEL_KINDS.has(facts.kind)) return tpl;
+    const live = liveTexts.get(liveKey(facts));
+    if (live) return live;
+    if (capture) capture.push(facts);
     const hit = cached(reminderInput(facts));
     if (!hit) return tpl;
     if (hit.output === null) return { ...tpl, review: hit.stamp, fallback: `review:${hit.stamp?.reason ?? "template"}` };

@@ -5,10 +5,8 @@ import type { PakkaEvent, ReviewStamp } from "@/engine/types";
 import { describeMasked } from "@/lib/privacy/mask";
 import { reviewOf } from "@/lib/recorder";
 import type { Session } from "@/engine/session";
-import { nudgeVoiceText } from "@/lib/voice";
 import { criteriaFor, RUBRIC } from "@/llm/agents/rubric";
 import { reviewTrail } from "@/llm/hooks";
-import { recordedNote } from "@/llm/tts";
 
 const STATUS: Record<ReviewStamp["status"], { label: string; tone: string }> = {
   agreed: { label: "Agreed: every criterion passed", tone: "bg-green-wash text-green" },
@@ -17,20 +15,12 @@ const STATUS: Record<ReviewStamp["status"], { label: string; tone: string }> = {
 };
 const NAME = Object.fromEntries(RUBRIC.map((c) => [c.id, c.name]));
 
-function voiceUsed(s: Session, e: PakkaEvent): string | null {
-  if (e.type !== "nudge_sent" || !e.payload.cycleId) return null;
-  const mer = s.idx.merchant.get(s.mandateOf(e.payload.cycleId).merchantId)!;
-  const note = recordedNote({ language: e.payload.language, text: nudgeVoiceText(e, mer) });
-  return note ? `Recorded note, ${note.voice} (${note.language === "en" ? "en-IN" : "hi-IN"})` : "Browser's Indian voice on the customer's phone, or text only";
-}
-
-export function ReviewTrail({ s, e }: { s: Session; e: PakkaEvent }) {
+export function ReviewTrail({ e }: { s: Session; e: PakkaEvent }) {
   const stamp = reviewOf(e);
   if (!stamp) return null;
   const full = reviewTrail(stamp.key);
   const rounds = full?.trail ?? stamp.trail?.map((t) => ({ ...t, fails: [], contests: [] })) ?? [];
   const ids = rounds.length ? Object.keys(rounds[0].verdicts) : [];
-  const voice = voiceUsed(s, e);
   return (
     <div className="mt-2 rounded-[8px] border border-line bg-canvas p-2.5 text-[13px]">
       <div className="flex flex-wrap items-center gap-2">
@@ -64,7 +54,6 @@ export function ReviewTrail({ s, e }: { s: Session; e: PakkaEvent }) {
       )}
       {full?.binding && !full.binding.use_template && <p className="mt-1"><b>Binding decision:</b> {[...full.binding.remove.map((w) => `remove "${w}"`), ...full.binding.change.map((c) => `change "${c.from}" to "${c.to}"`), ...full.binding.include.map((w) => `include "${w}"`)].join("; ")}</p>}
       <p className="mt-1 text-slate">Privacy: {describeMasked(stamp.masked)}</p>
-      {voice && <p className="text-slate">Voice: {voice}</p>}
       {stamp.rounds > 0 && <p className="text-slate">Criteria checked: {criteriaFor(e.type === "nudge_sent" ? "reminder" : e.type === "merchant_alerted" ? "alert" : e.type === "case_summary_written" ? "case_summary" : "intake").length}</p>}
     </div>
   );

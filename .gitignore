@@ -48,6 +48,10 @@ next-env.d.ts
 # llm bake progress
 /bake.log
 
-# Pakka for Business live data and local agent keys
+# Local data: live business ledgers, translation cache, agent keys
 .pakka-data/
 .pakka-agents/
+
+# python
+__pycache__/
+*.key.json

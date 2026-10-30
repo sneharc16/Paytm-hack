@@ -19,8 +19,22 @@ export function staticSchedule(w: World): Job[] {
   const hit = scheduleCache.get(w);
   if (hit) return hit;
   const jobs: Job[] = [];
-  const startMs = ms(SESSION_START);
+  const startMs = ms(w.live?.startAt ?? SESSION_START);
   const push = (at: ISO, pri: number, kind: string, ref: string) => { if (ms(at) > startMs) jobs.push({ at, pri, kind, ref }); };
+  if (w.live) {
+    // A real person's world: only their own charges drive the agent. No radar over seeded reviews, no
+    // refund sweep over seeded history, no scripted actors.
+    for (const c of w.cycles) {
+      push(c.noticeAt, 3, "notice", c.id);
+      push(addMin(c.dueAt, -180), 5, "follow_up", c.id);
+      push(addMin(c.dueAt, -60), 5, "cutoff", c.id);
+      push(c.dueAt, 6, "execute", c.id);
+      push(addMin(c.dueAt, -48 * 60), 4, "remind", c.id);
+    }
+    jobs.sort((a, b) => ms(a.at) - ms(b.at) || a.pri - b.pri || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
+    scheduleCache.set(w, jobs);
+    return jobs;
+  }
   for (let t = ms(ist("2026-10-26 20:58")); t <= ms(DEMO_END) + 3 * 86_400_000; t += 3_600_000) push(new Date(t).toISOString(), 0, "radar", "");
   for (const d of ["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29"]) push(ist(`${d} 21:00`), 1, "refund_sweep", "");
   for (const c of w.cycles) {

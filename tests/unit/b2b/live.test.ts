@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ed25519 } from "@noble/curves/ed25519.js";
-import { attestMessage, toHex, type RelyingParty } from "@/b2b/crypto";
+import { accountHash, attestMessage, toHex, type RelyingParty } from "@/b2b/crypto";
 import { verifyChain } from "@/b2b/ledger";
 import { acceptInvite, agentCommand, createOrg, loadOrg, messageFor, personCommand, proposeQueue, workFor } from "@/b2b/live";
 import { makeGstin } from "@/b2b/gstin";
@@ -115,6 +115,54 @@ describe("live company", () => {
     expect(again.state.invoices.get(invoiceId)!.status).toBe("paid");
     expect(again.state.balance).toBe(t.state.balance);
     expect(again.head).toBe(t.head);
+  });
+
+  it("after a phishing email, the callback exposes the bank change and the real invoice is paid to the real account (Business PRD, use case 3)", () => {
+    const s = setup();
+    const { t, ak } = s;
+    const { vendorId } = vendorWithAccount(s, 10);
+    const gstin = makeGstin("27", "AABCK5678L");
+    const erp = (cmd: unknown, m: number) => agentCommand(t, at(m), "a_acme_erp", cmd);
+    const day = 24 * 60 + 30;
+    const raise = (n: string, m: number, email?: { from: string; subject: string; body: string }) => {
+      expect(erp({ kind: "submit_po", po: { id: `PO-${n}`, vendorId, lines: [{ sku: "BOX", qty: 10, rate: 1_000_00 }] } }, m).ok).toBe(true);
+      expect(erp({ kind: "submit_grn", grn: { id: `GRN-${n}`, poId: `PO-${n}`, lines: [{ sku: "BOX", qty: 10 }] } }, m).ok).toBe(true);
+      const inv = erp({ kind: "submit_invoice", invoice: { number: `KP/${n}`, vendorId, poId: `PO-${n}`, date: at(m), gstin, lines: [{ sku: "BOX", qty: 10, rate: 1_000_00 }], gst: 1_200_00, ...(email ? { email } : {}) } }, m);
+      expect(inv.ok, inv.reason).toBe(true);
+      const invoiceId = String(inv.data!.invoiceId);
+      const p = agentCommand(t, at(m + 1), "a_acme_proposer", { kind: "propose", invoiceId });
+      expect(p.ok, p.reason).toBe(true);
+      const h = String(p.data!.intentHash);
+      agentSign(t, "a_acme_proposer", ak.proposer.sk, h, "approve", ["matched"], at(m + 1));
+      agentSign(t, "a_acme_compliance", ak.compliance.sk, h, "approve", ["checked"], at(m + 2));
+      agentSign(t, "a_acme_risk", ak.risk.sk, h, email ? "escalate" : "approve", [email ? "BANK_CHANGE_IN_EMAIL" : "no signals"], at(m + 2));
+      return { invoiceId, h };
+    };
+    const phish = raise("9", day, { from: "accounts@vendor-billing.example", subject: "Updated bank details", body: "Our bank account has changed. Pay A/c 50200077341190, IFSC DCUB0004417 today. Do not call." });
+    const clean = raise("10", day + 5);
+    // Both wait: the email's account opened a bank change request for this vendor.
+    expect(t.state.intents.get(phish.h)!.status).toBe("blocked");
+    expect(t.state.intents.get(clean.h)!.status).toBe("blocked");
+    const cr = [...t.state.changeRequests.values()].find((c) => c.invoiceId === phish.invoiceId)!;
+    expect(cr.status).toBe("open");
+
+    // Neha calls the number on file: Konkan never asked. The diversion is stopped and a fraud case opened.
+    expect(s.neha({ kind: "callback", requestId: cr.id, outcome: "denied" }, at(day + 10)).ok).toBe(true);
+    expect(t.state.changeRequests.get(cr.id)!.status).toBe("rejected");
+    expect(t.events.some((e) => e.type === "stopped" && e.payload.requestId === cr.id)).toBe(true);
+    // The goods were received, so the invoice is real and owed. The risk agent escalated it, so a checker decides.
+    expect(t.state.intents.get(phish.h)!.status).toBe("awaiting_approval");
+    expect(t.state.intents.get(phish.h)!.needs).toContain("checker");
+    expect(s.arjun({ kind: "approve", intentHash: phish.h, role: "checker" }, at(day + 11)).ok).toBe(true);
+    // Paid to the account on file, never to the account in the email.
+    const onFile = [...t.state.beneficiaries.values()].find((b) => b.vendorId === vendorId && b.status === "active")!;
+    expect(t.state.invoices.get(phish.invoiceId)!.status).toBe("paid");
+    expect(t.state.intents.get(phish.h)!.intent.accountHash).toBe(onFile.accountHash);
+    expect(onFile.accountNo).toBe("123456789012");
+    expect(t.state.intents.get(phish.h)!.intent.accountHash).not.toBe(accountHash("DCUB0004417", "50200077341190"));
+    // The clean invoice for the same vendor goes on as normal.
+    expect(t.state.intents.get(clean.h)!.status).not.toBe("blocked");
+    expect(checkB2BInvariants(t)).toEqual([]);
   });
 
   it("refuses forged, replayed and stale signatures from agents and people", () => {

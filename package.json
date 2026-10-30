@@ -10,14 +10,17 @@
     "test": "vitest run",
     "bake:llm": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-llm.ts",
     "e2e": "playwright test",
+    "tour": "playwright test -c playwright.tour.config.ts",
+    "test:python": "cd sdk/python && python3 -m unittest -v test_pakka_business",
     "check:supabase": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts",
     "check:live": "tsx --tsconfig tsconfig.json scripts/check-live.ts",
     "try:hindi": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-hindi.ts",
+    "bake:sarvam": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-sarvam.ts",
+    "sarvam:first-call": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/sarvam-first-call.ts",
     "b2b:story": "tsx --tsconfig tsconfig.json scripts/b2b-story.ts",
     "agents": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/agents/pakka-agents.ts",
     "b2b:live-demo": "tsx --tsconfig tsconfig.json scripts/b2b-live-demo.ts",
     "b2b:verify": "tsx --tsconfig tsconfig.json scripts/b2b-verify.ts",
-    "bake:voice": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-voice.ts",
     "try:review": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-review.ts"
   },
   "dependencies": {
@@ -34,6 +37,7 @@
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sarvamai": "^1.1.13",
     "seedrandom": "^3.0.5",
     "zod": "^4.6.7",
     "zustand": "^5.0.16"

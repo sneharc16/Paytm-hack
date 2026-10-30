@@ -112,6 +112,9 @@ export interface ScriptedOutcome {
 
 export interface World {
   seed: string;
+  /** Set for a real person's own world (Pakka live): it starts when they joined and runs on the wall clock.
+   *  No scripted actors, no demo window. Absent for the seeded demo world. */
+  live?: { startAt: ISO };
   users: User[];
   merchants: Merchant[];
   plans: Plan[];
