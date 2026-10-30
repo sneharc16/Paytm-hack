@@ -4,7 +4,7 @@ import { checkTranslation, clearTableForTests, forFormalModel, hasTable, protect
 import baked from "@/copy/regional.json";
 import { STRINGS } from "@/copy/strings";
 import { listen, setSarvamFetchForTests, speak, translate } from "@/lib/server/sarvam";
-import { copyDeck, listenRoute, resetVoiceCachesForTests, speakRoute } from "@/lib/server/voice";
+import { copyDeck, listenRoute, resetVoiceCachesForTests, speakRoute, withoutAddedBrands } from "@/lib/server/voice";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -104,11 +104,24 @@ describe("Sarvam client", () => {
   });
   it("listens with Saaras v4 and detects the language", async () => {
     fakeSarvam(() => ({ transcript: "இந்த 599 ஏன்?", language_code: "ta-IN", language_probability: 0.97 }));
-    const r = await listen(new Blob([new Uint8Array(10)], { type: "audio/webm" }));
+    const r = await listen(new Blob([new Uint8Array(10)], { type: "audio/webm;codecs=opus" }));
     expect(r.ok && r.data).toMatchObject({ transcript: "இந்த 599 ஏன்?", language: "ta" });
     const form = calls[0].init.body as FormData;
     expect(form.get("model")).toBe("saaras:v4");
     expect(form.get("language_code")).toBe("unknown");
+    // Sarvam rejects "audio/webm;codecs=opus", which is what Chrome records.
+    expect((form.get("file") as File).type).toBe("audio/webm");
+  });
+  it("takes out a payment brand the translation added", () => {
+    expect(withoutAddedBrands("Why is 599 rupees being deducted from my Paytm account tomorrow?", "நாளைக்கு 599 ரூபாய் ஏன் கட் ஆகுது?")).toBe("Why is 599 rupees being deducted from my account tomorrow?");
+    expect(withoutAddedBrands("Paytm took my money", "Paytm ne paise kaate")).toBe("Paytm took my money");
+    expect(withoutAddedBrands("My credit card was charged", "x")).toBe("My credit card was charged");
+  });
+  it("names a Safari recording as m4a", async () => {
+    fakeSarvam(() => ({ transcript: "हाँ", language_code: "hi-IN" }));
+    await listen(new Blob([new Uint8Array(10)], { type: "audio/mp4" }));
+    const file = (calls[0].init.body as FormData).get("file") as File;
+    expect([file.type, file.name]).toEqual(["audio/mp4", "speech.m4a"]);
   });
   it("reports Sarvam's error code", async () => {
     fakeSarvam(() => ({ error: { code: "invalid_api_key_error", message: "x" } }), 403);

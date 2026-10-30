@@ -86,8 +86,12 @@ export async function speak(text: string, lang: UiLang): Promise<SarvamResult<{ 
 
 // ---------------- listen ----------------
 export async function listen(audio: Blob, hint?: UiLang): Promise<SarvamResult<{ transcript: string; language: UiLang | null; languageCode: string | null }>> {
+  // Browsers label recordings "audio/webm;codecs=opus" (Chrome) or "audio/mp4" (Safari). Sarvam rejects a type
+  // with parameters, so send the bare container type and a matching file name.
+  const type = audio.type.split(";")[0].trim() || "audio/webm";
+  const ext = { "audio/mp4": "m4a", "audio/ogg": "ogg", "audio/wav": "wav", "audio/mpeg": "mp3" }[type] ?? "webm";
   const form = new FormData();
-  form.append("file", audio, "speech.webm");
+  form.append("file", new Blob([audio], { type }), `speech.${ext}`);
   form.append("model", "saaras:v4");
   form.append("language_code", hint && hint !== "hinglish" ? langInfo(hint).sarvam : "unknown");
   form.append("keyterms", JSON.stringify(["AutoPay", "UPI", "refund", "PadhoAI", "StadiumPass", "Griha", "Pakka"]));

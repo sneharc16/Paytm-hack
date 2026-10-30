@@ -96,6 +96,14 @@ export async function speakRoute(req: Request): Promise<Response> {
   return new Response(bytes, { headers: { "content-type": "audio/wav", "cache-control": "private, max-age=3600", "x-voice-language": voiceLang } });
 }
 
+// ---------------- a customer's words in English ----------------
+// Translation sometimes adds a payment app or bank the customer never said ("from my Paytm account"). That text
+// reaches the intake and the flight recorder, so a real brand that is not in what they said is taken out.
+const REAL_BRANDS = /\b(paytm|phone ?pe|g ?pay|google pay|bhim|amazon pay|mobikwik|cred|sbi|hdfc|icici|axis|kotak)\b\s*/gi;
+export function withoutAddedBrands(english: string, said: string): string {
+  return english.replace(REAL_BRANDS, (m, name: string) => (said.toLowerCase().includes(name.toLowerCase()) ? m : "")).replace(/\s{2,}/g, " ").trim();
+}
+
 // ---------------- listen ----------------
 export async function listenRoute(req: Request): Promise<Response> {
   if (limited(req, 20)) return fail(429, "RATE_LIMITED");
@@ -110,7 +118,7 @@ export async function listenRoute(req: Request): Promise<Response> {
   if (!r.data.transcript) return fail(422, "NOTHING_HEARD");
   // The intake reads English (and Hinglish) best; the customer keeps seeing their own words.
   const english = r.data.language === "en" ? r.data.transcript : await translate(r.data.transcript, "en", r.data.language ?? "auto");
-  return json(200, { ok: true, data: { transcript: r.data.transcript.slice(0, 300), language: r.data.language, languageCode: r.data.languageCode, english: typeof english === "string" ? english : english.ok ? english.data.slice(0, 300) : null } });
+  return json(200, { ok: true, data: { transcript: r.data.transcript.slice(0, 300), language: r.data.language, languageCode: r.data.languageCode, english: typeof english === "string" ? english : english.ok ? withoutAddedBrands(english.data, r.data.transcript).slice(0, 300) : null } });
 }
 
 // ---------------- translate a customer's own words ----------------
@@ -123,7 +131,7 @@ export async function toEnglishRoute(req: Request): Promise<Response> {
   if (!sarvamEnabled()) return fail(503, "NO_SARVAM_KEY");
   const from = typeof body?.from === "string" && isUiLang(body.from) ? body.from : "auto";
   const r = await translate(text, "en", from);
-  return r.ok ? json(200, { ok: true, data: { english: r.data.slice(0, 300) } }) : fail(502, "TRANSLATE_FAILED", r.reason);
+  return r.ok ? json(200, { ok: true, data: { english: withoutAddedBrands(r.data, text).slice(0, 300) } }) : fail(502, "TRANSLATE_FAILED", r.reason);
 }
 
 export function resetVoiceCachesForTests() { decks.clear(); inflight.clear(); }
