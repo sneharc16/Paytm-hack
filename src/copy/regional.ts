@@ -17,6 +17,7 @@ const tables = new Map<RegionalCode, Table>(Object.entries((baked as { langs?: R
 export const hasTable = (lang: RegionalCode) => tables.has(lang) && Object.keys(tables.get(lang)!).length > 0;
 export const setTable = (lang: RegionalCode, table: Table) => tables.set(lang, { ...(tables.get(lang) ?? {}), ...table });
 export const getTable = (lang: RegionalCode) => tables.get(lang) ?? {};
+export const clearTableForTests = (lang: RegionalCode) => tables.delete(lang);
 export const bakedLanguages = () => [...tables.keys()];
 
 /** The English source of every line to translate. */
@@ -25,6 +26,41 @@ export function sourceLines(): Record<string, string> {
   for (const [k, row] of Object.entries(STRINGS)) out[k] = row.en;
   for (const [k, v] of Object.entries(EXTRA)) out[k] = v;
   return out;
+}
+
+/** Sarvam Translate (the formal model) reads "charge" as an accusation and "trial" as a court case. Before a
+ *  line goes to it, money words are made unambiguous: "debit" stays a familiar loanword in every language. */
+export function forFormalModel(text: string): string {
+  const swap: [RegExp, string][] = [
+    [/\bcharges\b/g, "debits"], [/\bCharges\b/g, "Debits"], [/\bcharged\b/g, "debited"], [/\bCharged\b/g, "Debited"],
+    [/\bcharge\b/g, "debit"], [/\bCharge\b/g, "Debit"], [/\btrial\b(?! period)/g, "trial period"], [/\bTrial\b(?! period)/g, "Trial period"],
+  ];
+  return swap.reduce((t, [re, to]) => t.replace(re, to), text);
+}
+
+/** Sarvam translates "{amount}" but keeps "#1#": swap slots for numbered markers before translating. */
+export function protect(source: string): { text: string; names: string[]; counts: number[] } {
+  const names: string[] = [], counts: number[] = [];
+  const text = source.replace(/\{([a-zA-Z]+)\}/g, (_m, n: string) => {
+    let i = names.indexOf(n);
+    if (i < 0) { names.push(n); counts.push(0); i = names.length - 1; }
+    counts[i]++;
+    return `#${i + 1}#`;
+  });
+  return { text, names, counts };
+}
+/** Put the slots back. Null when a marker was lost, invented or doubled, so the line is rejected. */
+export function restore(translated: string, names: string[], counts: number[] = names.map(() => 1)): string | null {
+  const seen = new Map<number, number>();
+  // A suffix can swallow the closing hash ("#1-க்கு"), so it is optional; stray hashes are dropped after.
+  const out = translated.replace(/#\s*(\d+)\s*#?/g, (_m, d: string) => {
+    const i = Number(d) - 1;
+    seen.set(i, (seen.get(i) ?? 0) + 1);
+    return names[i] !== undefined ? `{${names[i]}}` : "\u0000";
+  });
+  if (out.includes("\u0000")) return null;
+  for (let i = 0; i < names.length; i++) if (seen.get(i) !== counts[i]) return null;
+  return out.replace(/#/g, "");
 }
 
 const placeholders = (s: string) => (s.match(/\{[a-zA-Z]+\}/g) ?? []).sort();
@@ -53,7 +89,13 @@ export function tr(lang: UiLang, key: StringKey | ExtraKey, params: Record<strin
   if (!isRegional(lang)) return key in STRINGS ? t(lang, key as StringKey, params) : EXTRA[key as ExtraKey];
   s = tables.get(lang)?.[key];
   if (s === undefined) return key in STRINGS ? t(baseLang(lang), key as StringKey, params) : EXTRA[key as ExtraKey];
-  for (const [k, v] of Object.entries(params)) s = s.replaceAll(`{${k}}`, String(v));
+  for (const [k, v] of Object.entries(params)) {
+    const val = String(v);
+    // A translated slot may carry a case suffix ("{day}-க்கு") that the inserted word already ends with
+    // ("நாளைக்கு"): drop the repeat.
+    s = s.replace(new RegExp(`\\{${k}\\}-(\\S+?)(?=[\\s.,!?]|$)`, "gu"), (m, suf: string) => (val.endsWith(suf) ? val : `${val}-${suf}`));
+    s = s.replaceAll(`{${k}}`, val);
+  }
   return s;
 }
 

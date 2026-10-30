@@ -5,7 +5,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { isRegional, isUiLang, langInfo, type RegionalCode, type UiLang } from "@/copy/languages";
-import { checkTranslation, sourceLines, type Table } from "@/copy/regional";
+import { checkTranslation, forFormalModel, protect, restore, sourceLines, type Table } from "@/copy/regional";
 import baked from "@/copy/regional.json";
 import { listen, sarvamEnabled, speak, translate } from "./sarvam";
 
@@ -30,20 +30,30 @@ function writeCache(lang: RegionalCode, table: Table) {
 }
 
 /** Translate every line, a few at a time; keep only lines that pass the check. */
-export async function translateDeck(lang: RegionalCode): Promise<{ table: Table; failed: string[] }> {
-  const lines = Object.entries(sourceLines());
+export async function translateDeck(lang: RegionalCode, skip: Table = {}): Promise<{ table: Table; failed: string[]; outOfCredits: boolean }> {
+  const lines = Object.entries(sourceLines()).filter(([k]) => !(k in skip));
   const table: Table = {}, failed: string[] = [];
-  let i = 0;
+  let i = 0, outOfCredits = false;
   const worker = async () => {
-    while (i < lines.length) {
+    while (i < lines.length && !outOfCredits) {
       const [key, en] = lines[i++];
-      const r = await translate(en, lang, "en");
-      const c = r.ok ? checkTranslation(en, r.data, lang) : null;
-      if (c?.ok) table[key as keyof Table] = c.text; else failed.push(`${key}: ${r.ok ? c!.problems.join(",") : r.reason}`);
+      const attempt = async (formal: boolean) => {
+        const viaFormal = formal || !langInfo(lang).colloquial;
+        const p = protect(viaFormal ? forFormalModel(en) : en);
+        const r = await translate(p.text, lang, "en", { formal });
+        const back = r.ok ? restore(r.data, p.names, p.counts) : null;
+        const c = back !== null ? checkTranslation(en, back, lang) : null;
+        return { ok: !!c?.ok, text: c?.text ?? "", why: !r.ok ? r.reason : back === null ? "markers" : c!.problems.join(",") };
+      };
+      // Conversational first; if that keeps English or loses a slot, the formal model gets one try.
+      let a = await attempt(false);
+      if (!a.ok && langInfo(lang).colloquial) a = await attempt(true);
+      if (a.ok) table[key as keyof Table] = a.text; else failed.push(`${key}: ${a.why}`);
+      if (a.why === "insufficient_quota_error") outOfCredits = true; // no point burning through the rest
     }
   };
-  await Promise.all(Array.from({ length: 6 }, worker));
-  return { table, failed };
+  await Promise.all(Array.from({ length: 2 }, worker));
+  return { table, failed, outOfCredits };
 }
 
 export async function copyDeck(req: Request): Promise<Response> {

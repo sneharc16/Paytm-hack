@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LANGS, REGIONAL, baseLang, fromSarvam } from "@/copy/languages";
-import { checkTranslation, hasTable, setTable, sourceLines, tr, uiRelativeDay } from "@/copy/regional";
+import { checkTranslation, clearTableForTests, forFormalModel, hasTable, protect, restore, setTable, sourceLines, tr, uiRelativeDay } from "@/copy/regional";
 import baked from "@/copy/regional.json";
 import { STRINGS } from "@/copy/strings";
 import { listen, setSarvamFetchForTests, speak, translate } from "@/lib/server/sarvam";
@@ -39,6 +39,7 @@ describe("checking a translation before it is shown", () => {
 
 describe("regional copy", () => {
   it("shows the base language until a checked table exists, then the table with parameters", () => {
+    clearTableForTests("gu"); clearTableForTests("mr"); clearTableForTests("kn");
     expect(tr("gu", "pill.done")).toBe(STRINGS["pill.done"].en);
     expect(tr("mr", "pill.done")).toBe(STRINGS["pill.done"].hi);
     setTable("kn", { "pill.done": "ಆಯಿತು", "sheet.title": "{amount} {brand}ಗೆ {day}", "rel.tomorrow": "ನಾಳೆ" });
@@ -46,6 +47,9 @@ describe("regional copy", () => {
     expect(tr("kn", "pill.done")).toBe("ಆಯಿತು");
     expect(tr("kn", "sheet.title", { amount: "₹599", brand: "PadhoAI", day: "ನಾಳೆ" })).toBe("₹599 PadhoAIಗೆ ನಾಳೆ");
     expect(uiRelativeDay("2026-10-27T18:00:00.000Z", "2026-10-26T18:00:00.000Z", "kn")).toBe("ನಾಳೆ");
+    setTable("ta", { "sheet.title": "{amount} {brand} {day}-க்கு போகுது" });
+    expect(tr("ta", "sheet.title", { amount: "₹599", brand: "PadhoAI", day: "நாளைக்கு" })).toBe("₹599 PadhoAI நாளைக்கு போகுது");
+    expect(tr("ta", "sheet.title", { amount: "₹599", brand: "PadhoAI", day: "27 Oct" })).toBe("₹599 PadhoAI 27 Oct-க்கு போகுது");
   });
   it("only ships baked lines that pass the check, with no dashes", () => {
     const src = sourceLines();
@@ -107,8 +111,31 @@ describe("Sarvam client", () => {
     expect(form.get("language_code")).toBe("unknown");
   });
   it("reports Sarvam's error code", async () => {
-    fakeSarvam(() => ({ error: { code: "insufficient_quota_error", message: "x" } }), 429);
-    expect(await translate("Quota", "bn")).toMatchObject({ ok: false, reason: "insufficient_quota_error", status: 429 });
+    fakeSarvam(() => ({ error: { code: "invalid_api_key_error", message: "x" } }), 403);
+    expect(await translate("Quota", "bn")).toMatchObject({ ok: false, reason: "invalid_api_key_error", status: 403 });
+  });
+  it("waits out a rate limit and tries again", async () => {
+    let n = 0;
+    setSarvamFetchForTests((async () => (++n === 1
+      ? new Response(JSON.stringify({ error: { code: "rate_limit_exceeded_error" } }), { status: 429, headers: { "retry-after": "1" } })
+      : new Response(JSON.stringify({ translated_text: "হয়ে গেছে" }), { status: 200 }))) as unknown as typeof fetch);
+    expect(await translate("Done after a wait", "bn")).toEqual({ ok: true, data: "হয়ে গেছে" });
+    expect(n).toBe(2);
+  });
+  it("makes money words unambiguous for the formal model", () => {
+    expect(forFormalModel("{brand}'s first {amount} charge after the trial")).toBe("{brand}'s first {amount} debit after the trial period");
+    expect(forFormalModel("Past charges. Charged. It will be charged. Trial period")).toBe("Past debits. Debited. It will be debited. Trial period");
+  });
+  it("swaps slots for markers Sarvam keeps, and rejects lines that lose or double one", () => {
+    const p = protect("{amount} goes to {brand} {day}, {amount}");
+    expect(p).toEqual({ text: "#1# goes to #2# #3#, #1#", names: ["amount", "brand", "day"], counts: [2, 1, 1] });
+    expect(restore("#1# #2# #3# #1#", p.names, p.counts)).toBe("{amount} {brand} {day} {amount}");
+    expect(restore("#1# #2# #3#", p.names, p.counts)).toBeNull();
+    expect(restore("#1# #2# #3#-க்கு போகுது", ["amount", "brand", "day"])).toBe("{amount} {brand} {day}-க்கு போகுது");
+    expect(restore("#1-க்கு அனுப்பிச்சிருக்கேன்#", ["brand"])).toBe("{brand}-க்கு அனுப்பிச்சிருக்கேன்");
+    expect(restore("#1# #3#", ["amount", "brand", "day"])).toBeNull();
+    expect(restore("#1# #1# #2#", ["amount", "brand"])).toBeNull();
+    expect(restore("#1# #2# #4#", ["amount", "brand", "day"])).toBeNull();
   });
 });
 
@@ -116,9 +143,12 @@ describe("voice routes", () => {
   beforeEach(() => { vi.stubEnv("SARVAM_API_KEY", "sk_test_123"); vi.stubEnv("PAKKA_DATA_DIR", mkdtempSync(path.join(tmpdir(), "pakka-voice-"))); resetVoiceCachesForTests(); });
   afterEach(() => { vi.unstubAllEnvs(); });
 
-  it("says so plainly when there is no key", async () => {
+  it("serves baked copy without a key, and says so plainly when voice needs one", async () => {
     vi.stubEnv("SARVAM_API_KEY", "");
-    const r = await copyDeck(new Request("http://x/api/voice/copy?lang=pa"));
+    const baked = await (await copyDeck(new Request("http://x/api/voice/copy?lang=ta"))).json();
+    expect(baked.data.source).toBe("baked");
+    expect(Object.keys(baked.data.table).length).toBeGreaterThan(100);
+    const r = await speakRoute(new Request("http://x/api/voice/speak", { method: "POST", body: JSON.stringify({ text: "नमस्ते", lang: "hi" }) }));
     expect(r.status).toBe(503);
     expect((await r.json()).error.code).toBe("NO_SARVAM_KEY");
   });
@@ -126,12 +156,12 @@ describe("voice routes", () => {
     // A fake that returns Gurmukhi but drops placeholders on one line.
     fakeSarvam((_u, init) => {
       const input = JSON.parse(init.body as string).input as string;
-      const ph = (input.match(/\{[a-zA-Z]+\}/g) ?? []).join(" ");
-      const nums = (input.replace(/\{[a-zA-Z]+\}/g, "").match(/\d+/g) ?? []).join(" ");
+      const ph = (input.match(/#\d+#/g) ?? []).join(" ");
+      const nums = (input.replace(/#\d+#/g, "").match(/\d+/g) ?? []).join(" ");
       return { translated_text: input === "Done" ? "ਹੋ ਗਿਆ" : input.startsWith("Refunded") ? "ਪੈਸਾ ਵਾਪਸ" : `ਪੰਜਾਬੀ ${nums} ${ph}`.trim() };
     });
-    const r = await copyDeck(new Request("http://x/api/voice/copy?lang=pa"));
-    const body = await r.json();
+    const { translateDeck } = await import("@/lib/server/voice");
+    const body = { ok: true, data: await translateDeck("pa") };
     expect(body.ok).toBe(true);
     expect(body.data.table["pill.done"]).toBe("ਹੋ ਗਿਆ");
     expect(body.data.table["sheet.title"]).toContain("{amount}");
@@ -152,4 +182,24 @@ describe("voice routes", () => {
     const sp = await speakRoute(new Request("http://x/api/voice/speak", { method: "POST", body: JSON.stringify({ text: "آداب", lang: "ur" }) }));
     expect(sp.headers.get("x-voice-language")).toBe("hi");
   });
+});
+
+describe("Sarvam as the chat model", () => {
+  afterEach(() => { vi.unstubAllEnvs(); });
+  it("asks Sarvam 105B Conversations for schema-checked JSON and falls back on bad output", async () => {
+    const { runTask, setSarvamForTests, provider } = await import("@/llm/client");
+    vi.stubEnv("LLM_PROVIDER", "sarvam");
+    vi.stubEnv("SARVAM_API_KEY", "sk_test");
+    expect(provider()).toBe("sarvam");
+    const seen: Record<string, unknown>[] = [];
+    let reply = JSON.stringify({ intent: "refund_request", merchant_text: "PadhoAI", amount_rupees: 599, date_text: null, language: "hinglish" });
+    setSarvamForTests({ chat: { completions: async (req: Record<string, unknown>) => { seen.push(req); return { model: "sarvam-105b-conversations", choices: [{ finish_reason: "stop", message: { content: reply } }] }; } } });
+    const ok = await runTask("intake", { text: "paisa wapas chahiye PadhoAI 599 test-a" }, { useDemoCache: false });
+    expect(ok.ok && ok.output).toMatchObject({ intent: "refund_request", amount_rupees: 599 });
+    expect(seen[0]).toMatchObject({ model: "sarvam-105b-conversations", reasoning_effort: "low", response_format: { type: "json_schema" } });
+    reply = JSON.stringify({ intent: "buy_shares" });
+    const bad = await runTask("intake", { text: "something else entirely test-b" }, { useDemoCache: false });
+    expect(bad).toMatchObject({ ok: false, reason: "invalid_output" });
+    setSarvamForTests(null);
+  }, 30_000); // the first import loads three model SDKs
 });

@@ -50,10 +50,16 @@ Live model text needs a paid Anthropic key (`LLM_API_KEY`, then `pnpm bake:llm`)
 
 ## Regional languages and voice (Sarvam AI)
 
-Set `SARVAM_API_KEY` in `.env.local`, then:
+Put `SARVAM_API_KEY` in `.env` (git-ignored). Check it works with one call:
+
+```bash
+pnpm sarvam:first-call
+```
+
+Then translate the customer copy:
 
 ```bash
 pnpm bake:sarvam
 ```
 
-That translates the customer copy into 21 more languages (Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Odia, Punjabi, Assamese, Urdu, Nepali, Konkani, Maithili, Dogri, Bodo, Sanskrit, Kashmiri, Sindhi, Manipuri, Santali) and keeps only lines that pass the checks in `src/copy/regional.ts`. The language button in the customer app lists all 24. "Listen" speaks in the chosen language (Bulbul), and the mic in Pakka se poochho understands any of them (Saaras, language detected automatically). Without a key everything falls back to Hindi, Hinglish or English.
+That translates the customer copy into 21 more languages (Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Odia, Punjabi, Assamese, Urdu, Nepali, Konkani, Maithili, Dogri, Bodo, Sanskrit, Kashmiri, Sindhi, Manipuri, Santali) and keeps only lines that pass the checks in `src/copy/regional.ts`. The language button in the customer app lists all 24. "Listen" speaks in the chosen language (Bulbul), and the mic in Pakka se poochho understands any of them (Saaras, language detected automatically). With only a Sarvam key, Pakka se poochho's intake and the offer-copy check also run on Sarvam 105B. Without a key everything falls back to Hindi, Hinglish or English.

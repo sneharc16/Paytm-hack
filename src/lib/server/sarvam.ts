@@ -17,7 +17,13 @@ export const sarvamEnabled = () => sarvamKey().length > 0;
 async function call<T>(path: string, init: RequestInit, timeoutMs: number): Promise<SarvamResult<T>> {
   if (!sarvamEnabled()) return { ok: false, reason: "no_key" };
   try {
-    const res = await fetcher(`${BASE}${path}`, { ...init, headers: { ...(init.headers ?? {}), "api-subscription-key": sarvamKey() }, signal: AbortSignal.timeout(timeoutMs) });
+    let res = await fetcher(`${BASE}${path}`, { ...init, headers: { ...(init.headers ?? {}), "api-subscription-key": sarvamKey() }, signal: AbortSignal.timeout(timeoutMs) });
+    // Rate limited: back off and try again, up to three times.
+    for (let attempt = 1; res.status === 429 && attempt <= 5; attempt++) {
+      const after = Number(res.headers.get("retry-after"));
+      await new Promise((r) => setTimeout(r, Number.isFinite(after) && after > 0 ? Math.min(after, 20) * 1000 : 1500 * attempt));
+      res = await fetcher(`${BASE}${path}`, { ...init, headers: { ...(init.headers ?? {}), "api-subscription-key": sarvamKey() }, signal: AbortSignal.timeout(timeoutMs) });
+    }
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { error?: { code?: string } } | null;
       return { ok: false, reason: body?.error?.code ?? `http_${res.status}`, status: res.status };
@@ -31,10 +37,10 @@ async function call<T>(path: string, init: RequestInit, timeoutMs: number): Prom
 // ---------------- translate ----------------
 const memo = new Map<string, string>();
 
-export async function translate(text: string, target: UiLang, source: UiLang | "auto" = "en"): Promise<SarvamResult<string>> {
+export async function translate(text: string, target: UiLang, source: UiLang | "auto" = "en", opts: { formal?: boolean } = {}): Promise<SarvamResult<string>> {
   const tgt = langInfo(target);
   const src = source === "auto" ? null : langInfo(source);
-  const both = tgt.colloquial && (src ? src.colloquial : true);
+  const both = !opts.formal && tgt.colloquial && (src ? src.colloquial : true);
   const model = both ? "mayura:v1" : "sarvam-translate:v1";
   const key = sha256(`${model}|${src?.sarvam ?? "auto"}|${tgt.sarvam}|${text}`);
   const hit = memo.get(key);

@@ -13,7 +13,8 @@
     "check:supabase": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts",
     "check:live": "tsx --tsconfig tsconfig.json scripts/check-live.ts",
     "try:hindi": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-hindi.ts",
-    "bake:sarvam": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-sarvam.ts"
+    "bake:sarvam": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-sarvam.ts",
+    "sarvam:first-call": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/sarvam-first-call.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
@@ -25,6 +26,7 @@
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sarvamai": "^1.1.13",
     "seedrandom": "^3.0.5",
     "zod": "^4.6.7",
     "zustand": "^5.0.16"
