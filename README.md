@@ -40,13 +40,20 @@ Without these, the demo runs in each browser on its own.
 - `src/engine`: pure TypeScript. The world comes from `generateWorld("2711")`, and state is a replay of the event log. Every money action goes through `gateway.ts` with a rule ID and an idempotency key.
 - `src/sim`: bank, merchant and NPCI simulators that follow the real rules (off-peak windows, 4 attempts, PIN for opt-out).
 - `src/app/api`: in-memory sessions on the server. Every surface polls the same log.
-- `pnpm test`: 48 tests, including the full scenario that reproduces every counter in the PRD and checks every invariant.
+- `pnpm test`: 238 tests (consumer and business), including the full scenario that reproduces every counter in the PRD and checks every invariant.
 
 Decisions where the PRD is silent are in `docs/DECISIONS.md`.
 
 ## Not built yet
 
-Live model text needs a paid Anthropic key (`LLM_API_KEY`, then `pnpm bake:llm`); until then templates and the hand-checked review labels are used and labelled as such. The cheaper-plan offer is not built.
+Model text comes from Gemini's free tier (`GEMINI_API_KEY`) or Anthropic (`LLM_API_KEY`). Run `pnpm bake:llm` to write the story's texts into the demo cache, then `pnpm bake:voice` to record their voice notes. Until then templates and the hand-checked review labels are used and labelled as such.
+
+### Privacy, review and voice
+- Every model input is masked first (phones, UPI IDs, accounts, cards, Aadhaar, PAN, OTPs, the customer's name); the model sees tokens like `<PHONE_1>`. No masking, no call.
+- Texts people read (reminders, Pakka se poochho replies, case summaries, merchant alerts) are written by one agent, checked by a second against a written rubric, and finalised by a third; the reviewer has the last word after 5 rounds, and code checks run before and after. The control room shows the review trail for every message.
+- Voice fallback order: recorded note (macOS Lekha for Hindi and Hinglish, Rishi for English), then the browser's Indian voice (hi-IN or en-IN), then text only. Never a US or UK voice. Sarvam Bulbul is planned for the next build.
+
+Environment variables for the model layer: `LLM_PROVIDER` (`gemini`, `anthropic` or `none`), `GEMINI_API_KEY`, `GEMINI_MODEL` (writer, default `gemini-3.5-flash`), `GEMINI_MODEL_FAST` (reviewer and classifiers, default `gemini-3.5-flash-lite`), `LLM_API_KEY`, `LLM_MODEL`, `LLM_MODEL_FAST`, `LLM_USE_DEMO_CACHE`. No new variables for voice in this build; Sarvam will add `SARVAM_API_KEY`.
 
 ## Pakka for Business (`/business`)
 

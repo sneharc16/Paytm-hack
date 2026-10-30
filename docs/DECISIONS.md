@@ -23,7 +23,7 @@
 - Cached model output is applied synchronously through engine hooks (`src/llm/hooks.ts`), so replay stays deterministic. Live calls are only L3 (Pakka se poochho) and L5 (offer lint).
 - With no key, review tags come from the hand-checked seed labels and are recorded as `seed-labels`; other text is recorded as `template`.
 - Only the `anthropic` provider is built; `openai` from PRD 14.2 is not.
-- Voice note: generated with the macOS Hindi voice (Lekha) as AAC .m4a (~20 s), not Sarvam Bulbul as MP3. Replace public/audio/sunita-padhoai-hi.m4a with a Bulbul recording if a key becomes available.
+- Voice notes: see "Indian voice" below.
 
 ## Shared sessions (Supabase)
 - Events are keyed by (session, epoch, seq) with no gaps; seq is the engine's event id. `append_events` appends a batch only if the log still ends where the writer expects (optimistic concurrency), so any server instance can advance a session; the loser re-reads and retries. This replaces the PRD's ticker lease.
@@ -42,6 +42,35 @@
 - The model gets the amounts pre-formatted (`amount_text`, `trial_amount_text`) beside the raw numbers; the PRD's L1 prompt is unchanged.
 - Only upcoming-charge messages (ask, tell, follow-up, collect, remind) are model-written, because the L1 prompt is about an upcoming charge. Refund offers and failed-charge notices keep their templates: the model described past charges as future ones.
 - Result: all Hinglish and English reminders pass the fact-check; all 22 Hindi reminders came back in Latin script and fail, so Hindi uses the hand-written templates. Review tags (205, all agreeing with the hand labels), the merchant alert and both case summaries are model-written.
+
+## Privacy masking (src/lib/privacy/mask.ts)
+- Every model call masks its input first, inside `runTask`, for every task; if masking throws, no call is made and the template is used. Values go back only after the output passes every check, on our server (or in the browser for cached texts, from the browser's own data).
+- Detected: Indian mobiles (+91, 91, 0 prefixes, spaces, dashes, Devanagari digits), UPI IDs, emails (checked before UPI IDs), IFSC, PAN, Aadhaar (groups of four, or 12 digits next to the word), card numbers (13 to 19 digits passing Luhn), bank accounts (9 to 18 digits near account, a/c, khata, खाता), OTPs and PINs (4 to 6 digits next to OTP, PIN, password; never unmasked, shown as ••••), and the customer's own name (the full name and each part of 3 or more letters).
+- Any other unexplained run of 9 to 18 digits is masked as an account number: no reminder or summary needs one.
+- Allowlist in code: rupee amounts, case IDs (PAK-0000), 1930, times, dates, brands and registered names (passed as keep words).
+- The vault keeps values in a private field and serialises to counts only. It is never logged or stored; the demo cache keeps masked inputs and masked outputs.
+- The customer's question is stored masked in the event log (and so in Supabase in shared mode), with counts of what was masked. The engine still reads the raw text once to match the merchant.
+- Voice scripts are checked the same way: any personal value or token means text only.
+
+## Three-agent review (src/llm/agents)
+- Reviewed: L1 reminder, L3 reply, L4 case summary, L6 merchant alert. L2 tagging and L5 lint stay single calls (classifiers).
+- L3 now writes a short `reply` (prompt l3-v3). Its facts are built on the server from our own data: the customer's mandates (brand, registered name, plan, amount, allowed actions) and the 1930 helpline.
+- The rubric is data (`rubric.ts`): R1 to R11, plus L4-S (a suggestion for Priya, never a decision) and L6-P (the exact privacy line, no adjectives). Prompts, code checks and tests all read it.
+- Code checks (`checks.ts`) decide R6, R7 and R9 alone and share R1, R2, R5, R8 and R10 with the reviewer; a code fail cannot be overruled. R5's code check also catches words that recommend a choice ("best rahega", "you should").
+- A contest counts only if its quote really appears in FACTS; otherwise it is upheld whatever the reviewer says.
+- On agreement the final text is the agreed draft as it is: the consolidator model is called only for the reviewer's binding decision after round 5. That keeps an agreed text unchanged and saves a call. Worst case: 5 drafts, 5 reviews and 1 consolidation, 11 calls.
+- The consolidator's output is rejected (template) if it keeps words the binding decision removed or misses words it required.
+- Models: writer and consolidator on the main model, reviewer on the fast one (Gemini: gemini-3.5-flash and flash-lite; Anthropic: Sonnet and Haiku), so the two are on different tiers.
+- The demo cache key is task, every version (task prompt, generator, reviewer, consolidator, rubric) and the masked input. Entries keep the final text, the status and the review trail; a review that ended in the template is stored too (output null), so the flight recorder can show why.
+- Live L3 has a 12 second budget for the whole loop. When it runs out the template is used, not an unreviewed draft: no AI text reaches a customer without the reviewer's approval. On Gemini's free tier most live answers will fall back to the facts card for this reason.
+
+## Indian voice (src/llm/tts)
+- One interface, `speak({ text, language })`. Order: recorded note, then Sarvam (empty slot, next build), then the browser's Indian voice, then text only.
+- Recorded notes: `pnpm bake:voice` runs the story and records every reminder sent to the four demo customers with macOS voices: Lekha (hi-IN) for Hindi and Hinglish, Rishi (en-IN) for English. Rishi is the long-standing macOS Indian English voice; Lekha is the only hi-IN voice on macOS. Files are AAC .m4a named by a hash of voice and text; the manifest maps language and text to the file.
+- Hinglish uses Lekha, as the brief asks (hi-IN). Not yet compared by ear with Rishi on Latin-script Hinglish; if Rishi sounds better, change `VOICE_FOR` in scripts/bake-voice.ts and run `pnpm bake:voice` again.
+- Spoken text is the reminder that was sent (its voice script when the model wrote one), plus the bank-SMS name line, in the customer's language. The sheet used to read a Hindi line for everyone.
+- Browser voices are ranked by exact locale (hi-IN for Hindi and Hinglish, en-IN for English), then known Indian voice names (Google हिन्दी, Microsoft Swara, Madhur, Heera, Neerja, Prabhat, Lekha, Rishi, Veena, Android hi-in-x and en-in-x), then any other Indian locale. A voice whose locale is US, UK or another non-Indian English never qualifies.
+- Sarvam Bulbul is planned for the next build: add `src/llm/tts/sarvam.ts` (a server route keeps the key) and `SARVAM_API_KEY`. No paid or third-party voice is called in this build.
 
 ## Pakka for Business (src/b2b, /business)
 - A separate engine and route. Nothing in src/engine, src/sim, src/copy or the consumer surfaces changes; the business engine only reads helpers from src/engine/clock. Its world is `generateBusinessWorld("2711")`, its store and localStorage key are its own.
