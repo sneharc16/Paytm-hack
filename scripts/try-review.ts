@@ -15,7 +15,7 @@ async function main() {
   setWriter((f, tpl) => { if (!facts && f.kind === "ask" && f.language === "hinglish") facts = f; return tpl; });
   tick(new Session("TRY", world), DEMO_END);
   const show = (label: string, r: Awaited<ReturnType<typeof runTask>>) => {
-    console.log(`\n== ${label}: ${r.ok ? "sent" : "template"} (${r.review?.status ?? r.reason}), ${r.review?.rounds ?? 0} rounds, ${r.review?.calls ?? 0} calls`);
+    console.log(`\n== ${label}: ${r.ok ? "sent" : "template"} (${r.review?.status ?? (r.ok ? "single call" : r.reason)}), ${r.review?.rounds ?? 0} rounds, ${r.review?.calls ?? 0} calls`);
     if (r.review?.reason) console.log("reason:", r.review.reason);
     for (const t of r.review?.trail ?? []) console.log(`round ${t.round}:`, Object.entries(t.verdicts).map(([k, v]) => `${k} ${v}`).join(", "), t.fails.length ? `\n  fails: ${t.fails.map((f) => `${f.criterion} (${f.by}) ${f.fix}`).join(" | ")}` : "");
     if (r.ok) console.log("output:", JSON.stringify(r.output));
