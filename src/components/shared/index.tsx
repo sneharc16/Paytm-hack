@@ -1,8 +1,10 @@
 "use client";
 // Shared components (PRD 19.1, 19.2).
-import { t } from "@/copy/strings";
+import { useState } from "react";
+import { Check, Languages, Volume2 } from "lucide-react";
+import { baseLang, LANGS, langInfo, type UiLang } from "@/copy/languages";
+import { tr } from "@/copy/regional";
 import { amountAria, inr } from "@/lib/format";
-import type { Lang } from "@/engine/types";
 import type { PillKind } from "@/lib/views";
 
 export function PakkaSeal({ onNavy = false, label = true }: { onNavy?: boolean; label?: boolean }) {
@@ -28,9 +30,9 @@ export function StatusPill({ kind, children }: { kind: PillKind; children: React
   return <span className={`inline-block rounded-full px-[9px] py-px text-[13px] font-semibold leading-[18px] whitespace-nowrap ${PILL[kind]}`}>{children}</span>;
 }
 
-export function Amount({ paise, size = "m", lang = "en", className = "" }: { paise: number; size?: "l" | "m"; lang?: Lang; className?: string }) {
+export function Amount({ paise, size = "m", lang = "en", className = "" }: { paise: number; size?: "l" | "m"; lang?: UiLang; className?: string }) {
   const cls = size === "l" ? "text-[22px] leading-[26px]" : "text-[17px] leading-[22px]";
-  return <span aria-label={amountAria(paise, lang)} className={`tnum font-bold ${cls} ${className}`}>{inr(paise)}</span>;
+  return <span aria-label={amountAria(paise, baseLang(lang))} className={`tnum font-bold ${cls} ${className}`}>{inr(paise)}</span>;
 }
 
 export function MerchantTile({ brand, tile, size = 40 }: { brand: string; tile: { bg: string; fg: string }; size?: number }) {
@@ -41,22 +43,39 @@ export function MerchantTile({ brand, tile, size = 40 }: { brand: string; tile: 
   );
 }
 
-export function AIFooter({ lang, align = "center", list = false }: { lang: Lang; align?: "center" | "left"; list?: boolean }) {
-  return <p className={`text-[13px] text-slate ${align === "center" ? "text-center" : ""}`}>{t(lang, list ? "ai.footer.list" : "ai.footer")}</p>;
+export function AIFooter({ lang, align = "center", list = false }: { lang: UiLang; align?: "center" | "left"; list?: boolean }) {
+  return <p className={`text-[13px] text-slate ${align === "center" ? "text-center" : ""}`}>{tr(lang, list ? "ai.footer.list" : "ai.footer")}</p>;
 }
 
-export function KillSwitchBanner({ on, lang = "hinglish" }: { on: boolean; lang?: Lang }) {
+export function KillSwitchBanner({ on, lang = "hinglish" }: { on: boolean; lang?: UiLang }) {
   if (!on) return null;
-  return <div role="status" className="flex h-9 items-center justify-center bg-amber-wash px-4 text-[14px] font-semibold text-amber">{t(lang, "killswitch.banner")}</div>;
+  return <div role="status" className="flex h-9 items-center justify-center bg-amber-wash px-4 text-[14px] font-semibold text-amber">{tr(lang, "killswitch.banner")}</div>;
 }
 
-const LANG_LABEL: Record<Lang, string> = { hi: "हिं", hinglish: "Hi-En", en: "EN" };
-const NEXT: Record<Lang, Lang> = { hi: "hinglish", hinglish: "en", en: "hi" };
-export function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
+/** All 24 languages. Hindi, Hinglish and English are hand-written; the rest are Sarvam AI's, checked line by line.
+ *  A speaker icon marks languages Sarvam can also speak. */
+export function LangPicker({ lang, onChange }: { lang: UiLang; onChange: (l: UiLang) => void }) {
+  const [open, setOpen] = useState(false);
   return (
-    <button onClick={() => onChange(NEXT[lang])} className="min-w-12 rounded-full border border-line-strong px-3 py-1 text-[13px] font-semibold text-navy" aria-label="Change language">
-      {LANG_LABEL[lang]}
-    </button>
+    <span className="relative">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="listbox" className="inline-flex min-w-12 items-center gap-1 rounded-full border border-line-strong px-3 py-1 text-[13px] font-semibold text-navy" aria-label="Change language">
+        <Languages size={14} aria-hidden />{langInfo(lang).native}
+      </button>
+      {open && (
+        <ul role="listbox" aria-label="Language" className="absolute right-0 top-9 z-30 max-h-[340px] w-[210px] overflow-y-auto rounded-[12px] border border-line bg-surface py-1" style={{ boxShadow: "var(--shadow-float)" }}>
+          {LANGS.map((l) => (
+            <li key={l.code}>
+              <button role="option" aria-selected={l.code === lang} onClick={() => { onChange(l.code); setOpen(false); }} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[14px] ${l.code === lang ? "bg-cyan-wash font-semibold text-navy" : "text-ink"}`}>
+                <span dir={l.rtl ? "rtl" : "ltr"} className="flex-1">{l.native}</span>
+                <span className="text-[12px] text-slate">{l.english}</span>
+                {l.tts && <Volume2 size={13} className="text-slate" aria-label="Can speak" />}
+                {l.code === lang && <Check size={14} className="text-navy" aria-hidden />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </span>
   );
 }
 

@@ -25,4 +25,9 @@ export const LintOut = z.object({
 });
 export const AlertOut = z.object({ headline: z.string(), detail: z.string() });
 
-export const SCHEMAS = { reminder: ReminderOut, tagger: TagOut, intake: IntakeOut, case_summary: CaseOut, lint: LintOut, alert: AlertOut } as const;
+export const SmsOut = z.object({
+  found: z.boolean(), brand: z.string().max(60).nullable(), legal_name: z.string().max(100).nullable(),
+  amount_rupees: z.number().nonnegative().nullable(), interval: z.enum(["month", "quarter", "year"]).nullable(),
+  next_due: z.string().nullable(), kind: z.enum(["subscription", "emi", "sip", "insurance", "bill"]),
+});
+export const SCHEMAS = { reminder: ReminderOut, tagger: TagOut, intake: IntakeOut, case_summary: CaseOut, lint: LintOut, alert: AlertOut, sms: SmsOut } as const;

@@ -2,6 +2,10 @@
 
 An AI teammate for UPI AutoPay that asks before the money moves. Prototype for the Paytm Build for India AI Hackathon, Problem Statement 3. All merchants and people are fictional. No real money moves.
 
+## Pakka live: try it for real
+
+Open `/live`, create an account with a passkey (Touch ID, Windows Hello or your phone), pick any of 24 languages and add the AutoPays you actually have, typed or by pasting a bank SMS. Pakka then runs on the real clock: the bank notice, the risk score, a reminder written live by Sarvam in your language (and read aloud), your decision, and a pause or cancel confirmed with your passkey. Only money is simulated; nothing touches your bank. Set `SARVAM_API_KEY` for live text, translation and voice; without it the hand-written templates are used. For a hosted setup run `supabase/migrations/0003_live.sql` and call `GET /api/live/cron` every few minutes with `CRON_SECRET`.
+
 ## Run it
 
 ```bash
@@ -48,6 +52,22 @@ Decisions where the PRD is silent are in `docs/DECISIONS.md`.
 
 Live model text needs a paid Anthropic key (`LLM_API_KEY`, then `pnpm bake:llm`); until then templates and the hand-checked review labels are used and labelled as such. The cheaper-plan offer is not built.
 
+## Regional languages and voice (Sarvam AI)
+
+Put `SARVAM_API_KEY` in `.env` (git-ignored). Check it works with one call:
+
+```bash
+pnpm sarvam:first-call
+```
+
+Then translate the customer copy:
+
+```bash
+pnpm bake:sarvam
+```
+
+That translates the customer copy into 21 more languages (Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Odia, Punjabi, Assamese, Urdu, Nepali, Konkani, Maithili, Dogri, Bodo, Sanskrit, Kashmiri, Sindhi, Manipuri, Santali) and keeps only lines that pass the checks in `src/copy/regional.ts`. The language button in the customer app lists all 24. "Listen" speaks in the chosen language (Bulbul), and the mic in Pakka se poochho understands any of them (Saaras, language detected automatically). With only a Sarvam key, Pakka se poochho's intake and the offer-copy check also run on Sarvam 105B. Without a key everything falls back to Hindi, Hinglish or English.
+
 ## Pakka for Business (`/business`)
 
 The same idea for B2B payouts in INR. Three AI agents (payables, compliance, risk) read invoices and plan vendor payouts, but none of them can move money. A treasury guard releases a payout only for a receipt it checks on its own: Ed25519 signatures from each agent and from the people the amount demands, the account on file, the exact amount after TDS, a fresh nonce, the current policy and model, cooling periods, caps, the release window and the balance. It fails closed.
@@ -59,7 +79,7 @@ The same idea for B2B payouts in INR. Three AI agents (payables, compliance, ris
 
 ### Live mode (`/business/live`): real people, real agents, simulated money
 
-- People sign in and sign every approval with passkeys. Agents run outside the app and use the API with their own Ed25519 keys (`docs/AGENT_API.md`). Ledgers persist to Supabase (`supabase/migrations/0002_b2b.sql`) or `.pakka-data/`. Only money is simulated, by a sandbox bank.
+- People sign in and sign every approval with passkeys. Agents run outside the app and use the API with their own Ed25519 keys (`docs/AGENT_API.md`; Python client and integration guide in `docs/BUSINESS_API_PYTHON.md`). Test report with screenshots: `docs/test-report/README.md`. Ledgers persist to Supabase (`supabase/migrations/0002_b2b.sql`) or `.pakka-data/`. Only money is simulated, by a sandbox bank.
 - Try it in five commands against `pnpm dev`:
 
 ```bash

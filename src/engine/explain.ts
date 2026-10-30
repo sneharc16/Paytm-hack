@@ -7,7 +7,7 @@ import type { ISO, Lang } from "./types";
 
 export type NudgeKind = "ask" | "tell" | "follow_up" | "collect" | "failed" | "refund_offer" | "remind" | "stale";
 
-export interface Written { title: string; body: string; voice?: string; language: Lang; modelVersion: string; fallback?: string }
+export interface Written { title: string; body: string; voice?: string; language: Lang | (string & {}); modelVersion: string; fallback?: string }
 
 export interface ReminderFacts {
   language: Lang; kind: NudgeKind; brand: string; registered_name: string; brand_verified: boolean;

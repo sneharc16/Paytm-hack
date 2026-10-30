@@ -18,6 +18,13 @@ export function verifyPin(s: Session, at: ISO, userId: string, digits: string): 
   return r;
 }
 
+/** Pakka live: the person confirmed with their passkey (verified by the server) instead of a PIN pad. The
+ *  token is what the gateway checks before a pause or cancel, exactly like a PIN token. */
+export function passkeyVerified(s: Session, at: ISO, userId: string, pinToken: string) {
+  s.emit({ actor: "customer", simAt: at, type: "pin_verified", payload: { userId, pinToken, method: "passkey" } });
+  return { pinToken };
+}
+
 const DECISION_RULE: Record<Choice, string> = {
   keep: "KEEP_V1", skip: "SKIP_VIA_MERCHANT_V1", pause: "USER_OPT_OUT_V1", cancel: "USER_OPT_OUT_V1", downgrade: "DOWNGRADE_VIA_MERCHANT_V1",
 };
@@ -226,7 +233,9 @@ export function askQuestion(s: Session, at: ISO, userId: string, text: string, i
     caseCode = s.state.caseByMandate.get(res.mandateId);
     if (!caseCode) {
       const m = s.idx.mandate.get(res.mandateId)!;
-      const charge = s.world.history.filter((h) => h.mandateId === m.id).at(-1);
+      // Seeded history first (demo); in a live world the charges are the ones the engine made.
+      const charge = s.world.history.filter((h) => h.mandateId === m.id).at(-1)
+        ?? [...s.state.executions.values()].filter((x) => x.result === "success" && s.idx.cycle.get(x.cycleId)?.mandateId === m.id).at(-1);
       const code = nextCaseCode(s, m.id);
       run(s, addSec(at, 2), { type: "openCase", ruleId: "FRAUD_LANE_V1", actor: "rule", targetId: m.id, params: { mandateId: m.id, caseType: "fraud", code, amount: charge?.amount ?? 0, executionId: charge?.id, customerAsk: text } });
       run(s, addSec(at, 3), { type: "assignHuman", ruleId: "FRAUD_LANE_V1", actor: "rule", targetId: code, params: { mandateId: m.id, summary: caseSummary(s, code) } });

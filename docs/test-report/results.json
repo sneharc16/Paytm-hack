@@ -1,0 +1,357 @@
+{
+  "at": "2026-10-30T16:22:24.662Z",
+  "base": "http://localhost:3001",
+  "rows": [
+    {
+      "id": "01",
+      "area": "Screens",
+      "title": "Home and hub",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/01-home-and-hub.png",
+      "ms": 1378
+    },
+    {
+      "id": "02",
+      "area": "Screens",
+      "title": "Consumer app (demo world)",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/02-consumer-app-demo-world.png",
+      "ms": 1561
+    },
+    {
+      "id": "03",
+      "area": "Screens",
+      "title": "Stage demo",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/03-stage-demo.png",
+      "ms": 1164
+    },
+    {
+      "id": "04",
+      "area": "Screens",
+      "title": "Merchant console",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/04-merchant-console.png",
+      "ms": 1342
+    },
+    {
+      "id": "05",
+      "area": "Screens",
+      "title": "Ops console",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/05-ops-console.png",
+      "ms": 1245
+    },
+    {
+      "id": "06",
+      "area": "Screens",
+      "title": "Ops: review radar",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/06-ops-review-radar.png",
+      "ms": 847
+    },
+    {
+      "id": "07",
+      "area": "Screens",
+      "title": "Ops: cases",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/07-ops-cases.png",
+      "ms": 702
+    },
+    {
+      "id": "08",
+      "area": "Screens",
+      "title": "Ops: audit",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/08-ops-audit.png",
+      "ms": 1226
+    },
+    {
+      "id": "09",
+      "area": "Screens",
+      "title": "Pakka for Business simulation",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/09-pakka-for-business-simulation.png",
+      "ms": 907
+    },
+    {
+      "id": "10",
+      "area": "Screens",
+      "title": "Business live: welcome",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/10-business-live-welcome.png",
+      "ms": 955
+    },
+    {
+      "id": "11",
+      "area": "Screens",
+      "title": "Consumer live: welcome",
+      "status": "pass",
+      "note": "HTTP 200",
+      "shot": "screens/11-consumer-live-welcome.png",
+      "ms": 3375
+    },
+    {
+      "id": "12",
+      "area": "Consumer live",
+      "title": "Sign up with a passkey",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/12-sign-up-with-a-passkey.png",
+      "ms": 1267
+    },
+    {
+      "id": "13",
+      "area": "Consumer live",
+      "title": "Paste a bank SMS and let Pakka read it",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/13-paste-a-bank-sms-and-let-pakka-read-it.png",
+      "ms": 1986
+    },
+    {
+      "id": "14",
+      "area": "Consumer live",
+      "title": "Add the AutoPay",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/14-add-the-autopay.png",
+      "ms": 86
+    },
+    {
+      "id": "15",
+      "area": "Consumer live",
+      "title": "Reminder arrives, written live",
+      "status": "pass",
+      "note": "label: 9:51 PM, Sarvam ne aapki bhasha mein likha, Pakka ne jaancha",
+      "shot": "screens/15-reminder-arrives-written-live.png",
+      "ms": 73306
+    },
+    {
+      "id": "16",
+      "area": "Consumer live",
+      "title": "Open the decision sheet",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/16-open-the-decision-sheet.png",
+      "ms": 105
+    },
+    {
+      "id": "17",
+      "area": "Consumer live",
+      "title": "Choose pause: Pakka asks for the passkey",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/17-choose-pause-pakka-asks-for-the-passkey.png",
+      "ms": 378
+    },
+    {
+      "id": "18",
+      "area": "Consumer live",
+      "title": "Confirm with the passkey: AutoPay paused",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/18-confirm-with-the-passkey-autopay-paused.png",
+      "ms": 163
+    },
+    {
+      "id": "19",
+      "area": "Consumer live",
+      "title": "What Pakka did, after the pause",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/19-what-pakka-did-after-the-pause.png",
+      "ms": 127
+    },
+    {
+      "id": "20",
+      "area": "API key",
+      "title": "Create a company with a passkey",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/20-create-a-company-with-a-passkey.png",
+      "ms": 1903
+    },
+    {
+      "id": "21",
+      "area": "API key",
+      "title": "Open People and agents",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/21-open-people-and-agents.png",
+      "ms": 154
+    },
+    {
+      "id": "22",
+      "area": "API key",
+      "title": "Fill in the agent and its public key",
+      "status": "pass",
+      "note": "public key d4824fbcb485f9c0...",
+      "shot": "screens/22-fill-in-the-agent-and-its-public-key.png",
+      "ms": 89
+    },
+    {
+      "id": "23",
+      "area": "API key",
+      "title": "Sign with a passkey: the API key is shown once",
+      "status": "pass",
+      "note": "API key pk_abf850149b_UU... (46 chars)",
+      "shot": "screens/23-sign-with-a-passkey-the-api-key-is-shown-once.png",
+      "ms": 433
+    },
+    {
+      "id": "24",
+      "area": "API key",
+      "title": "Python client connects with the new key",
+      "status": "pass",
+      "note": "Connected as Payables agent (proposer) at Tarang.",
+      "shot": "screens/24-python-client-connects-with-the-new-key.png",
+      "ms": 386
+    },
+    {
+      "id": "25",
+      "area": "Business live",
+      "title": "Governor signs in with a passkey: overview",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/25-governor-signs-in-with-a-passkey-overview.png",
+      "ms": 98
+    },
+    {
+      "id": "26",
+      "area": "Business live",
+      "title": "Payables",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/26-payables.png",
+      "ms": 94
+    },
+    {
+      "id": "27",
+      "area": "Business live",
+      "title": "Ledger: hash chained",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/27-ledger-hash-chained.png",
+      "ms": 153
+    },
+    {
+      "id": "28",
+      "area": "Business live",
+      "title": "Policy and keys",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/28-policy-and-keys.png",
+      "ms": 100
+    },
+    {
+      "id": "29",
+      "area": "Business live",
+      "title": "Audit export",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/29-audit-export.png",
+      "ms": 80
+    },
+    {
+      "id": "30",
+      "area": "Business live",
+      "title": "Red team: attacks on a copy of the real ledger",
+      "status": "pass",
+      "note": "12 attacks: 11 defended, 0 got through, 1 skipped",
+      "shot": "screens/30-red-team-attacks-on-a-copy-of-the-real-ledger.png",
+      "ms": 1773
+    },
+    {
+      "id": "31",
+      "area": "Business live",
+      "title": "People and agents",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/31-people-and-agents.png",
+      "ms": 113
+    },
+    {
+      "id": "32",
+      "area": "Business live",
+      "title": "Agent API page",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/32-agent-api-page.png",
+      "ms": 89
+    },
+    {
+      "id": "33",
+      "area": "Business live",
+      "title": "Python agents send a phishing invoice: guard holds it",
+      "status": "pass",
+      "note": "[      risk] Risk agent at Saanjh, policy v5, sealed=True / [       erp] invoice INV-1A18D9E75EE (inv_5) is received with flags BANK_CHANGE_IN_EMAIL, URGENCY, DISCOURAGES_CALLBACK, SENDER_MISMATCH / [      risk] escalate (BANK_CHANGE_IN_EMAIL, URGENCY, DISCOURAGES_CALLBACK, SENDER_MISMATCH, OPEN_BANK_CHANGE) -> blocked / Intent 576e265983a1: blocked /   blocked: NO_OPEN_BANK_CHANGE Bank change request cr_inv_4 is open; payouts wait for the callback",
+      "shot": "screens/33-python-agents-send-a-phishing-invoice-guard-holds-.png",
+      "ms": 650
+    },
+    {
+      "id": "34",
+      "area": "Business live",
+      "title": "Maker sees bank changes the phishing emails asked for",
+      "status": "pass",
+      "note": "2 open requests",
+      "shot": "screens/34-maker-sees-bank-changes-the-phishing-emails-asked-.png",
+      "ms": 341
+    },
+    {
+      "id": "35",
+      "area": "Business live",
+      "title": "Maker calls the number on file: vendor never asked",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/35-maker-calls-the-number-on-file-vendor-never-asked.png",
+      "ms": 2566
+    },
+    {
+      "id": "36",
+      "area": "Business live",
+      "title": "Python agents raise a payout that needs a checker",
+      "status": "pass",
+      "note": " / Intent 62cc01e8a4ec: awaiting_approval /   waiting for passkey approval from: checker (approve in the console, or run pnpm b2b:live-demo approve)",
+      "shot": "screens/36-python-agents-raise-a-payout-that-needs-a-checker.png",
+      "ms": 478
+    },
+    {
+      "id": "37",
+      "area": "Business live",
+      "title": "Checker approves with a passkey: guard releases the payout",
+      "status": "pass",
+      "note": "intent 62cc01e8a4ec: settled SBKP281C116EC6D2; ",
+      "shot": "screens/37-checker-approves-with-a-passkey-guard-releases-the.png",
+      "ms": 4834
+    },
+    {
+      "id": "38",
+      "area": "Business live",
+      "title": "Real invoice from the phishing email waits for a checker (PRD 3)",
+      "status": "pass",
+      "note": "INV-1A18D9E75EE waits for the checker, flags shown, payee is the account on file",
+      "shot": "screens/38-real-invoice-from-the-phishing-email-waits-for-a-c.png",
+      "ms": 187
+    },
+    {
+      "id": "39",
+      "area": "Business live",
+      "title": "Ledger after the payout",
+      "status": "pass",
+      "note": "",
+      "shot": "screens/39-ledger-after-the-payout.png",
+      "ms": 191
+    }
+  ]
+}

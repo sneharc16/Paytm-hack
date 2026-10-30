@@ -5,6 +5,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { ApiError, FinishReason, GoogleGenAI } from "@google/genai";
+import { SarvamAIClient } from "sarvamai";
 import { z } from "zod";
 import { cacheKey, lookup } from "./cache";
 import { PROMPTS, type Task } from "./prompts";
@@ -16,28 +17,31 @@ export type TaskResult =
 
 const memory = new Map<string, { output: unknown; model: string }>();
 
-type Provider = "anthropic" | "gemini" | "none";
+type Provider = "anthropic" | "gemini" | "sarvam" | "none";
 const anthropicKey = () => process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY;
 const geminiKey = () => process.env.GEMINI_API_KEY;
+const sarvamKey = () => process.env.SARVAM_API_KEY;
 
 /** LLM_PROVIDER if set; otherwise whichever key is present. */
 export function provider(): Provider {
   const p = process.env.LLM_PROVIDER;
-  if (p === "anthropic" || p === "gemini" || p === "none") return p;
-  return anthropicKey() ? "anthropic" : geminiKey() ? "gemini" : "none";
+  if (p === "anthropic" || p === "gemini" || p === "sarvam" || p === "none") return p;
+  return anthropicKey() ? "anthropic" : geminiKey() ? "gemini" : sarvamKey() ? "sarvam" : "none";
 }
 
 const isFastTask = (task: Task) => task === "tagger" || task === "intake" || task === "lint";
 
 /** Writing tasks use the main model; tagging, intake and lint use the fast one. */
 export function modelFor(task: Task, p: Provider = provider()): string {
+  // The conversations model answers these short structured tasks in about a third of a second.
+  if (p === "sarvam") return process.env.SARVAM_MODEL || "sarvam-105b-conversations";
   if (p === "gemini") return isFastTask(task) ? process.env.GEMINI_MODEL_FAST || "gemini-3.5-flash-lite" : process.env.GEMINI_MODEL || "gemini-3.5-flash";
   return isFastTask(task) ? process.env.LLM_MODEL_FAST || "claude-haiku-5-5" : process.env.LLM_MODEL || "claude-sonnet-5-5";
 }
 
 export function llmEnabled(): boolean {
   const p = provider();
-  return (p === "anthropic" && !!anthropicKey()) || (p === "gemini" && !!geminiKey());
+  return (p === "anthropic" && !!anthropicKey()) || (p === "gemini" && !!geminiKey()) || (p === "sarvam" && !!sarvamKey());
 }
 
 let client: Anthropic | null = null;
@@ -51,8 +55,14 @@ function getGemini(): GoogleGenAI {
   gemini ??= new GoogleGenAI({ apiKey: geminiKey() });
   return gemini;
 }
+let sarvam: SarvamAIClient | null = null;
+function getSarvam(): SarvamAIClient {
+  sarvam ??= new SarvamAIClient({ apiSubscriptionKey: sarvamKey() ?? "" });
+  return sarvam;
+}
 /** Tests swap in fakes. */
 export function setClientForTests(c: unknown) { client = c as Anthropic; }
+export function setSarvamForTests(c: unknown) { sarvam = c as SarvamAIClient; }
 export function setGeminiForTests(c: unknown) { gemini = c as GoogleGenAI; }
 
 type Call = { ok: true; raw: unknown; model: string } | { ok: false; reason: string };
@@ -133,6 +143,38 @@ async function callGeminiOnce(task: Task, model: string, user: string, timeoutMs
   }
 }
 
+/** Sarvam 105B with structured output from the same Zod schema; low reasoning effort keeps it quick. */
+async function callSarvam(task: Task, model: string, user: string, timeoutMs: number): Promise<Call> {
+  try {
+    const r = await getSarvam().chat.completions({
+      model: model as "sarvam-105b",
+      messages: [{ role: "system", content: PROMPTS[task].system }, { role: "user", content: user }],
+      response_format: { type: "json_schema", json_schema: { name: task, schema: jsonSchemaFor(task), strict: true } },
+      reasoning_effort: "low", max_tokens: 2000,
+    }, { timeoutInSeconds: Math.ceil(timeoutMs / 1000), maxRetries: 1 });
+    const choice = r.choices?.[0];
+    if (choice?.finish_reason === "length") return { ok: false, reason: "max_tokens" };
+    if (choice?.finish_reason === "content_filter") return { ok: false, reason: "refusal" };
+    const text = choice?.message?.content;
+    if (!text) return { ok: false, reason: "invalid_output" };
+    try {
+      return { ok: true, raw: JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)), model: r.model ?? model };
+    } catch {
+      return { ok: false, reason: "invalid_output" };
+    }
+  } catch (error) {
+    const status = (error as { statusCode?: number })?.statusCode;
+    if (status) return { ok: false, reason: status === 429 ? "rate_limited" : status === 401 || status === 403 ? "auth" : status === 400 || status === 422 ? "bad_request" : `api_${status}` };
+    const name = (error as Error)?.name;
+    return { ok: false, reason: /Timeout|Abort/.test(name ?? "") ? "timeout" : "connection" };
+  }
+}
+
+async function callSarvamWithRetry(task: Task, model: string, user: string, timeoutMs: number): Promise<Call> {
+  const first = await callSarvam(task, model, user, timeoutMs);
+  return !first.ok && TRANSIENT.has(first.reason) ? callSarvam(task, model, user, timeoutMs) : first;
+}
+
 function userContent(task: Task, input: unknown): string {
   const json = JSON.stringify(input);
   switch (task) {
@@ -142,6 +184,7 @@ function userContent(task: Task, input: unknown): string {
     case "case_summary": return `FACTS:\n${json}`;
     case "lint": return `TEXT:\n${(input as { text: string }).text}`;
     case "alert": return `METRICS:\n${json}`;
+    case "sms": return `Message:\n${(input as { text: string }).text}`;
   }
 }
 
@@ -154,12 +197,14 @@ export async function runTask(task: Task, input: unknown, opts: { useDemoCache?:
   const key = cacheKey(task, input);
   const mem = memory.get(key);
   if (mem) return { ok: true, output: mem.output, model: mem.model, promptVersion, cacheHit: true, latencyMs: 0 };
-  if (!llmEnabled() && !client && !gemini) return { ok: false, reason: "llm_off", promptVersion };
+  if (!llmEnabled() && !client && !gemini && !sarvam) return { ok: false, reason: "llm_off", promptVersion };
 
-  const p = client ? "anthropic" : gemini ? "gemini" : provider();
+  const p = client ? "anthropic" : gemini ? "gemini" : sarvam ? "sarvam" : provider();
   const model = modelFor(task, p);
   const started = Date.now();
-  const call = p === "gemini" ? await callGemini(task, model, userContent(task, input), opts.timeoutMs ?? 45_000) : await callAnthropic(task, model, userContent(task, input));
+  const call = p === "gemini" ? await callGemini(task, model, userContent(task, input), opts.timeoutMs ?? 45_000)
+    : p === "sarvam" ? await callSarvamWithRetry(task, model, userContent(task, input), opts.timeoutMs ?? 30_000)
+    : await callAnthropic(task, model, userContent(task, input));
   const latencyMs = Date.now() - started;
   if (!call.ok) {
     console.warn(JSON.stringify({ llm: task, model, promptVersion, fallback: call.reason }));
