@@ -17,7 +17,8 @@
     "agents": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/agents/pakka-agents.ts",
     "b2b:live-demo": "tsx --tsconfig tsconfig.json scripts/b2b-live-demo.ts",
     "b2b:verify": "tsx --tsconfig tsconfig.json scripts/b2b-verify.ts",
-    "bake:voice": "tsx --tsconfig tsconfig.json scripts/bake-voice.ts"
+    "bake:voice": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-voice.ts",
+    "try:review": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-review.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
