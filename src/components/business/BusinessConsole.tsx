@@ -162,7 +162,7 @@ function Overview({ t, go }: { t: Treasury; go: (p: Page) => void }) {
       </div>
       <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
         <Card title="How a payout is released">
-          <ol className="grid gap-2 md:grid-cols-7">
+          <ol className="@container">
             {[
               { t: "Invoice email", d: "Untrusted. Read as data, never obeyed", Icon: Inbox },
               { t: "Payables agent", d: "Plans the payout to the account on file", Icon: Bot },
@@ -172,10 +172,13 @@ function Overview({ t, go }: { t: Treasury; go: (p: Page) => void }) {
               { t: "Treasury guard", d: "Checks every signature and rule, fails closed", Icon: ShieldCheck },
               { t: "Bank", d: "Idempotent payout, status checked, never resent", Icon: Landmark },
             ].map((s, i) => (
-              <li key={s.t} className="rounded-[12px] border border-line p-3">
-                <div className="flex items-center gap-2 text-navy"><s.Icon size={16} aria-hidden /><span className="text-[12px] font-semibold text-mist">{i + 1}</span></div>
-                <div className="mt-1 text-[14px] font-semibold leading-5">{s.t}</div>
-                <div className="mt-1 text-[12.5px] leading-4 text-slate">{s.d}</div>
+              <li key={s.t} className="relative flex gap-3 pb-3 last:pb-0">
+                {i < 6 && <span aria-hidden className="absolute bottom-0 left-[15px] top-8 w-px bg-line" />}
+                <span className="grid size-8 shrink-0 place-items-center rounded-full border border-line bg-white text-navy"><s.Icon size={16} aria-hidden /></span>
+                <div className="min-w-0 flex-1 pt-[5px] @min-[460px]:flex @min-[460px]:gap-3">
+                  <div className="text-[14px] font-semibold leading-5 @min-[460px]:w-[150px] @min-[460px]:shrink-0"><span className="tnum mr-1.5 text-mist">{i + 1}</span>{s.t}</div>
+                  <div className="text-[13px] leading-5 text-slate">{s.d}</div>
+                </div>
               </li>
             ))}
           </ol>
