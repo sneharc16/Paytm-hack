@@ -12,7 +12,7 @@ export const TagOut = z.object({
 export const IntakeOut = z.object({
   intent: z.enum(["explain_charge", "refund_request", "cancel_help", "never_approved", "failed_charge", "other"]),
   merchant_text: z.string().nullable(), amount_rupees: z.number().nullable(), date_text: z.string().nullable(),
-  language: z.enum(["hi", "hinglish", "en"]),
+  language: z.enum(["hi", "hinglish", "en"]), reply: z.string(),
 });
 export const CaseOut = z.object({
   summary: z.array(z.string()), customer_ask: z.string(), rules_said: z.string(), merchant_position: z.string(),
