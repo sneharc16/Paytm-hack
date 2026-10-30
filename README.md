@@ -79,7 +79,7 @@ The same idea for B2B payouts in INR. Three AI agents (payables, compliance, ris
 
 ### Live mode (`/business/live`): real people, real agents, simulated money
 
-- People sign in and sign every approval with passkeys. Agents run outside the app and use the API with their own Ed25519 keys (`docs/AGENT_API.md`). Ledgers persist to Supabase (`supabase/migrations/0002_b2b.sql`) or `.pakka-data/`. Only money is simulated, by a sandbox bank.
+- People sign in and sign every approval with passkeys. Agents run outside the app and use the API with their own Ed25519 keys (`docs/AGENT_API.md`; Python client and integration guide in `docs/BUSINESS_API_PYTHON.md`). Test report with screenshots: `docs/test-report/README.md`. Ledgers persist to Supabase (`supabase/migrations/0002_b2b.sql`) or `.pakka-data/`. Only money is simulated, by a sandbox bank.
 - Try it in five commands against `pnpm dev`:
 
 ```bash

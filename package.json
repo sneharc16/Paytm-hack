@@ -10,6 +10,8 @@
     "test": "vitest run",
     "bake:llm": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-llm.ts",
     "e2e": "playwright test",
+    "tour": "playwright test -c playwright.tour.config.ts",
+    "test:python": "cd sdk/python && python3 -m unittest -v test_pakka_business",
     "check:supabase": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts",
     "check:live": "tsx --tsconfig tsconfig.json scripts/check-live.ts",
     "try:hindi": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-hindi.ts",

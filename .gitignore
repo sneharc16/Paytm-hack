@@ -51,3 +51,7 @@ next-env.d.ts
 # Local data: live business ledgers, translation cache, agent keys
 .pakka-data/
 .pakka-agents/
+
+# python
+__pycache__/
+*.key.json
