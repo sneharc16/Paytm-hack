@@ -42,7 +42,7 @@ export function intakeInput(world: World, userId: string, text: string, language
   });
   return {
     task: "intake",
-    input: { message: text, language, mandates, helpline: "1930", fraud_review: "Pakka opens a fraud review for a charge the customer says they never approved." },
+    input: { message: text, language, mandates, helpline: "1930", never_approved_route: "Pakka's trust team reviews a charge the customer says they never approved." },
     mask: { names: user ? [user.name] : [], keep: mandates.flatMap((m) => [m.brand, m.registered_name]) },
   };
 }

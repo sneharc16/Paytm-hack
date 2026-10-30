@@ -6,7 +6,7 @@
 // (no key, timeout, refusal, bad JSON, rate limit, review) returns { ok: false } and the caller uses its template.
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { ApiError, FinishReason, GoogleGenAI } from "@google/genai";
+import { ApiError, FinishReason, GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import { mask, tokensIn, unmask, type MaskOptions, type PiiType, type Vault } from "@/lib/privacy/mask";
 import { reviewLoop, type ReviewMeta, type Role } from "./agents/loop";
@@ -117,7 +117,8 @@ async function callGeminiOnce(system: string, schema: z.ZodType, model: string, 
       contents: user,
       config: {
         systemInstruction: system, responseMimeType: "application/json", responseJsonSchema: jsonSchemaFor(schema),
-        maxOutputTokens: 2000, abortSignal: AbortSignal.timeout(timeoutMs),
+        // Gemini 3.5 counts its thinking against the output limit: keep thinking low and leave room for the JSON.
+        maxOutputTokens: 8192, thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, abortSignal: AbortSignal.timeout(timeoutMs),
       },
     });
     if (response.promptFeedback?.blockReason) return { ok: false, reason: "refusal" };
