@@ -2,7 +2,8 @@
 // (executed, verified, informed) are folded away; what's left explains what happened and why.
 import { RULES } from "@/engine/rules/catalog";
 import type { Session } from "@/engine/session";
-import type { Actor, PakkaEvent } from "@/engine/types";
+import type { Actor, PakkaEvent, ReviewStamp } from "@/engine/types";
+import { describeMasked } from "@/lib/privacy/mask";
 import { dayMonth, inr, timeIST } from "./format";
 
 export interface RecorderRow { id: number; at: string; actor: Actor; title: string; detail: string; chip?: string; event: PakkaEvent }
@@ -41,7 +42,7 @@ export function recorderRow(s: Session, e: PakkaEvent): RecorderRow | null {
     case "action_blocked": return r(`Blocked: ${p.reason}`, `Action ${p.actionId} (${p.actionType})`, e.ruleId);
     case "action_failed": return r(`Failed: ${p.reason}`, `Action ${p.actionId}`, e.ruleId);
     case "nudge_sent":
-      return r(e.modelVersion === "template" ? `Reminder in ${LANG[p.language]}, from the template` : `Reminder written in ${LANG[p.language]}, facts checked`,
+      return r(e.modelVersion === "template" ? `Reminder in ${LANG[p.language]}, from the template${p.review ? ": the review did not approve a model text" : ""}` : `Reminder written in ${LANG[p.language]}, ${p.review?.status === "reviewer_final" ? "reviewer's final decision applied" : "approved by a second agent"}`,
         p.pushAt ? (Math.abs(Date.parse(p.pushAt) - Date.parse(e.simAt)) < 60_000 ? `Push sent: ${p.title}` : `Quiet hours, push moved to ${timeIST(p.pushAt)}`) : "In-app card only", e.modelVersion);
     case "decision_recorded":
       if (p.refund) return r(`${first} said no to the refund`);
@@ -60,7 +61,7 @@ export function recorderRow(s: Session, e: PakkaEvent): RecorderRow | null {
     case "merchant_decision": return r(`${mer?.brand ?? "Merchant"} ${p.decision === "approve" ? "approved" : "declined"} the refund`, p.reason ?? "");
     case "case_opened": return r(`Case ${p.code} opened`, p.caseType === "fraud" ? "Fraud lane" : p.caseType === "refund" ? "Refund lane" : "", e.ruleId);
     case "case_assigned": return r(`Assigned to ${p.to}`, "", e.ruleId);
-    case "case_summary_written": return r("Case summary written", "Suggestion only, not applied", e.modelVersion);
+    case "case_summary_written": return r(p.summary?.review?.status && p.summary.review.status !== "template" ? "Case summary written, approved by a second agent" : "Case summary written", "Suggestion only, not applied", e.modelVersion);
     case "callback_booked": return r(`Callback booked by ${timeIST(p.by)}`, `From a 1600 number, code ${p.callbackCode}`, e.ruleId);
     case "callback_done": return r(`${p.by} spoke with the customer`);
     case "human_decision": return r(`${p.by} decided: ${p.decision === "refund" ? "ask merchant to refund" : p.decision === "uphold" ? "uphold merchant decision" : "need more info"}`, p.reason, e.ruleId);
@@ -69,8 +70,8 @@ export function recorderRow(s: Session, e: PakkaEvent): RecorderRow | null {
     case "merchant_alerted": return r("Private alert sent to the merchant", p.headline, e.ruleId);
     case "merchant_settings_changed": return r(`${p.by} changed Pakka settings`, Object.entries(p.settings).map(([k, v]) => `${k}: ${v}`).join(", "));
     case "kill_switch_changed": return r(`Kill switch ${p.on ? "on" : "off"}`, `${p.scope}: ${p.reason}`, "KILL_SWITCH_V1");
-    case "question_asked": return r(`${first} asked: "${p.text}"`);
-    case "question_resolved": return r(`Intent: ${p.intent}`, p.mandateId ? "Matched one mandate, deterministically" : "No single match", e.modelVersion);
+    case "question_asked": return r(`${first} asked: "${p.text}"`, p.masked ? `${describeMasked(p.masked)} before any model saw it` : "");
+    case "question_resolved": return r(`Intent: ${p.intent}`, [p.mandateId ? "Matched one mandate, deterministically" : "No single match", p.review ? (p.review.status === "template" ? "reply from the template" : "reply approved by a second agent") : ""].filter(Boolean).join("; "), e.modelVersion);
     default: return null;
   }
 }
@@ -88,4 +89,23 @@ export function eventsFor(s: Session, subject: { cycleId?: string; mandateId?: s
       || (code && (p.code === code || p.caseCode === code || e.subjectId === code))
       || (userId && (e.type === "question_asked" || e.type === "question_resolved") && p.userId === userId);
   });
+}
+
+/** The review stamp on an AI-written message, if it has one (reminders, answers, case summaries, alerts). */
+export function reviewOf(e: PakkaEvent): ReviewStamp | undefined {
+  return (e.payload.review ?? e.payload.summary?.review) as ReviewStamp | undefined;
+}
+
+/** "AI messages checked by a second agent: N; rounds on average: M; sent as template: K". Counts every message
+ *  a model could have written (upcoming-charge reminders, answers, case summaries, alerts). */
+export function reviewCounts(events: PakkaEvent[]) {
+  let checked = 0, rounds = 0, template = 0;
+  const MODEL_NUDGES = new Set(["ask", "tell", "follow_up", "collect", "remind"]);
+  for (const e of events) {
+    const eligible = (e.type === "nudge_sent" && MODEL_NUDGES.has(e.payload.kind)) || e.type === "case_summary_written" || e.type === "merchant_alerted" || (e.type === "question_resolved" && !!e.payload.review);
+    if (!eligible) continue;
+    const r = reviewOf(e);
+    if (r && r.status !== "template") { checked++; rounds += r.rounds; } else template++;
+  }
+  return { checked, avgRounds: checked ? rounds / checked : 0, template };
 }

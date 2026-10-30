@@ -218,7 +218,7 @@ export function run(s: Session, at: ISO, a: PlannedAction): GatewayResult {
       return { status: "executed", key, actionId };
     }
     case "alertMerchant": {
-      s.emit({ actor: "ai", ruleId: a.ruleId, simAt: at, type: "merchant_alerted", modelVersion: p.modelVersion, subjectType: "merchant", subjectId: merchantId, payload: { merchantId, incidentId: p.incidentId, headline: p.headline, detail: p.detail } });
+      s.emit({ actor: "ai", ruleId: a.ruleId, simAt: at, type: "merchant_alerted", modelVersion: p.modelVersion, subjectType: "merchant", subjectId: merchantId, payload: { merchantId, incidentId: p.incidentId, headline: p.headline, detail: p.detail, review: p.review } });
       exec({ money: false });
       return { status: "executed", key, actionId };
     }

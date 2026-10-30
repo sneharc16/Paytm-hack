@@ -8,7 +8,7 @@ import { metrics } from "@/engine/metrics";
 import type { Session } from "@/engine/session";
 import type { PakkaEvent } from "@/engine/types";
 import { dayMonth, inr, timeIST } from "@/lib/format";
-import { recorderRow } from "@/lib/recorder";
+import { recorderRow, reviewCounts } from "@/lib/recorder";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
 import { PakkaSeal } from "@/components/shared";
 import ConsumerApp from "@/components/consumer/ConsumerApp";
@@ -71,6 +71,7 @@ function Counters({ s, compact = false, panel = false }: { s: Session; compact?:
     return group !== "ordinary" && e.type !== "risk_scored" && e.type !== "notice_received";
   };
   const feed = s.events.slice(-1500).reverse().filter(storyEvent).map((e) => recorderRow(s, e)).filter((r): r is NonNullable<typeof r> => !!r).slice(0, compact ? 6 : 14);
+  const rv = reviewCounts(s.events);
   const b = m.choiceBreakdown;
   const total = b.keep + b.skip + b.downgrade + b.pause + b.cancel + b.none || 1;
   const pad = compact ? "p-3" : panel ? "p-5" : "px-8 pb-8 pt-[22px]";
@@ -118,6 +119,9 @@ function Counters({ s, compact = false, panel = false }: { s: Session; compact?:
               <div key={l} className={`p-4 ${i === 3 && m.movedWithoutRule > 0 ? "bg-red-wash text-red" : ""}`}><div className="tnum text-[22px] font-bold">{v}</div><div className="text-[13.5px] text-slate">{l}</div></div>
             ))}
           </section>
+          <p className={`card px-4 py-3 text-[14px] ${compact ? "col-span-2" : "lg:col-span-2"}`} data-testid="review-counts">
+            AI messages checked by a second agent: <b className="tnum">{rv.checked}</b>; rounds on average: <b className="tnum">{rv.avgRounds.toFixed(1)}</b>; sent as template: <b className="tnum">{rv.template}</b>
+          </p>
           <section className={`card p-5 ${compact ? "col-span-2" : "lg:col-span-2"}`}>
             <h2 className="text-[15px] font-semibold">What the 318 people chose</h2>
             <div className="mt-2 flex h-9 overflow-hidden rounded-[8px]">

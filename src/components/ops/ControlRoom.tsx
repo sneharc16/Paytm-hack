@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { metrics } from "@/engine/metrics";
 import type { Session } from "@/engine/session";
 import { inr, timeIST, dayMonth } from "@/lib/format";
-import { eventsFor, recorderRow } from "@/lib/recorder";
+import { eventsFor, recorderRow, reviewOf } from "@/lib/recorder";
+import { ReviewTrail } from "./ReviewTrail";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
 import { PakkaSeal, RuleChip, StatusPill } from "@/components/shared";
 import { AuditPage, CasesPage, RadarPage, RedTeamPanel } from "./OpsPages";
@@ -239,6 +240,8 @@ export function FlightRecorder({ s, subject }: { s: Session; subject: { cycleId?
               <button onClick={() => setOpen(open === r.id ? null : r.id)} className="text-left text-[14.5px] font-semibold">{r.title}</button>
               {r.detail && <p className="text-[13.5px] text-slate">{r.detail}</p>}
               {r.chip && <div className="mt-1"><RuleChip id={r.chip} /></div>}
+              {reviewOf(r.event) && open !== r.id && <button onClick={() => setOpen(r.id)} className="mt-1 text-[12.5px] font-semibold text-navy underline">Review trail</button>}
+              {open === r.id && <ReviewTrail s={s} e={r.event} />}
               {open === r.id && r.event.type === "risk_scored" && (
                 <ul className="mt-2 rounded-[8px] bg-canvas p-2 text-[13px]">
                   {(r.event.payload.contributions as { id: string; label: string; points: number }[]).map((c) => <li key={c.id} className="flex justify-between"><span>{c.id} {c.label}</span><b className="tnum">{c.points > 0 ? "+" : ""}{c.points}</b></li>)}
