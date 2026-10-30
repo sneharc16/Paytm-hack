@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-28T15:05:14.064Z",
+ "generatedAt": "2026-10-30T20:19:32.697Z",
  "entries": {
   "39efd864c77a30cba5757e336369b4f99ba54ca300acbc1225691ec975059cfd": {
    "task": "tagger",
@@ -482,25 +482,6 @@
    },
    "createdAt": "2026-10-28T14:26:16.080Z"
   },
-  "141cdff3e2559cd61c21ce57ac279e97aef99bfdf1c8cb1c67dcea51a75be2b8": {
-   "task": "alert",
-   "model": "gemini-3.6-flash",
-   "promptVersion": "l6-v1",
-   "input": {
-    "brand": "PadhoAI",
-    "count": 46,
-    "consent": 38,
-    "name": 6,
-    "ownership": 2,
-    "trial_amount": "₹1",
-    "amount": "₹599"
-   },
-   "output": {
-    "headline": "PadhoAI: 46 customer complaints recorded",
-    "detail": "We logged 46 complaints: 38 consent, 6 name, and 2 ownership for ₹1 trial and ₹599 amounts. Only you and Paytm's merchant team can see this."
-   },
-   "createdAt": "2026-10-28T14:26:19.006Z"
-  },
   "6ac8f5a13e0731c9a1597cbecce7c8ae95d84df2c339b7828e9a1f91b27ec851": {
    "task": "tagger",
    "model": "gemini-3.5-flash-lite",
@@ -539,104 +520,6 @@
     "evidence": "trial khatam hote hi ₹599. koi notification nahi, kuch nahi"
    },
    "createdAt": "2026-10-28T14:27:15.604Z"
-  },
-  "6f93893dea4c29805ae4d130b106855cb8dce40f990b22b62900b5c2b6d058c6": {
-   "task": "case_summary",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l4-v2",
-   "input": {
-    "code": "PAK-2311",
-    "caseType": "refund",
-    "template": {
-     "summary": [
-      "Farhan Qureshi asked for a refund of ₹1,499 for PadhoAI Pro quarterly.",
-      "The amount is above PadhoAI's auto refund cap, so it went to PadhoAI, which declined it.",
-      "Usage signal, shared with consent, says the app was not opened after the trial."
-     ],
-     "customer_ask": "Refund of ₹1,499; says the app was not used.",
-     "rules_said": "REFUND_AUTO_V1 did not apply (cap ₹999). REFUND_MERCHANT_V1 sent it to PadhoAI.",
-     "merchant_position": "Plan terms allow refunds only within 7 days of purchase for quarterly plans.",
-     "evidence": [
-      "Trial started 16 Oct",
-      "Charged ₹1,499 on 25 Oct",
-      "App opened since trial: no (consented)"
-     ],
-     "suggested_next_step": "Ask PadhoAI to refund as a goodwill exception, pointing to the usage evidence.",
-     "suggestion_confidence": "medium",
-     "risk_flags": [],
-     "modelVersion": "template"
-    }
-   },
-   "output": {
-    "summary": [
-     "Farhan Qureshi requested a refund of ₹1,499 for PadhoAI Pro quarterly.",
-     "The amount exceeded PadhoAI's auto refund cap, and the merchant declined the request.",
-     "Usage data confirmed the app was not opened after the trial."
-    ],
-    "customer_ask": "Refund of ₹1,499; says the app was not used.",
-    "rules_said": "REFUND_AUTO_V1 did not apply (cap ₹999). REFUND_MERCHANT_V1 sent it to PadhoAI.",
-    "merchant_position": "Plan terms allow refunds only within 7 days of purchase for quarterly plans.",
-    "evidence": [
-     "Trial started 16 Oct",
-     "Charged ₹1,499 on 25 Oct",
-     "App opened since trial: no (consented)"
-    ],
-    "suggested_next_step": "Ask PadhoAI to refund as a goodwill exception, pointing to the usage evidence.",
-    "suggestion_confidence": "medium",
-    "risk_flags": []
-   },
-   "createdAt": "2026-10-28T14:31:00.682Z"
-  },
-  "a131c7198879b6d5138fb56a6187e6a70885d523c629f583eb8075c1c2a01eac": {
-   "task": "case_summary",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l4-v2",
-   "input": {
-    "code": "PAK-2314",
-    "caseType": "fraud",
-    "template": {
-     "summary": [
-      "Anjali Rao says they never set up a ₹599 PadhoAI AutoPay.",
-      "The mandate has no recorded PIN authorisation on this account.",
-      "Fraud lane steps were shown and a person review is open."
-     ],
-     "customer_ask": "Stop the charges and review an AutoPay they say they never approved.",
-     "rules_said": "FRAUD_LANE_V1: never routed through the merchant refund path.",
-     "merchant_position": "Not asked. Fraud cases do not go to the merchant first.",
-     "evidence": [
-      "Charge ₹599 on 25 Oct",
-      "No PIN authorisation on record for this mandate",
-      "Customer statement through Pakka se poochho"
-     ],
-     "suggested_next_step": "Confirm with the issuer bank whether the mandate was registered with AFA, and help the customer file with 1930.",
-     "suggestion_confidence": "medium",
-     "risk_flags": [
-      "fraud_claim"
-     ],
-     "modelVersion": "template"
-    }
-   },
-   "output": {
-    "summary": [
-     "Anjali Rao says they never set up a ₹599 PadhoAI AutoPay.",
-     "The mandate has no recorded PIN authorisation on this account.",
-     "Fraud lane steps were shown and a person review is open."
-    ],
-    "customer_ask": "Stop the charges and review an AutoPay they say they never approved.",
-    "rules_said": "FRAUD_LANE_V1: never routed through the merchant refund path.",
-    "merchant_position": "Not asked. Fraud cases do not go to the merchant first.",
-    "evidence": [
-     "Charge ₹599 on 25 Oct",
-     "No PIN authorisation on record for this mandate",
-     "Customer statement through Pakka se poochho"
-    ],
-    "suggested_next_step": "Confirm with the issuer bank whether the mandate was registered with AFA, and help the customer file with 1930.",
-    "suggestion_confidence": "medium",
-    "risk_flags": [
-     "fraud_claim"
-    ]
-   },
-   "createdAt": "2026-10-28T14:32:27.729Z"
   },
   "e7be7f72090be0b8a525a937505e059d7253c3cee8889ab964955a2c09b90529": {
    "task": "tagger",
@@ -4068,45 +3951,55 @@
    },
    "createdAt": "2026-10-28T14:52:22.641Z"
   },
-  "f5961e461d4e36d05885f3fe2869ef560ea5fcff9d0dc809ed6801f5374fb562": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+  "666aab5252f306ba2f40eb88e2ec2f3c1814166c874b0376b0b52da761d5fa6c": {
+   "task": "alert",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l6-v1+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
-    "language": "hinglish",
-    "kind": "ask",
     "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "20 Oct",
-    "charge_day": "Kal",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
+    "count": 46,
+    "consent": 38,
+    "name": 6,
+    "ownership": 2,
+    "trial_amount": "₹1",
+    "amount": "₹599"
    },
    "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Aapka PadhoAI ka charge kal 9:30 PM ke baad hai. Aapke paas choices hain.",
-    "voice_script": "Namaste. Aapka PadhoAI subscription ka agla charge Vidyakosh Learning Pvt Ltd ke zariye ₹599 ka hai, jo kal 9:30 PM ke baad hoga. Aapne trial ke baad ise use nahi kiya hai. Aap ise keep, skip, pause ya cancel kar sakte hain. Agar aap kuch nahi karenge, toh aapko charge nahi kiya jayega.",
-    "language": "hinglish"
+    "headline": "Spike in complaints for PadhoAI",
+    "detail": "46 complaints received (38 consent, 6 name, 2 ownership). Trial ₹1, plan ₹599. Only you and Paytm's merchant team can see this."
    },
-   "createdAt": "2026-10-28T14:55:13.169Z"
+   "createdAt": "2026-10-30T05:12:20.063Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "L6-P": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l6-v1+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "fc6bdbae199470d20d00e4d40b66718fc12344d932f695ece962e6b6f8f862f6": {
+  "4caf038c33a606acb6d76e236ae72cd1b39888585ef88b508228cac1fc0b7108": {
    "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hi",
     "kind": "ask",
@@ -4131,17 +4024,72 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI ke liye ₹599 ka AutoPay",
-    "body": "PadhoAI ka ₹599 ka AutoPay kal 9:30 PM ke baad shuru hoga.",
-    "voice_script": "Namaste. Aapke PadhoAI subscription ke liye Vidyakosh Learning Pvt Ltd ka ₹599 ka charge kal 9:30 PM ke baad hone wala hai. Aapne is app ko is dauran khola nahi hai. Agar aap chahte hain, toh aap ise rakh sakte hain, ya skip, pause ya cancel bhi kar sakte hain. Agar aap koi jawab nahi dete hain, toh aapko koi charge nahi lagega.",
-    "language": "hinglish"
+    "title": "PadhoAI का ₹599 का ऑटोपे",
+    "body": "कल 9:30 PM के बाद PadhoAI का ₹599 का ऑटोपे शुल्क तय है। आप इसे जारी रख सकते हैं, स्किप, पॉज़ या कैंसिल कर सकते हैं।",
+    "voice_script": "नमस्कार। कल 9:30 PM के बाद PadhoAI यानी Vidyakosh Learning Pvt Ltd का ₹599 का ऑटोपे शुल्क तय है। आप इसे जारी रखने, स्किप, पॉज़ या कैंसिल करने का विकल्प चुन सकते हैं। उत्तर न देने पर कोई शुल्क नहीं कटेगा।",
+    "language": "hi"
    },
-   "createdAt": "2026-10-28T14:55:16.549Z"
+   "createdAt": "2026-10-30T05:12:30.911Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "56% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
   },
-  "44dfb4a779edc5b99e3f0426855c5b70ce5fd088afff34e92e92b40121d589f1": {
+  "a79f690416b011b2fa0c74f9f3968fa775875eb64ec70071093cf54ba4e3e854": {
    "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "en",
     "kind": "ask",
@@ -4166,17 +4114,144 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI ₹599 charge tomorrow",
-    "body": "Your PadhoAI AutoPay of ₹599 is scheduled for tomorrow after 9:30 PM.",
-    "voice_script": "Hello. This is a simple update about your PadhoAI AutoPay. Vidyakosh Learning Pvt Ltd will charge ₹599 tomorrow after 9:30 PM. Since the app was not opened after the trial on 19 Oct, you can choose to keep, skip, pause, or cancel your plan. If you do nothing, you will not be charged. Please check your UPI app for details.",
+    "title": "PadhoAI AutoPay of ₹599",
+    "body": "Your PadhoAI AutoPay charge of ₹599 is scheduled for Tomorrow after 9:30 PM. You can keep, skip, pause or cancel it.",
+    "voice_script": "Hello. Your PadhoAI AutoPay charge of ₹599 from Vidyakosh Learning Pvt Ltd is scheduled for Tomorrow after 9:30 PM. You can choose to keep, skip, pause or cancel this payment. If you do nothing, you will not be charged.",
     "language": "en"
    },
-   "createdAt": "2026-10-28T14:55:30.967Z"
+   "createdAt": "2026-10-30T05:12:35.011Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "fail",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R1",
+        "by": "reviewer",
+        "quote": "Vidyakosh Learning Pvt Ltd",
+        "fix": "Remove Vidyakosh Learning Pvt Ltd from the voice script."
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": [
+       {
+        "criterion": "R1",
+        "factsQuote": "\"registered_name\":\"Vidyakosh Learning Pvt Ltd\"",
+        "answer": "withdrawn",
+        "reason": "Vidyakosh Learning Pvt Ltd is present in FACTS under registered_name."
+       }
+      ]
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
   },
-  "6ed50def250304f43046b42c96745ef6e5be0e0db7866899d7a6c65ea2abf8fe": {
+  "f0afe474d32e5b176f68b9fa3937026f8fc8ef818f0685f3beb66af14ea1a1b3": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "ask",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "20 Oct",
+    "charge_day": "Kal",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI se ₹599 ka charge",
+    "body": "Kal 9:30 PM ke baad PadhoAI aapke account se ₹599 ka AutoPay charge karega. Aap ise keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. Kal 9:30 PM ke baad PadhoAI se ₹599 ka AutoPay charge hone wala hai. Ye Vidyakosh Learning Pvt Ltd ke naam se hai. Aapke paas keep, skip, pause ya cancel karne ke vikalp hain. Agar aap koi jawab nahi dete hain toh paise nahi kategi. Aap apni suvidha ke anusaar chunein.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T05:12:35.614Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "605a60a11c39b972fddc271ae00248d5191e3aaff247df08128f02c9e96f3ac7": {
    "task": "reminder",
    "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hinglish",
     "kind": "ask",
@@ -4201,17 +4276,47 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI ka AutoPay ₹599",
-    "body": "Aapka AutoPay kal 9:30 PM ke baad charge hoga. Aap chahe toh ise skip, pause ya cancel kar sakte hain.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Vidyakosh Learning Pvt Ltd ka PadhoAI subscription AutoPay ke zariye kal 9:30 PM ke baad ₹599 se renew hoga. Trial period 19 Oct ko khatam ho chuka hai. Aapne iska upyog nahi kiya hai. Agar aap chahte hain, toh aap ise keep kar sakte hain, ya phir skip, pause ya cancel ka vikalp chun sakte hain. Koi jaldi nahi hai. Aap apna faisla aaram se le sakte hain.",
+    "title": "PadhoAI ke liye ₹599 charge Kal",
+    "body": "Aapka PadhoAI ka auto payment Kal 9:30 PM ke baad hone wala hai.",
+    "voice_script": "Namaste. Vidyakosh Learning Pvt Ltd ke PadhoAI ke liye ₹599 ka auto payment Kal 9:30 PM ke baad hone wala hai. Aap ise rakh sakte hain, skip kar sakte hain, pause kar sakte hain ya cancel kar sakte hain.",
     "language": "hinglish"
    },
-   "createdAt": "2026-10-28T14:55:34.292Z"
+   "createdAt": "2026-10-30T05:12:38.721Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "780ff7110ba3b445fcfbf6fb46f8c9003623fee82c44555f82e5635c95379a59": {
+  "c909a5b7c7b2419fd4a7609d00ba75b72449be5308284cf387931ea176f0d287": {
    "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hi",
     "kind": "ask",
@@ -4236,87 +4341,72 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI AutoPay ₹599",
-    "body": "PadhoAI ka auto pay kal 9:30 PM ke baad charge hoga. Amount ₹599 hai.",
-    "voice_script": "Namaste. Vidyakosh Learning Pvt Ltd dwara PadhoAI ka auto pay kal 9:30 PM ke baad charge hone wala hai. Iska amount ₹599 hai. Aap chahe toh ise rakh sakte hain, skip kar sakte hain, pause kar sakte hain ya cancel kar sakte hain. Aapka nirnay poori tarah se aapke haath mein hai.",
+    "title": "PadhoAI से ₹599 का AutoPay",
+    "body": "PadhoAI का ₹599 का ऑटोपे कल 9:30 PM के बाद कटने वाला है। आपने ऐप नहीं खोला है। आप इसे रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "voice_script": "नमस्ते। Vidyakosh Learning Pvt Ltd के PadhoAI का ₹599 का चार्ज कल कटने वाला है। यह 9:30 PM के बाद कटने वाला है। आपने ऐप का इस्तेमाल नहीं किया है। आप इसे जारी रख सकते हैं, स्किप कर सकते हैं, रोक सकते हैं या रद्द कर सकते हैं। जवाब न देने पर पैसे नहीं कटेंगे।",
     "language": "hi"
    },
-   "createdAt": "2026-10-28T14:55:42.071Z"
-  },
-  "0c92f52b098c103593e4b0938865b0739e8c0eb22adb6c46f05924600e7e933f": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "en",
-    "kind": "ask",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "18 Oct",
-    "charge_day": "Tomorrow",
-    "charge_time_text": "after 9:30 PM",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
+   "createdAt": "2026-10-30T05:13:55.932Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "fail",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R8",
+        "by": "code",
+        "quote": "",
+        "fix": "2 sentence(s) over 20 words: \"PadhoAI, जो Vidyakosh Learning Pvt Ltd की सेवा है, का ₹599 का चार्ज कल 9:30 PM क\""
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
     ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your PadhoAI payment of ₹599 is scheduled for tomorrow after 9:30 PM. You can manage this anytime.",
-    "voice_script": "Hello. Your PadhoAI AutoPay of ₹599 by Vidyakosh Learning Pvt Ltd is scheduled for tomorrow after 9:30 PM. The trial period ends on 18 Oct. Since the app has not been opened yet, you may want to check your choices. You can keep, skip, pause, or cancel this charge. If you take no action, you will not be charged. Please review your settings when you have a moment.",
-    "language": "en"
-   },
-   "createdAt": "2026-10-28T14:55:49.647Z"
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
   },
-  "e1304588b8fd55930c8e6e82c2218b4ef93a3ed5ef25b1e41cf7793b8b3219e5": {
+  "83b384dee6851ecc5596b127cb2988046d1fc26ee56e7bc49d2125dba63efe55": {
    "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "ask",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "18 Oct",
-    "charge_day": "Kal",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your trial ends on 18 Oct. The auto payment of ₹599 for PadhoAI is scheduled for tomorrow after 9:30 PM.",
-    "voice_script": "Namaste. Your trial for PadhoAI by Vidyakosh Learning Pvt Ltd ends on 18 Oct. The auto payment of ₹599 is scheduled for tomorrow after 9:30 PM. You can keep, skip, pause, or cancel this payment. If you do nothing, you will not be charged. Please check your app to manage your choices.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:55:57.185Z"
-  },
-  "4a2c047252b31a1134259e225255ad45a79f377e03a9580740805dd4390c3b11": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hi",
     "kind": "ask",
@@ -4341,17 +4431,267 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI ka ₹599 AutoPay",
-    "body": "PadhoAI ke liye ₹599 ka AutoPay kal 9:30 PM ke baad hai. Aapke paas vikalp hain.",
-    "voice_script": "Namaste. Aapke PadhoAI subscription ke liye ₹599 ka AutoPay kal 9:30 PM ke baad debit hoga. Yeh Vidyakosh Learning Pvt Ltd dwara hai. Aap ise rakh sakte hain, skip kar sakte hain, pause ya cancel kar sakte hain.",
+    "title": "PadhoAI ₹599 AutoPay charge",
+    "body": "PadhoAI का ₹599 का ऑटोपे भुगतान कल 9:30 PM के बाद होना है। आप इसे जारी रख सकते हैं, स्किप, पॉज या कैंसिल कर सकते हैं।",
+    "voice_script": "नमस्ते। PadhoAI Vidyakosh Learning Pvt Ltd के नाम से पंजीकृत है। इसका ₹599 का ऑटोपे भुगतान कल 9:30 PM के बाद होगा। आप इसे जारी रख सकते हैं। आप इसे पॉज, स्किप या कैंसिल भी कर सकते हैं।",
     "language": "hi"
    },
-   "createdAt": "2026-10-28T14:56:13.022Z"
+   "createdAt": "2026-10-30T05:13:57.685Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "fail",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R8",
+        "by": "code",
+        "quote": "",
+        "fix": "1 sentence(s) over 20 words: \"PadhoAI, जो Vidyakosh Learning Pvt Ltd के रूप में पंजीकृत है, का ₹599 का ऑटोपे भ\""
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
   },
-  "5d463c576248916e359851c775353efe583823ab68d4fea2549349100eb2fd9a": {
+  "09e328db86de60090a069594848f2f432e2a4296c806b20420a71da934ed7ed9": {
    "task": "reminder",
    "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "en",
+    "kind": "ask",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "18 Oct",
+    "charge_day": "Tomorrow",
+    "charge_time_text": "after 9:30 PM",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 charge Tomorrow",
+    "body": "Your PadhoAI AutoPay of ₹599 is scheduled for tomorrow. You can keep, skip, pause or cancel.",
+    "voice_script": "Hello. Your AutoPay for PadhoAI by Vidyakosh Learning Pvt Ltd of ₹599 is scheduled for tomorrow after 9:30 PM. You can keep, skip, pause or cancel it.",
+    "language": "en"
+   },
+   "createdAt": "2026-10-30T05:13:59.828Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "dd251fb89325990509bc849dd511794f5fc9f182693ef5a5be7ae4f3676195fa": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "ask",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "18 Oct",
+    "charge_day": "Kal",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 AutoPay Kal",
+    "body": "Aapka PadhoAI ka AutoPay charge ₹599 kal 9:30 PM ke baad hai. Aap keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. Vidyakosh Learning Pvt Ltd ka PadhoAI plan ₹599 ka hai. Yeh charge kal 9:30 PM ke baad hone wala hai. Aapke paas keep, skip, pause aur cancel karne ke options hain.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T05:14:01.548Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "e68707108f376c0de6e437c8d22b01d07d942be4953b0141f31098543c369d99": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "ask",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "20 अक्टूबर",
+    "charge_day": "कल",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI का ₹599 का ऑटोपे",
+    "body": "कल 9:30 PM के बाद PadhoAI का ₹599 का ऑटोपे पेमेंट होना है। आप चाहें तो इसे ऐप में जाकर रोक सकते हैं।",
+    "voice_script": "नमस्कार। कल 9:30 PM के बाद PadhoAI, यानी Vidyakosh Learning Pvt Ltd का ₹599 का ऑटोपे पेमेंट होना है। अगर आप इसे जारी नहीं रखना चाहते, तो ऐप में जाकर रोक सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T05:14:03.905Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "84267110be96bbf6a2950d41f00ba3ab6abd3fd248cff4c76199edf9edec5af6": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "en",
     "kind": "ask",
@@ -4376,17 +4716,47 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI AutoPay for ₹599",
-    "body": "Your PadhoAI AutoPay of ₹599 is scheduled for tomorrow after 9:30 PM. You can manage your choices in the app.",
-    "voice_script": "Hello. This is a gentle reminder about your PadhoAI subscription by Vidyakosh Learning Pvt Ltd. Your auto pay of five hundred ninety nine rupees is scheduled for tomorrow after nine thirty pm. Since you have not opened the app recently, we wanted to let you know. You can keep, skip, pause, or cancel anytime. If you do nothing, you will not be charged.",
+    "title": "PadhoAI ₹599 charge Tomorrow",
+    "body": "An AutoPay charge of ₹599 for PadhoAI is scheduled for Tomorrow after 9:30 PM. You can keep, skip, pause or cancel it.",
+    "voice_script": "Hello. An AutoPay charge of ₹599 for PadhoAI, registered as Vidyakosh Learning Pvt Ltd, is scheduled for Tomorrow after 9:30 PM. You can choose to keep, skip, pause or cancel this payment.",
     "language": "en"
    },
-   "createdAt": "2026-10-28T14:56:18.102Z"
+   "createdAt": "2026-10-30T05:14:06.277Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "03a7ef4028922b2c4794b0909c3791ac1a68eb1cd70ac36ec7c8f9a6e130eb56": {
+  "d8661bf9e82afbfbad2672190acad796b30dfc2e20a355c9aa5a46cd5a0eb5e6": {
    "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hinglish",
     "kind": "ask",
@@ -4411,17 +4781,177 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Aapka PadhoAI ka auto payment kal 9:30 PM ke baad hone wala hai.",
-    "voice_script": "Namaste. Aapke PadhoAI ka auto payment Vidyakosh Learning Pvt Ltd ke liye kal 9:30 PM ke baad nirdharit hai. Iska amount 599 rupaye hai. Aap ise rakh sakte hain, skip kar sakte hain, pause kar sakte hain, ya cancel kar sakte hain. Agar aap kuch nahi karenge toh aap par koi charge nahi lagega.",
+    "title": "PadhoAI ₹599 charge",
+    "body": "PadhoAI ka ₹599 ka AutoPay charge Kal 9:30 PM ke baad hoga. Vidyakosh Learning Pvt Ltd ke iss plan ko aap keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. PadhoAI ka ₹599 ka AutoPay charge Kal 9:30 PM ke baad scheduled hai. Iska registered name Vidyakosh Learning Pvt Ltd hai. Agar aap chahein toh iss payment ko keep, skip, pause ya cancel kar sakte hain. Jawab na dene par koi charge nahi katega.",
     "language": "hinglish"
    },
-   "createdAt": "2026-10-28T14:56:32.819Z"
+   "createdAt": "2026-10-30T05:14:08.821Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "181ab2e76b4bc56677733b7ef23113f894e4db349f5728eea06a34f5c4367af3": {
+  "4cf831145d52900cf5dd736539aec3808aaf931630784ac950c67e8e74737bc9": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "ask",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "19 Oct",
+    "charge_day": "Kal",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 charge expected",
+    "body": "Kal 9:30 PM ke baad ₹599 ka AutoPay charge aane wala hai. Aap isko keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. Vidyakosh Learning Pvt Ltd ke PadhoAI service ka ₹599 AutoPay charge Kal 9:30 PM ke baad aane wala hai. Agar aap chahein toh isse keep, skip, pause ya cancel kar sakte hain. Koi bhi jawaab na dene par charge nahi katega.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T05:14:12.596Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "96a372c4153bb8d4f41b65a51628cb27b9fbe77673d3228598cd6610440602c7": {
    "task": "reminder",
    "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "ask",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "18 Oct",
+    "charge_day": "Kal",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 AutoPay Kal",
+    "body": "Aapka PadhoAI ka AutoPay ₹599 ka hai. Yeh kal 9:30 PM ke baad charge hoga. Aap keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. Vidyakosh Learning Pvt Ltd ka PadhoAI ka ₹599 ka AutoPay kal 9:30 PM ke baad charge hoga. Aap keep, skip, pause ya cancel kar sakte hain.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T05:14:16.677Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "5124d3cc0842376c033fe098a2c64ed801235f6032cef5f4e1a257d54ffd95a4": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hi",
     "kind": "ask",
@@ -4446,157 +4976,97 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI ₹599 AutoPay",
-    "body": "PadhoAI ka AutoPay kal 9:30 PM ke baad charge hoga.",
-    "voice_script": "Namaste. Aapke PadhoAI subscription ke liye Vidyakosh Learning Pvt Ltd ki taraf se ₹599 ka AutoPay kal 9:30 PM ke baad set hai. Agar aap chahein toh isko skip ya cancel kar sakte hain. Aapka faisla surakshit rahega.",
-    "language": "hinglish"
+    "title": "PadhoAI ₹599 AutoPay charge कल",
+    "body": "कल PadhoAI का ₹599 का ऑटोपे पेमेंट है। आप इसे स्किप, पॉज या कैंसिल कर सकते हैं। कोई जवाब न देने पर चार्ज नहीं लगेगा।",
+    "voice_script": "नमस्ते। PadhoAI, जो Vidyakosh Learning Pvt Ltd के नाम से रजिस्टर्ड है, उसका कल ₹599 का ऑटोपे पेमेंट है। आप इसे स्किप, पॉज या कैंसिल कर सकते हैं। अगर आप कोई जवाब नहीं देते, तो चार्ज नहीं कटेगा।",
+    "language": "hi"
    },
-   "createdAt": "2026-10-28T14:56:45.676Z"
-  },
-  "21810b46a774b1df2f6302fd7f30f7758d7384f0ede0af5e33ac749ce9496b87": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "ask",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "20 अक्टूबर",
-    "charge_day": "कल",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
+   "createdAt": "2026-10-30T05:14:18.140Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 3,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "50% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "44% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
     ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI ₹599 AutoPay",
-    "body": "Kal 9:30 PM ke baad PadhoAI ka charge hai. ₹599 katenge.",
-    "voice_script": "Namaste. Aapke PadhoAI subscription ke liye Vidyakosh Learning Pvt Ltd ki taraf se ₹599 ka charge kal 9:30 PM ke baad hona hai. Trial 20 October ko tha. Aap ise rakh sakte hain, skip kar sakte hain, pause kar sakte hain, ya cancel kar sakte hain. Agar aap kuch nahi karte hain, toh aapko charge nahi kiya jayega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:56:52.032Z"
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 6
+   }
   },
-  "6ba249ed7d5351387e0c402a5582151ac36239749dcbc11b49c8314e1c2226b2": {
+  "b3e78e6a5a0f3eb346c490445983d83e97c08470fb7d3c314c72ad9d6ba4d816": {
    "task": "reminder",
    "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "ask",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "19 Oct",
-    "charge_day": "Kal",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay ₹599",
-    "body": "Aapka PadhoAI ka ₹599 ka AutoPay kal 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Aapka Vidyakosh Learning Pvt Ltd ke dwara PadhoAI ka AutoPay ₹599 ka kal 9:30 PM ke baad process hoga. Agar aapko ise rakhna hai, skip karna hai, pause karna hai, ya cancel karna hai, toh aap apne UPI app par yeh kar sakte hain. Agar aap kuch nahi karte hain, toh aapko charge nahi kiya jayega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:56:56.208Z"
-  },
-  "09960fb0fe810a36d8397ef788666108d58436299d3f1f2daf239c3b9897ad4b": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "ask",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "18 Oct",
-    "charge_day": "Kal",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your trial ends on 18 Oct. ₹599 will be charged tomorrow after 9:30 PM.",
-    "voice_script": "Namaste. Yeh PadhoAI ka message hai. Vidyakosh Learning Pvt Ltd ke trial ka 18 Oct ko ant ho raha hai. Kal 9:30 PM ke baad ₹599 ka AutoPay charge hoga. Aapke paas keep, skip, pause ya cancel karne ka vikalp hai. Agar aap koi vikalp nahi chunte hain, toh aapko charge nahi kiya jayega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:57:08.142Z"
-  },
-  "2b717741331f82131510194432678646f6fabf30142d8a2550efac2bb35127b4": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "ask",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "18 अक्टूबर",
-    "charge_day": "कल",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI ke liye ₹599 ka AutoPay",
-    "body": "PadhoAI ke liye ₹599 ka charge kal 9:30 PM ke baad tay hai.",
-    "voice_script": "Namaste. Aapke PadhoAI subscription ke liye Vidyakosh Learning Pvt Ltd ki taraf se ₹599 ka AutoPay kal 9:30 PM ke baad hona hai. Agar aap chahte hain, toh aap ise skip, pause ya cancel bhi kar sakte hain. Koi bhi badlav na karne par aapko charge nahi kiya jayega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:57:11.468Z"
-  },
-  "5f0f0b710abba92f1bfa1c67181a405078ad69b3829baf0f4c7031478d0ff312": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "en",
     "kind": "ask",
@@ -4621,17 +5091,47 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your PadhoAI AutoPay of ₹599 is scheduled for tomorrow after 9:30 PM. You can manage your choices in the app.",
-    "voice_script": "Namaste. This is a simple update about your PadhoAI AutoPay by Vidyakosh Learning Pvt Ltd. An amount of ₹599 is scheduled to be charged tomorrow after 9:30 PM. Your trial started on 20 Oct for ₹1. If you wish, you can keep, skip, pause, or cancel this payment in the app. If you do not make a choice, you will not be charged. Please check your app for details.",
+    "title": "PadhoAI ₹599 AutoPay Tomorrow",
+    "body": "Your AutoPay of ₹599 for PadhoAI is scheduled for tomorrow after 9:30 PM. You can keep, skip, pause or cancel it.",
+    "voice_script": "Hello. Your Vidyakosh Learning Pvt Ltd AutoPay of ₹599 for PadhoAI is scheduled for tomorrow after 9:30 PM. You can keep, skip, pause or cancel this payment.",
     "language": "en"
    },
-   "createdAt": "2026-10-28T14:57:12.538Z"
+   "createdAt": "2026-10-30T05:14:20.549Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "f985ea19d9b239767422069235e9d2f948a93dbb5840ff9386a2071b4e79ab7b": {
+  "e140af02bc7ae6020f44c8f7814cf07e13a965bcde391c0dc71209302c26a8eb": {
    "task": "reminder",
    "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "en",
     "kind": "ask",
@@ -4656,119 +5156,147 @@
     "no_answer_outcome": "not_charged"
    },
    "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your PadhoAI AutoPay of ₹599 is scheduled for tomorrow after 9:30 PM.",
-    "voice_script": "Hello. Your AutoPay for PadhoAI by Vidyakosh Learning Pvt Ltd of ₹599 is coming up tomorrow after 9:30 PM. You can manage your choices like keep, skip, pause, or cancel as per your plan.",
+    "title": "PadhoAI ₹599 Tomorrow",
+    "body": "Your AutoPay for PadhoAI of ₹599 is scheduled for tomorrow after 9:30 PM. You can keep, skip, pause or cancel.",
+    "voice_script": "This is a reminder about your AutoPay for PadhoAI by Vidyakosh Learning Pvt Ltd of ₹599. It is scheduled for tomorrow after 9:30 PM. You have choices to keep, skip, pause or cancel.",
     "language": "en"
    },
-   "createdAt": "2026-10-28T14:57:27.501Z"
-  },
-  "eb71cd82167d32045aaf3dfaebbaa736da98d149483795bd47ea441f3d1f37ef": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "collect",
-    "brand": "StadiumPass",
-    "registered_name": "Khelghar Media Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 299,
-    "amount_text": "₹299",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "कल",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "opened",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
+   "createdAt": "2026-10-30T05:14:28.689Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "fail",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R8",
+        "by": "code",
+        "quote": "",
+        "fix": "1 sentence(s) over 20 words: \"This is a reminder about your upcoming AutoPay for PadhoAI by Vidyakosh Learning\""
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
     ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
+  },
+  "0038530b6c25af02c73b7387da48b709a8089b7d8c8f47b0fd8d7200a479b653": {
+   "task": "case_summary",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l4-v2+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "code": "PAK-2311",
+    "caseType": "refund",
+    "template": {
+     "summary": [
+      "<NAME_1> asked for a refund of ₹1,499 for PadhoAI Pro quarterly.",
+      "The amount is above PadhoAI's auto refund cap, so it went to PadhoAI, which declined it.",
+      "Usage signal, shared with consent, says the app was not opened after the trial."
+     ],
+     "customer_ask": "Refund of ₹1,499; says the app was not used.",
+     "rules_said": "REFUND_AUTO_V1 did not apply (cap ₹999). REFUND_MERCHANT_V1 sent it to PadhoAI.",
+     "merchant_position": "Plan terms allow refunds only within 7 days of purchase for quarterly plans.",
+     "evidence": [
+      "Trial started 16 Oct",
+      "Charged ₹1,499 on 25 Oct",
+      "App opened since trial: no (consented)"
+     ],
+     "suggested_next_step": "Ask PadhoAI to refund as a goodwill exception, pointing to the usage evidence.",
+     "suggestion_confidence": "medium",
+     "risk_flags": [],
+     "modelVersion": "template"
+    }
    },
    "output": {
-    "title": "StadiumPass के लिए ₹299",
-    "body": "StadiumPass का ऑटोपे कल 9:30 PM के बाद कटेगा।",
-    "voice_script": "नमस्ते। Khelghar Media Pvt Ltd के StadiumPass के लिए ₹299 का ऑटोपे कल 9:30 PM के बाद तय है। आप इसे रख सकते हैं, रोक सकते हैं या बंद कर सकते हैं।",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T14:57:31.391Z"
-  },
-  "f227f9259519fb8b854e61fd989c7a3dbd35e613451013653b05aaac30f80775": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "en",
-    "kind": "collect",
-    "brand": "StadiumPass",
-    "registered_name": "Khelghar Media Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 299,
-    "amount_text": "₹299",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Tomorrow",
-    "charge_time_text": "after 9:30 PM",
-    "usage": "opened",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
+    "summary": [
+     "<NAME_1> asked for a refund of ₹1,499 for PadhoAI Pro quarterly.",
+     "The amount is above PadhoAI's auto refund cap, so it went to PadhoAI, which declined it.",
+     "Usage signal, shared with consent, says the app was not opened after the trial."
     ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "StadiumPass: ₹299",
-    "body": "Your AutoPay charge of ₹299 for StadiumPass is scheduled for tomorrow after 9:30 PM.",
-    "voice_script": "Hello. This is a simple update about your upcoming AutoPay charge. Khelghar Media Pvt Ltd will process the charge of ₹299 for StadiumPass tomorrow after 9:30 PM. You can keep, pause, or cancel this service as per your preference.",
-    "language": "en"
-   },
-   "createdAt": "2026-10-28T14:57:48.289Z"
-  },
-  "72b71bdf65187e6abb2445d454c830f52d4d33b7b1f05b0fbbbc9f789918f662": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 20700,
-    "amount_text": "₹20,700",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
+    "customer_ask": "Refund of ₹1,499; says the app was not used.",
+    "rules_said": "REFUND_AUTO_V1 did not apply (cap ₹999). REFUND_MERCHANT_V1 sent it to PadhoAI.",
+    "merchant_position": "Plan terms allow refunds only within 7 days of purchase for quarterly plans.",
+    "evidence": [
+     "Trial started 16 Oct",
+     "Charged ₹1,499 on 25 Oct",
+     "App opened since trial: no (consented)"
     ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
+    "suggested_next_step": "Ask PadhoAI to refund as a goodwill exception, pointing to the usage evidence.",
+    "suggestion_confidence": "medium",
+    "risk_flags": []
    },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹20,700 ka AutoPay",
-    "body": "Aapka Griha Home Finance ka AutoPay ₹20,700 parso 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka ₹20,700 ka AutoPay parso 9:30 PM ke baad debit hoga. Agar aapko ise rakhna hai, paus karna hai ya cancel karna hai, toh aap iska chunav kar sakte hain. Sahi samay par nirnay lene se aapka paisa aur samay dono bachat hote hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:57:50.095Z"
+   "createdAt": "2026-10-30T05:15:35.107Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R4": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "L4-S": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l4-v2+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "3128c37895a76efac9dc2f9874bdbd3761c8f136232cdf5ebcf6cc34b191a5e9": {
+  "01a9c0039f00c5740cf1126148f4d55b43a119b490d6aeab558115992fe8e6c2": {
    "task": "reminder",
    "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hinglish",
     "kind": "collect",
@@ -4792,1046 +5320,47 @@
     "no_answer_outcome": "charged"
    },
    "output": {
-    "title": "StadiumPass ke liye ₹299",
-    "body": "Aapka StadiumPass AutoPay kal 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki StadiumPass ke liye Khelghar Media Pvt Ltd ka ₹299 ka AutoPay kal 9:30 PM ke baad process hoga. Aap isse rakh sakte hain, pause kar sakte hain, ya cancel kar sakte hain.",
+    "title": "StadiumPass ₹299 - Kal",
+    "body": "Aapka StadiumPass AutoPay ₹299 ka charge kal 9:30 PM ke baad hone wala hai. Aap ise keep, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. Khelghar Media Pvt Ltd ka StadiumPass AutoPay ₹299 ka charge kal 9:30 PM ke baad hone wala hai. Aap ise keep, pause ya cancel kar sakte hain.",
     "language": "hinglish"
    },
-   "createdAt": "2026-10-28T14:57:57.494Z"
-  },
-  "fb064cf7ae9337fd7af0a44bd9fcffa86538f23b30f243dcdd4d3c75c0d3c927": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "en",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 34100,
-    "amount_text": "₹34,100",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "29 Oct",
-    "charge_time_text": "after 9:30 PM",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
+   "createdAt": "2026-10-30T05:15:39.960Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
     ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ₹34,100 AutoPay",
-    "body": "Your AutoPay for Griha Home Finance of ₹34,100 is scheduled for 29 Oct after 9:30 PM.",
-    "voice_script": "Namaste. This is a simple reminder that your AutoPay for Griha Home Finance Ltd of thirty four thousand one hundred rupees is scheduled for 29 Oct after 9:30 PM. You can choose to keep, pause, or cancel this payment.",
-    "language": "en"
-   },
-   "createdAt": "2026-10-28T14:58:11.995Z"
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "9bbe868bc93688fdcd9864fc384be615c4c9252be5719bc113b45c594099a6a2": {
+  "2b755e0ee5e34886ba36f973f31722df9202a4302bdb672fd01bd5425550bda7": {
    "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 8800,
-    "amount_text": "₹8,800",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹8,800 AutoPay",
-    "body": "Aapka Griha Home Finance ka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka AutoPay parson 9:30 PM ke baad hone wala hai. Iska amount ₹8,800 hai. Agar aap chahein toh ise rakh sakte hain, pause kar sakte hain ya cancel kar sakte hain. Aapka din shubh ho.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:58:18.194Z"
-  },
-  "fa8f86bfe006cf43495c5f430037edf38bf1499fffcf03a3a139b08e18ee9243": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 15200,
-    "amount_text": "₹15,200",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹15,200",
-    "body": "Aapka Griha Home Finance AutoPay parson raat 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka ₹15,200 ka AutoPay parson 9:30 PM ke baad hona hai. Agar aapko ise rakhna hai, toh aap kuch na karein. Agar aap pause ya cancel karna chahte hain, toh aapke paas yeh vikalp hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:58:22.998Z"
-  },
-  "68d0c52808c35b167012862280e6b23c23c7016b36de6aa3ddab3fc8453d0557": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 32900,
-    "amount_text": "₹32,900",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹32,900 AutoPay",
-    "body": "Aapka Griha Home Finance AutoPay parson raat 9:30 baje ke baad debit hoga.",
-    "voice_script": "Namaste. Aapke Griha Home Finance Ltd ka AutoPay parson raat 9:30 baje ke baad process hone wala hai. Iska amount ₹32,900 hai. Agar aap chahein toh ise rakh sakte hain, pause kar sakte hain, ya cancel kar sakte hain. Koi bhi action na lene par yeh payment automatically ho jayegi.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:58:35.003Z"
-  },
-  "e23305196933a2600bea69ecffddab2def08fafb7c5a3b97642f3da314acc18d": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 10400,
-    "amount_text": "₹10,400",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹10,400",
-    "body": "Aapka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka ₹10,400 ka AutoPay parson 9:30 PM ke baad hona hai. Agar aap chahein toh ise app mein rakh sakte hain, pause kar sakte hain ya cancel kar sakte hain.",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T14:58:49.521Z"
-  },
-  "398bdb542651f6b26da8578fa3725f83b9b54865dcaac6e7639caf8dbb07e426": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 18400,
-    "amount_text": "₹18,400",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹18,400",
-    "body": "Aapka Griha Home Finance AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka AutoPay parson 9:30 PM ke baad ₹18,400 ke liye hona hai. Agar aapko yeh rakhna hai, toh aap kuch na karein. Agar aap ise pause ya cancel karna chahte hain, toh aapke paas yeh vikalp hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:58:56.674Z"
-  },
-  "57f4542bb8abfddd89e57f6b8a9ec08786868a30f06958591de6e2a980ff0363": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 32400,
-    "amount_text": "₹32,400",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹32,400 AutoPay",
-    "body": "Griha Home Finance ka ₹32,400 AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana hai ki Griha Home Finance Ltd ka ₹32,400 ka AutoPay parson 9:30 PM ke baad debit hone wala hai. Aap ise rakh sakte hain, pause kar sakte hain, ya cancel kar sakte hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:59:07.102Z"
-  },
-  "5f047d7f9ac5e71bd708220e0a74c5ece1f0b176113a8b11f182e0fff12ab4ea": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 10800,
-    "amount_text": "₹10,800",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹10,800",
-    "body": "Aapka Griha Home Finance AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Aapka Griha Home Finance Ltd ka AutoPay parson 9:30 PM ke baad ₹10,800 debit karne ke liye scheduled hai. Aap chahe toh ise rakh sakte hai, pause kar sakte hai ya cancel kar sakte hai.",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T14:59:17.139Z"
-  },
-  "b6575dfb67628c866757a05d2675cce55b2a9b8e4c69a692e53eab0eabf2fd15": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "en",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "19 Oct",
-    "charge_day": "Today",
-    "charge_time_text": "after 9:30 PM",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your AutoPay charge of ₹599 is scheduled for today after 9:30 PM.",
-    "voice_script": "Hello. Your AutoPay charge of ₹599 for PadhoAI, operated by Vidyakosh Learning Pvt Ltd, is scheduled for today after 9:30 PM. You have not opened the app recently. You can keep, skip, pause, or cancel your plan. If you skip, you may receive a merchant offer. If you do not answer, you will not be charged.",
-    "language": "en"
-   },
-   "createdAt": "2026-10-28T14:59:26.196Z"
-  },
-  "8f20d7fb96c32f1ffcecc8db36e3da4d16e4e74c74b052c69a38e39f618d4014": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "en",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 9700,
-    "amount_text": "₹9,700",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "29 Oct",
-    "charge_time_text": "after 9:30 PM",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance AutoPay ₹9,700",
-    "body": "Your AutoPay of ₹9,700 for Griha Home Finance is scheduled on 29 Oct after 9:30 PM.",
-    "voice_script": "Namaste. This is a simple reminder about your upcoming AutoPay. An amount of 9700 rupees will be charged for Griha Home Finance Ltd on 29 Oct after 9:30 PM. You can keep, pause, or cancel this payment anytime as per your preference.",
-    "language": "en"
-   },
-   "createdAt": "2026-10-28T14:59:30.662Z"
-  },
-  "85145568ade5f3bbfa13a33f571bc2afff440e014447169818cb75b58fb06dc0": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "en",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "18 Oct",
-    "charge_day": "Today",
-    "charge_time_text": "after 9:30 PM",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your trial has ended. AutoPay for ₹599 is scheduled today after 9:30 PM.",
-    "voice_script": "Hello. This is a gentle reminder regarding your PadhoAI subscription by Vidyakosh Learning Pvt Ltd. Your trial period ended on 18 Oct. Since you have not opened the app yet, your AutoPay charge of ₹599 is scheduled for today after 9:30 PM. You can choose to keep, skip, pause, or cancel this setup as you prefer.",
-    "language": "en"
-   },
-   "createdAt": "2026-10-28T14:59:37.235Z"
-  },
-  "229507beccf41fc54c940418b5ff790afacaf24d2e86a835b5e5189148c97d35": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "19 अक्टूबर",
-    "charge_day": "आज",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay ₹599",
-    "body": "Aapka PadhoAI ka AutoPay charge ₹599 aaj 9:30 PM ke baad hone wala hai.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Vidyakosh Learning Pvt Ltd ka AutoPay charge ₹599 aaj 9:30 PM ke baad hona hai. Pichle dino aapne ise nahi khola. Agar aap chahein toh ise skip, pause ya cancel bhi kar sakte hain. Koi baat nahi.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:59:41.341Z"
-  },
-  "9a13494c25bbd6a899fcf6d3d8d5b4ec1acfeaa06f2460bf4b4469a81f7c3b6c": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "20 अक्टूबर",
-    "charge_day": "आज",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI ₹599 AutoPay आज",
-    "body": "PadhoAI ke liye ₹599 ka AutoPay aaj 9:30 PM ke baad hona hai. Aap ise badal sakte hain.",
-    "voice_script": "Namaste. PadhoAI ka trial 20 October ko shuru hua tha. Ab Vidyakosh Learning Pvt Ltd ki taraf se ₹599 ka charge aaj 9:30 PM ke baad hona hai. App me jakar aap isko keep, skip, pause ya cancel kar sakte hain. Agar aap kuch nahi karenge toh aapko charge nahi kiya jayega.",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T14:59:48.749Z"
-  },
-  "140433e46df3d2a2c4815d9a44d7c7166caffe4d1c30a67318f3b19ef084ad54": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "20 Oct",
-    "charge_day": "Aaj",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI ₹599 AutoPay",
-    "body": "Aapka PadhoAI ka auto-pay ₹599 aaj 9:30 PM ke baad process hoga. Aap app me jaakar ise skip, pause ya cancel bhi kar sakte hain.",
-    "voice_script": "Namaste. Yeh ek gentle reminder hai ki Vidyakosh Learning Pvt Ltd ke PadhoAI subscription ke liye ₹599 ka auto-pay aaj 9:30 PM ke baad charge hone wala hai. Aapne trial ke baad app ka use nahi kiya hai. Agar aap chahte hain, toh aap apni preference ke mutabiq skip, pause ya cancel ka option chun sakte hain. Koi jaldi nahi hai.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:59:49.960Z"
-  },
-  "455a0c40cf42d767be8cad5e091fe506b123ca9fbc794f5253299de82bced3b9": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "18 Oct",
-    "charge_day": "Aaj",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Your PadhoAI AutoPay of ₹599 is scheduled for today after 9:30 PM.",
-    "voice_script": "Namaste. Yeh PadhoAI ke AutoPay ke baare mein hai. Vidyakosh Learning Pvt Ltd ka ₹599 ka charge aaj 9:30 PM ke baad hona hai. Aap ise rakh sakte hain, skip kar sakte hain, pause kar sakte hain, ya cancel kar sakte hain. Agar aap koi bhi choice nahi dete hain, toh aap par charge nahi lagega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T14:59:57.005Z"
-  },
-  "6e787c9b0b5877b76c1852ff9f8e757235fb9041b6c4a4c3e89f31556865ca71": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "20 अक्टूबर",
-    "charge_day": "आज",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI ka ₹599 AutoPay charge",
-    "body": "PadhoAI ke liye ₹599 ka AutoPay charge aaj 9:30 PM ke baad hona hai. Aap chahe to ise skip ya cancel kar sakte hain.",
-    "voice_script": "Namaste. Aapke PadhoAI subscription ke liye Vidyakosh Learning Pvt Ltd ki taraf se ₹599 ka AutoPay charge aaj 9:30 PM ke baad tay hai. Yeh charge aapke trial period ke baad shuru ho raha hai. Agar aap chahte hain, to aap is payment ko rakh sakte hain ya fir skip, pause aur cancel karne ka vikalp chun sakte hain. Aapka nirnay poori tarah se aapke haath mein hai.",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T15:00:08.574Z"
-  },
-  "26a3515faa4caf76a05ed991c43b7793b97508a9488876f091ef6bb75ba63400": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "19 Oct",
-    "charge_day": "Aaj",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI AutoPay of ₹599",
-    "body": "Aapka PadhoAI ka AutoPay ₹599 ka aaj 9:30 PM ke baad hone wala hai.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Vidyakosh Learning Pvt Ltd ka AutoPay ₹599 ka aaj 9:30 PM ke baad nikalne wala hai. Agar aap chahein toh aap isse rakh sakte hain, skip kar sakte hain, pause kar sakte hain, ya cancel kar sakte hain. Agar aap kuch nahi karenge toh aapko charge nahi kiya jayega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:00:10.711Z"
-  },
-  "d904a9990691aed4a7de9035eec2825d427b5a31a83550c91955a146fbd3e02b": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 31800,
-    "amount_text": "₹31,800",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹31,800",
-    "body": "Griha Home Finance ka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilaane ke liye hai ki Griha Home Finance Ltd ka AutoPay parson 9:30 PM ke baad debit hoga. Iski rakam ₹31,800 hai. Aap ise rakh sakte hain, rok sakte hain ya radd kar sakte hain.",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T15:00:25.779Z"
-  },
-  "9c4f3db60a57960b6aabdc112c0d4f874bbe141636a0469c4432ea2a1b868548": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 19700,
-    "amount_text": "₹19,700",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹19,700 ka AutoPay",
-    "body": "Aapka Griha Home Finance ka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Aapke Griha Home Finance Ltd ke AutoPay se parson 9:30 PM ke baad ₹19,700 debit honge. Aap ise keep, pause ya cancel kar sakte hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:00:42.065Z"
-  },
-  "3ad4f33019913a6154abb5b8c7f2b1277a0958db0c398cba721eaa38e82d39a0": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "follow_up",
-    "brand": "PadhoAI",
-    "registered_name": "Vidyakosh Learning Pvt Ltd",
-    "brand_verified": true,
-    "amount_rupees": 599,
-    "amount_text": "₹599",
-    "trial_amount_rupees": 1,
-    "trial_amount_text": "₹1",
-    "trial_date": "19 Oct",
-    "charge_day": "Aaj",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "not_opened",
-    "choices": [
-     "keep",
-     "skip",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": true,
-    "no_answer_outcome": "not_charged"
-   },
-   "output": {
-    "title": "PadhoAI ka AutoPay ₹599",
-    "body": "Aapka PadhoAI ka auto-debit ₹599 aaj 9:30 PM ke baad hone wala hai. Aapke paas skip, pause, aur cancel karne ka vikalp hai.",
-    "voice_script": "Namaste. Aapke PadhoAI subscription ka ₹599 ka auto-debit aaj 9:30 PM ke baad hone wala hai. Ise Vidyakosh Learning Pvt Ltd dwara process kiya jayega. Aapne iska upyog nahi kiya hai. Agar aap chahein toh ise skip, pause, ya cancel kar sakte hain. Aapke paas saare vikalp uplabdh hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:01:09.278Z"
-  },
-  "6732cab3da5ba414e607d2678cf8f258d90f35d075dae61087a90f7b0d7ab0b7": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 24200,
-    "amount_text": "₹24,200",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹24,200",
-    "body": "Aapka Griha Home Finance ka AutoPay parson raat 9:30 PM ke baad hone wala hai.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka AutoPay parson raat 9:30 PM ke baad ₹24,200 ka hone wala hai. Aapke paas isko keep, pause ya cancel karne ka vikalp hai. Agar aap kuch nahi karte hain, toh yeh charge ho jayega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:01:36.300Z"
-  },
-  "c4995098647e327203eb517171367bf73df3deb0fd191d55a8046e9b964356d7": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 34700,
-    "amount_text": "₹34,700",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹34,700 ka AutoPay",
-    "body": "Griha Home Finance ka ₹34,700 ka AutoPay parson 9:30 PM ke baad tay hai. Aap ise badal sakte hain.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ki taraf se ₹34,700 ka AutoPay parson 9:30 PM ke baad hona hai. Agar aap chahein toh isme badlav kar sakte hain ya ise rok sakte hain. Aapka din shubh ho.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:02:11.373Z"
-  },
-  "512fb7a6f6b8f97ca4e098693f2fa85329ad9383acb59c63fb2cdcc7a1d3a9e4": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 15900,
-    "amount_text": "₹15,900",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹15,900",
-    "body": "Aapka Griha Home Finance ka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Aapke Griha Home Finance Ltd ke AutoPay se ₹15,900 parson 9:30 PM ke baad debit hone wale hain. Aap ise rakh sakte hain, pause kar sakte hain, ya cancel kar sakte hain. Agar aap kuch nahi karte hain, toh payment ho jayegi.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:02:36.676Z"
-  },
-  "985b12dd0970c1e3080f812e0fc513ef082012538806c2318706463338534376": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 9800,
-    "amount_text": "₹9,800",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance के लिए ₹9,800",
-    "body": "परसों 9:30 PM के बाद Griha Home Finance Ltd का ऑटोपেমेंट तय है।",
-    "voice_script": "नमस्ते। Griha Home Finance Ltd का ₹9,800 का भुगतान परसों 9:30 PM के बाद होना है। यदि आप इसे जारी रखना चाहते हैं, तो कोई कदम नहीं उठाना है। बदलाव के लिए आप ऐप में विकल्प देख सकते हैं।",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T15:02:47.504Z"
-  },
-  "62dc2fd457d12d5349e6e8994177339a9758d9f4fb2b4d4d418ad587b5211b84": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 21800,
-    "amount_text": "₹21,800",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹21,800 ka AutoPay",
-    "body": "Aapka Griha Home Finance ka AutoPay ₹21,800 parso 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh ek aam jankari hai ki Griha Home Finance Ltd ka AutoPay ₹21,800 parso 9:30 PM ke baad debit hoga. Aap chahe toh ise rakh sakte hai, rok sakte hai ya radd kar sakte hai.",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T15:02:59.782Z"
-  },
-  "1ba840c44bbd41fc88385500da7287707ccd8b6251e95f3f0ade88c127ab34c7": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "en",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 23900,
-    "amount_text": "₹23,900",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "30 Oct",
-    "charge_time_text": "after 9:30 PM",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ₹23,900 AutoPay",
-    "body": "Your AutoPay for Griha Home Finance of ₹23,900 is due on 30 Oct after 9:30 PM.",
-    "voice_script": "Hello. This is a simple reminder about your upcoming AutoPay. A payment of ₹23,900 for Griha Home Finance Ltd will be processed on 30 Oct after 9:30 PM. You can keep, pause, or cancel this setup as you prefer.",
-    "language": "en"
-   },
-   "createdAt": "2026-10-28T15:03:27.115Z"
-  },
-  "98eaf55e1a4cba2961b1b79cb2b2167b5b12d3f73d88e11e70018233bed5d912": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 29100,
-    "amount_text": "₹29,100",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹29,100",
-    "body": "Griha Home Finance ka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana hai ki Griha Home Finance Ltd ka AutoPay parson 9:30 PM ke baad debit hoga. Iska amount ₹29,100 hai. Aap is payment ko keep, pause ya cancel kar sakte hain. Agar aap kuch nahi karte hain, toh yeh charge ho jayega.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:03:31.793Z"
-  },
-  "459e1d3d3aa1350cf35085d56d6b43a83efec41e1ae7c4bf5acc8242dfd2495a": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 11000,
-    "amount_text": "₹11,000",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ₹11,000 AutoPay",
-    "body": "Aapka Griha Home Finance ka ₹11,000 AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki aapka Griha Home Finance Ltd ka ₹11,000 ka AutoPay parson 9:30 PM ke baad hona hai. Agar aap chahein toh isko keep, pause ya cancel kar sakte hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:03:44.451Z"
-  },
-  "649e00762a1a3ade10975b11d32959921e53d751a24f7878ebff5c5d0f4b758c": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hinglish",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 21600,
-    "amount_text": "₹21,600",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "Parson",
-    "charge_time_text": "9:30 PM ke baad",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹21,600 ka AutoPay",
-    "body": "Griha Home Finance ka ₹21,600 ka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka ₹21,600 ka AutoPay parson 9:30 PM ke baad debit hoga. Aap ise rakh sakte hain, pause kar sakte hain ya cancel kar sakte hain.",
-    "language": "hinglish"
-   },
-   "createdAt": "2026-10-28T15:03:53.424Z"
-  },
-  "a5900a025f083816acbfcc8e44683708c5bed4be17cf48b058b9b3b8a4c7781e": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
-   "input": {
-    "language": "hi",
-    "kind": "remind",
-    "brand": "Griha Home Finance",
-    "registered_name": "Griha Home Finance Ltd",
-    "brand_verified": true,
-    "amount_rupees": 38500,
-    "amount_text": "₹38,500",
-    "trial_amount_rupees": null,
-    "trial_amount_text": null,
-    "trial_date": null,
-    "charge_day": "परसों",
-    "charge_time_text": "9:30 PM के बाद",
-    "usage": "unknown",
-    "choices": [
-     "keep",
-     "pause",
-     "cancel"
-    ],
-    "skip_is_merchant_offer": false,
-    "no_answer_outcome": "charged"
-   },
-   "output": {
-    "title": "Griha Home Finance ke liye ₹38,500 ka AutoPay",
-    "body": "Aapka Griha Home Finance ka AutoPay ₹38,500 parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ke liye ₹38,500 ka AutoPay parson 9:30 PM ke baad se debit hoga. Aap isko keep, pause ya cancel kar sakte hain.",
-    "language": "hi"
-   },
-   "createdAt": "2026-10-28T15:04:55.854Z"
-  },
-  "e88f1964ae9a781ddff62676ae705bdd793996eafe278179745f8df24eff042e": {
-   "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hi",
     "kind": "remind",
@@ -5855,17 +5384,47 @@
     "no_answer_outcome": "charged"
    },
    "output": {
-    "title": "Griha Home Finance ke liye ₹36,900 ka AutoPay",
-    "body": "Griha Home Finance ka ₹36,900 ka AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Yeh yaad dilana tha ki Griha Home Finance Ltd ka ₹36,900 ka AutoPay parson 9:30 PM ke baad debit hoga. Aap chahe toh ise rakh sakte hain, pause kar sakte hain ya cancel kar sakte hain.",
-    "language": "hinglish"
+    "title": "Griha Home Finance का ₹36,900 का पेमेंट",
+    "body": "Griha Home Finance का ₹36,900 का ऑटोपे परसों 9:30 PM के बाद शेड्यूल है। आप इसे रखें, पॉज़ करें या कैंसिल करें।",
+    "voice_script": "Griha Home Finance Ltd का ₹36,900 का ऑटोपे पेमेंट परसों 9:30 PM के बाद शेड्यूल है। आपके पास इसे चालू रखने, पॉज़ करने या कैंसिल करने के विकल्प हैं।",
+    "language": "hi"
    },
-   "createdAt": "2026-10-28T15:05:05.300Z"
+   "createdAt": "2026-10-30T20:16:42.337Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
   },
-  "c90a8d9439aed7fb9607386fd397f4d88249c93874f72167b2e372c7e9c3fe1a": {
+  "7ec4f7fa14dbfac4a872ed0cdfb4c75f7424b726d53728acaaab2a3d7a398600": {
    "task": "reminder",
-   "model": "gemini-3.5-flash-lite",
-   "promptVersion": "l1-v3",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
    "input": {
     "language": "hinglish",
     "kind": "remind",
@@ -5889,12 +5448,812 @@
     "no_answer_outcome": "charged"
    },
    "output": {
-    "title": "Griha Home Finance AutoPay of ₹17,100",
-    "body": "Aapka Griha Home Finance AutoPay parson 9:30 PM ke baad debit hoga.",
-    "voice_script": "Namaste. Aapko yaad dilana tha ki Griha Home Finance Ltd ka AutoPay parson 9:30 PM ke baad debit hoga. Amount ₹17,100 hai. Aap ise rakh sakte hain, pause kar sakte hain, ya cancel kar sakte hain.",
+    "title": "Griha Home Finance ke liye ₹17,100 AutoPay",
+    "body": "Parson 9:30 PM ke baad Griha Home Finance ka ₹17,100 ka AutoPay charge hona hai. Aap ise keep, pause ya cancel kar sakte hain.",
+    "voice_script": "Griha Home Finance Ltd ka ₹17,100 ka AutoPay charge Parson 9:30 PM ke baad hona hai. Aap ise keep, pause ya cancel kar sakte hain.",
     "language": "hinglish"
    },
-   "createdAt": "2026-10-28T15:05:14.064Z"
+   "createdAt": "2026-10-30T20:16:54.205Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 3,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "Aap isse keep, pause ya cancel kar sakte hain.",
+        "fix": "Remove pause and cancel options as FACTS choices do not allow pausing or cancelling loan EMIs."
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "Aap ise rakh sakte hain.",
+        "fix": "Remove the recommendation to keep."
+       }
+      ],
+      "contests": [
+       {
+        "criterion": "R3",
+        "factsQuote": "usage: unknown, choices: [keep, pause, cancel]",
+        "answer": "upheld",
+        "reason": "Quote is not in FACTS"
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 6
+   }
+  },
+  "2d53739164aab962ec12e6c87e9c097271287bae25361cacb8a02d1f3b217bf6": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "ask",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "18 अक्टूबर",
+    "charge_day": "कल",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI से ₹599 का ऑटोपे",
+    "body": "कल 9:30 PM के बाद ₹599 का ऑटोपे शुल्क तय है। आप इसे जारी रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "voice_script": "नमस्ते। PadhoAI, यानी Vidyakosh Learning Pvt Ltd, से कल 9:30 PM के बाद ₹599 का ऑटोपे तय है। आप इसे अपनी पसंद के अनुसार जारी रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:17:59.136Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "e12c809ed8cb57b9254ea7d41212ac1465d1b2ff431cbbdbd534a83151edbdc0": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "collect",
+    "brand": "StadiumPass",
+    "registered_name": "Khelghar Media Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 299,
+    "amount_text": "₹299",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "कल",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "opened",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "StadiumPass से ₹299 का ऑटोपे",
+    "body": "StadiumPass का ₹299 का ऑटोपे कल 9:30 PM के बाद कटना तय है। आप इसे चालू रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "voice_script": "नमस्ते। StadiumPass, यानी Khelghar Media Pvt Ltd का ₹299 का भुगतान कल 9:30 PM के बाद होना है। आप इसे ऐप में चालू रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:18:02.397Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "fail",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R8",
+        "by": "code",
+        "quote": "",
+        "fix": "1 sentence(s) over 20 words: \"अगर आप चाहें तो अपनी जरूरत के हिसाब से इसे ऐप में जाकर रोक सकते हैं, रद्द कर सकत\""
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
+  },
+  "2ad5d4bb62631a7091184d1d8f5738a467eaaf2ffd20707b5ea7a9b3525a4ed7": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "en",
+    "kind": "collect",
+    "brand": "StadiumPass",
+    "registered_name": "Khelghar Media Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 299,
+    "amount_text": "₹299",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Tomorrow",
+    "charge_time_text": "after 9:30 PM",
+    "usage": "opened",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "StadiumPass AutoPay for ₹299",
+    "body": "Your StadiumPass AutoPay charge of ₹299 is scheduled for Tomorrow after 9:30 PM. You can keep, pause or cancel this payment in the app.",
+    "voice_script": "Hello. Your StadiumPass AutoPay charge of ₹299 is scheduled for Tomorrow after 9:30 PM. The registered merchant name is Khelghar Media Pvt Ltd. You can keep, pause or cancel this payment in the app as per your choice.",
+    "language": "en"
+   },
+   "createdAt": "2026-10-30T20:18:02.806Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "9fa83e980a141867d057826d118a1b47632eb17f5a5de4204a3243e6958c5e48": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 8800,
+    "amount_text": "₹8,800",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹8,800 AutoPay",
+    "body": "Griha Home Finance ka ₹8,800 ka AutoPay parson 9:30 PM ke baad schedule hai. Aap isse app par manage kar sakte hain.",
+    "voice_script": "Namaste. Griha Home Finance Ltd ka ₹8,800 ka AutoPay charge parson 9:30 PM ke baad schedule hai. Aap isse app se manage kar sakte hain. Dhanyawad.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:18:06.935Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "0626b42ca4f333422d642488b5593f14cd9fedb2b4decb0f775ebcb3b7b065e6": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 15200,
+    "amount_text": "₹15,200",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹15,200",
+    "body": "Parson aapka AutoPay charge hoga. Aapke paas keep, pause, ya cancel ka option hai.",
+    "voice_script": "Griha Home Finance Ltd ka AutoPay parson 9:30 PM ke baad charge hoga. Amount ₹15,200 hai. Aap ise keep, pause, ya cancel kar sakte hain.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:18:10.572Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "28fa6748b9878d367e0dbc94df5f4aae53e8b684966438f79932df44a540cccd": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "en",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 34100,
+    "amount_text": "₹34,100",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "29 Oct",
+    "charge_time_text": "after 9:30 PM",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹34,100 on 29 Oct",
+    "body": "Your AutoPay charge for Griha Home Finance is ₹34,100 on 29 Oct after 9:30 PM. You can keep, pause, or cancel it.",
+    "voice_script": "Your AutoPay charge of ₹34,100 by Griha Home Finance Ltd is scheduled for 29 Oct after 9:30 PM. You can keep, pause, or cancel this payment.",
+    "language": "en"
+   },
+   "createdAt": "2026-10-30T20:18:13.970Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "cf0da07fa1c501e6a1250d8b2a16267644a5d64b6c345182fcda77e330e2eb2b": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 32900,
+    "amount_text": "₹32,900",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹32,900 Parson",
+    "body": "Griha Home Finance AutoPay of ₹32,900 is scheduled for Parson at 9:30 PM ke baad.",
+    "voice_script": "Griha Home Finance Ltd AutoPay of ₹32,900 is scheduled for Parson at 9:30 PM ke baad.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:18:16.859Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "c49da50207a5211b454946c4019e3daa4bef1e861ea9371e96dbc4d057e91f35": {
+   "task": "case_summary",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l4-v2+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "code": "PAK-2314",
+    "caseType": "fraud",
+    "template": {
+     "summary": [
+      "<NAME_1> says they never set up a ₹599 PadhoAI AutoPay.",
+      "The mandate has no recorded PIN authorisation on this account.",
+      "Fraud lane steps were shown and a person review is open."
+     ],
+     "customer_ask": "Stop the charges and review an AutoPay they say they never approved.",
+     "rules_said": "FRAUD_LANE_V1: never routed through the merchant refund path.",
+     "merchant_position": "Not asked. Fraud cases do not go to the merchant first.",
+     "evidence": [
+      "Charge ₹599 on 25 Oct",
+      "No PIN authorisation on record for this mandate",
+      "Customer statement through Pakka se poochho"
+     ],
+     "suggested_next_step": "Confirm with the issuer bank whether the mandate was registered with AFA, and help the customer file with 1930.",
+     "suggestion_confidence": "medium",
+     "risk_flags": [
+      "fraud_claim"
+     ],
+     "modelVersion": "template"
+    }
+   },
+   "output": {
+    "summary": [
+     "<NAME_1> says they never set up a ₹599 PadhoAI AutoPay.",
+     "The mandate has no recorded PIN authorisation on this account.",
+     "Fraud lane steps were shown and a person review is open."
+    ],
+    "customer_ask": "Stop the charges and review an AutoPay they say they never approved.",
+    "rules_said": "FRAUD_LANE_V1: never routed through the merchant refund path.",
+    "merchant_position": "Not asked. Fraud cases do not go to the merchant first.",
+    "evidence": [
+     "Charge ₹599 on 25 Oct",
+     "No PIN authorisation on record for this mandate",
+     "Customer statement through Pakka se poochho"
+    ],
+    "suggested_next_step": "Confirm with the issuer bank whether the mandate was registered with AFA, and help the customer file with 1930.",
+    "suggestion_confidence": "medium",
+    "risk_flags": [
+     "fraud_claim"
+    ]
+   },
+   "createdAt": "2026-10-30T20:19:22.045Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R4": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "L4-S": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l4-v2+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "4c9519c509827edac98e70af1781790421f91573a7f7c3856079026496f43653": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "en",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 9700,
+    "amount_text": "₹9,700",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "29 Oct",
+    "charge_time_text": "after 9:30 PM",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance AutoPay for ₹9,700",
+    "body": "Your AutoPay charge of ₹9,700 for Griha Home Finance is scheduled for 29 Oct after 9:30 PM. You can keep, pause, or cancel it in the app.",
+    "voice_script": "Hello. Your AutoPay charge of ₹9,700 for Griha Home Finance Ltd is scheduled for 29 Oct after 9:30 PM. You can choose to keep, pause, or cancel this payment in your app before the charge time.",
+    "language": "en"
+   },
+   "createdAt": "2026-10-30T20:19:25.634Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "c66006202b00734cdbb9a6a7236cc78681e0ad57f6bdadfae85ee53764082439": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 18400,
+    "amount_text": "₹18,400",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹18,400 Parson",
+    "body": "Griha Home Finance ka ₹18,400 ka AutoPay parson 9:30 PM ke baad schedule hai.",
+    "voice_script": "Namaste. Griha Home Finance Ltd ka ₹18,400 ka AutoPay charge parson 9:30 PM ke baad scheduled hai.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:19:32.697Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "Aap isey keep, pause ya cancel kar sakte hain.",
+        "fix": "Remove the offer to pause or cancel since loan EMIs cannot be paused or cancelled."
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": [
+       {
+        "criterion": "R3",
+        "factsQuote": "\"usage\":\"unknown\"",
+        "answer": "withdrawn",
+        "reason": "The draft offers no actions, so R3 automatically passes."
+       }
+      ]
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
   }
  }
 }
