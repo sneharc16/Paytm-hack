@@ -34,6 +34,8 @@ export const LIMITS: Record<ReviewTask, Record<string, number>> = {
 export const MAX_SENTENCE_WORDS = 20;
 /** Words a customer should not have to know (R8). Matched case-insensitively. */
 export const JARGON = ["e-mandate", "emandate", "npci", "debit authorisation", "debit authorization", "umn", "afa", "pre-debit notification", "nach"];
+/** Words that recommend or rank a choice (R5, checked by code alongside the banned-word list). */
+export const PUSH_WORDS = ["we recommend", "i recommend", "you should", "best option", "best choice", "best rahega", "sahi rahega", "behtar rahega", "better rahega", "zaroor cancel", "सबसे अच्छा", "बेहतर रहेगा"];
 export const ALERT_PRIVACY_LINE = "Only you and Paytm's merchant team can see this.";
 /** Token types a task's text may contain (R9). Voice scripts may contain none. */
 export const ALLOWED_TOKENS: Record<ReviewTask, string[]> = { reminder: [], intake: [], case_summary: ["NAME"], alert: [] };

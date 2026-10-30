@@ -19,6 +19,7 @@ describe("model hooks in the engine", async () => {
   const { Session } = await import("@/engine/session");
   const { tick } = await import("@/engine/agent");
   const { ist } = await import("@/engine/clock");
+  const { versionFor } = await import("@/llm/cache");
   installModelHooks();
   const s = new Session("HOOK", generateWorld("2711"));
   tick(s, ist("2026-10-26 21:11"));
@@ -26,7 +27,7 @@ describe("model hooks in the engine", async () => {
 
   it("uses fact-checked model text and records the prompt version", () => {
     const sunita = asks.find((e) => e.payload.userId === "u_sunita")!;
-    expect(sunita.modelVersion).toBe("l1-v3");
+    expect(sunita.modelVersion).toBe(versionFor("reminder"));
     expect(sunita.payload.title).toBe("कल ₹599 PadhoAI को जाएंगे");
   });
   it("falls back to the template when the fact-check fails (RT-05)", () => {

@@ -2,6 +2,7 @@
 // The model only reads intent; this code picks the mandate.
 import { tokens } from "./namegap";
 import type { Session } from "./session";
+import type { ReviewStamp } from "./types";
 
 export interface Intake {
   intent: "explain_charge" | "refund_request" | "cancel_help" | "never_approved" | "failed_charge" | "other";
@@ -10,6 +11,9 @@ export interface Intake {
   date_text: string | null;
   language: "hi" | "hinglish" | "en";
   modelVersion?: string;
+  /** L3's reply, only when the review loop approved it. */
+  reply?: string;
+  review?: ReviewStamp;
 }
 
 export function resolveMandate(s: Session, userId: string, intake: Intake): { mandateId?: string; candidates: string[] } {

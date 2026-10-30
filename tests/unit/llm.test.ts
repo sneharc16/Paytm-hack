@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { versionFor } from "@/llm/cache";
 import { runTask, setClientForTests, setGeminiForTests } from "@/llm/client";
 
 function fakeClient(response: unknown) {
@@ -10,21 +11,21 @@ describe("model client", () => {
 
   it("falls back when no key is set", async () => {
     const r = await runTask("intake", { text: "ye 599 kya kata?" }, { useDemoCache: false });
-    expect(r).toMatchObject({ ok: false, reason: "llm_off", promptVersion: "l3-v2" });
+    expect(r).toMatchObject({ ok: false, reason: "llm_off", promptVersion: versionFor("intake") });
   });
 
   it("returns validated output and the model that wrote it", async () => {
-    const out = { intent: "explain_charge", merchant_text: "vidyakosh", amount_rupees: 599, date_text: null, language: "hinglish" };
+    const out = { pass: true, issues: [] };
     const c = fakeClient({ stop_reason: "end_turn", model: "claude-haiku-5-5", parsed_output: out });
     setClientForTests(c);
-    const r = await runTask("intake", { text: "ye vidyakosh kaun hai 1" }, { useDemoCache: false });
+    const r = await runTask("lint", { text: "Jab chahein wapas aa sakte hain 1" }, { useDemoCache: false });
     expect(r).toMatchObject({ ok: true, output: out, model: "claude-haiku-5-5", cacheHit: false });
     const req = c.beta.messages.parse.mock.calls[0][0];
     expect(req.model).toBe("claude-haiku-5-5");
     expect(req.output_config.effort).toBe("low");
     expect(req.temperature).toBeUndefined();
     // Second identical call is served from this process's cache.
-    expect(await runTask("intake", { text: "ye vidyakosh kaun hai 1" }, { useDemoCache: false })).toMatchObject({ ok: true, cacheHit: true });
+    expect(await runTask("lint", { text: "Jab chahein wapas aa sakte hain 1" }, { useDemoCache: false })).toMatchObject({ ok: true, cacheHit: true });
   });
 
   it("asks for the server-side refusal fallback on the Sonnet route", async () => {

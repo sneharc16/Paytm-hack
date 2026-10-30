@@ -3,7 +3,7 @@
 import { bannedWordsIn } from "@/copy/banned";
 import { piiIn, tokensIn } from "@/lib/privacy/mask";
 import { factcheckAlert, factcheckReminder, factcheckSummary, numbersIn } from "../factcheck";
-import { ALERT_PRIVACY_LINE, ALLOWED_TOKENS, criteriaFor, JARGON, LIMITS, MAX_SENTENCE_WORDS, type ReviewTask } from "./rubric";
+import { ALERT_PRIVACY_LINE, ALLOWED_TOKENS, criteriaFor, JARGON, LIMITS, MAX_SENTENCE_WORDS, PUSH_WORDS, type ReviewTask } from "./rubric";
 
 export interface CodeResult { pass: boolean; detail?: string }
 export type CodeResults = Record<string, CodeResult>;
@@ -77,9 +77,9 @@ export function codeChecks(task: ReviewTask, facts: Record<string, unknown>, dra
     set("R2", !!String(draft.headline ?? "").trim() && !!String(draft.detail ?? "").trim(), "headline or detail empty");
   }
 
-  // R5: banned words (the reviewer judges the rest).
-  const banned = bannedWordsIn(all);
-  set("R5", !banned.length, banned.length ? `banned words: ${banned.join(", ")}` : undefined);
+  // R5: banned words and words that recommend a choice (the reviewer judges the rest).
+  const banned = [...bannedWordsIn(all), ...PUSH_WORDS.filter((w) => all.toLowerCase().includes(w))];
+  set("R5", !banned.length, banned.length ? `pushing or banned words: ${banned.join(", ")}` : undefined);
 
   // R6: script share.
   const lang = languageOf(task, facts);

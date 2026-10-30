@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Info, Lock, Mic, Phone, ShieldCheck, Clock, Volume2, Pause, Check, X } from "lucide-react";
 import { t, type StringKey } from "@/copy/strings";
 import { addMin, ms, peakWindow } from "@/engine/clock";
+import { intakeTemplate } from "@/engine/actions";
 import { hasNameGap } from "@/engine/namegap";
+import type { Intake } from "@/engine/resolve";
 import type { Choice, Lang, Persona } from "@/engine/types";
 import { dayMonth, inr, relativeDay, timeIST } from "@/lib/format";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
@@ -611,8 +613,11 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
   const submit = async () => {
     if (!text.trim()) return;
     setBusy(true);
-    const live = await callModel<{ intent: "explain_charge" | "refund_request" | "cancel_help" | "never_approved" | "failed_charge" | "other"; merchant_text: string | null; amount_rupees: number | null; date_text: string | null; language: "hi" | "hinglish" | "en" }>("intake", { text });
-    const intake = live ? { ...live.output, modelVersion: live.promptVersion } : undefined;
+    const live = await callModel<Omit<Intake, "modelVersion" | "review">>("intake", { text }, { userId, lang });
+    // The classification is used when the model answered; the reply only when the review loop approved it.
+    const intake: Intake | undefined = live?.output
+      ? { ...live.output, modelVersion: live.promptVersion, review: live.review }
+      : live?.review ? { ...intakeTemplate(text), review: live.review } : undefined;
     const r = (await send({ kind: "question", userId, text, intake })) as typeof answer;
     setBusy(false);
     setAnswer(r);

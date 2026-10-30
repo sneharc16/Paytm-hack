@@ -3,11 +3,11 @@
 import { t } from "@/copy/strings";
 import { dayMonth, inr, relativeDay, timeIST } from "@/lib/format";
 import type { Session } from "./session";
-import type { ISO, Lang } from "./types";
+import type { ISO, Lang, ReviewStamp } from "./types";
 
 export type NudgeKind = "ask" | "tell" | "follow_up" | "collect" | "failed" | "refund_offer" | "remind" | "stale";
 
-export interface Written { title: string; body: string; voice?: string; language: Lang; modelVersion: string; fallback?: string }
+export interface Written { title: string; body: string; voice?: string; language: Lang; modelVersion: string; fallback?: string; review?: ReviewStamp }
 
 export interface ReminderFacts {
   language: Lang; kind: NudgeKind; brand: string; registered_name: string; brand_verified: boolean;

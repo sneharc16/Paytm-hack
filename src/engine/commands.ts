@@ -18,6 +18,12 @@ export const Command = z.discriminatedUnion("kind", [
     intent: z.enum(["explain_charge", "refund_request", "cancel_help", "never_approved", "failed_charge", "other"]),
     merchant_text: z.string().nullable(), amount_rupees: z.number().nullable(), date_text: z.string().nullable(),
     language: z.enum(["hi", "hinglish", "en"]), modelVersion: z.string().optional(),
+    reply: z.string().max(400).optional(),
+    review: z.object({
+      status: z.enum(["agreed", "reviewer_final", "template"]), rounds: z.number().int().min(0).max(5), reason: z.string().max(200).optional(),
+      trail: z.array(z.object({ round: z.number().int(), verdicts: z.record(z.string().max(8), z.enum(["pass", "fail"])) })).max(5).optional(),
+      masked: z.record(z.string().max(10), z.number().int()).optional(),
+    }).optional(),
   }).optional() }),
   z.object({ kind: z.literal("merchant_settings"), merchantId: z.string(), by: z.string(), settings: z.object({
     askBeforeFirstCharge: z.boolean().optional(), shareUsageSignal: z.boolean().optional(), offerSkip: z.boolean().optional(),

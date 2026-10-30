@@ -116,7 +116,7 @@ export function run(s: Session, at: ISO, a: PlannedAction): GatewayResult {
       const w = a.cycleId ? writeNudge(s, a.cycleId, p.kind as NudgeKind, at) : p.written;
       s.emit({
         actor: "ai", simAt: addSec(at, 1), type: "nudge_sent", ruleId: a.ruleId, modelVersion: w.modelVersion, ...subject,
-        payload: { userId, cycleId: a.cycleId, kind: p.kind, title: w.title, body: w.body, voice: w.voice, language: w.language, pushAt, askRule: p.askRule, fallback: w.fallback },
+        payload: { userId, cycleId: a.cycleId, kind: p.kind, title: w.title, body: w.body, voice: w.voice, language: w.language, pushAt, askRule: p.askRule, fallback: w.fallback, review: w.review },
       });
       if (p.kind === "refund_offer") {
         s.emit({ actor: "rule", simAt: addSec(at, 1), type: "refund_offered", ruleId: a.ruleId, ...subject, payload: { executionId: p.executionId, cycleId: a.cycleId, mandateId, userId, merchantId, amount: p.amount } });

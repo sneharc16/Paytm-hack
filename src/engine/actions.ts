@@ -8,7 +8,8 @@ import { addMin, addSec, ist, istDay, istMinutes, ms, nextOffPeak } from "./cloc
 import { nextCaseCode, run } from "./gateway";
 import { resolveMandate, type Intake } from "./resolve";
 import type { Session } from "./session";
-import type { Choice, ISO, MerchantSettings } from "./types";
+import { mask } from "@/lib/privacy/mask";
+import type { Choice, ISO, MerchantSettings, ReviewStamp } from "./types";
 
 const PERSON = "Priya Nair";
 
@@ -105,15 +106,17 @@ export function refundAnswer(s: Session, at: ISO, executionId: string, yes: bool
   return { status: res.status, actionId: res.actionId, reason: res.reason };
 }
 
-export type CaseSummary = ReturnType<typeof templateSummary>;
-type Summarizer = (facts: { code: string; caseType: string; template: CaseSummary }, tpl: CaseSummary) => CaseSummary;
+export type CaseSummary = ReturnType<typeof templateSummary> & { review?: ReviewStamp };
+/** ctx.names: the customer's name, masked before any model sees the facts. */
+type Summarizer = (facts: { code: string; caseType: string; template: CaseSummary }, tpl: CaseSummary, ctx: { names: string[] }) => CaseSummary;
 let summarizer: Summarizer = (_f, tpl) => tpl;
 /** Plug in the L4 model (demo cache or live). It must return a validated summary or the template. */
 export function setSummarizer(fn: Summarizer) { summarizer = fn; }
 
 export function caseSummary(s: Session, code: string, merchantPosition?: string): CaseSummary {
   const tpl = templateSummary(s, code, merchantPosition);
-  return summarizer({ code, caseType: s.state.cases.get(code)!.type, template: tpl }, tpl);
+  const u = s.idx.user.get(s.idx.mandate.get(s.state.cases.get(code)!.mandateId)!.userId);
+  return summarizer({ code, caseType: s.state.cases.get(code)!.type, template: tpl }, tpl, { names: u ? [u.name] : [] });
 }
 
 function templateSummary(s: Session, code: string, merchantPosition?: string) {
@@ -218,9 +221,12 @@ export function intakeTemplate(text: string): Intake {
 
 export function askQuestion(s: Session, at: ISO, userId: string, text: string, intake: Intake = intakeTemplate(text), opts: { autoplayed?: boolean } = {}) {
   intake ??= intakeTemplate(text);
-  s.emit({ actor: "customer", simAt: at, type: "question_asked", payload: { userId, text, autoplayed: !!opts.autoplayed } });
+  // The log keeps the question masked: phone numbers, UPI IDs, OTPs and the like never reach storage.
+  const user = s.idx.user.get(userId);
+  const safe = mask(text, { names: user ? [user.name] : [] });
+  s.emit({ actor: "customer", simAt: at, type: "question_asked", payload: { userId, text: safe.masked, masked: safe.vault.counts(), autoplayed: !!opts.autoplayed } });
   const res = resolveMandate(s, userId, intake);
-  s.emit({ actor: "ai", simAt: addSec(at, 1), type: "question_resolved", modelVersion: intake.modelVersion ?? "template", payload: { userId, text, intent: intake.intent, mandateId: res.mandateId, candidates: res.candidates } });
+  s.emit({ actor: "ai", simAt: addSec(at, 1), type: "question_resolved", modelVersion: intake.modelVersion ?? "template", payload: { userId, text: safe.masked, intent: intake.intent, mandateId: res.mandateId, candidates: res.candidates, reply: intake.reply, review: intake.review } });
   let caseCode: string | undefined;
   if (intake.intent === "never_approved" && res.mandateId) {
     caseCode = s.state.caseByMandate.get(res.mandateId);

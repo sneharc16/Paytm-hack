@@ -3,7 +3,7 @@ import { inr } from "@/lib/format";
 import { addMin, ms } from "./clock";
 import { run } from "./gateway";
 import type { Session } from "./session";
-import type { Gap, ISO, Review } from "./types";
+import type { Gap, ISO, Review, ReviewStamp } from "./types";
 
 const MENTIONS = /(autopay|auto pay|trial|ट्रायल|₹|rupay|refund|wapas|cancel|band kar|बंद|पैसा|paisa|kat|कट|deduct|charged|debit|message|msg|sms)/i;
 
@@ -18,7 +18,7 @@ export function setTagger(t: Tagger) { tagger = t; }
 /** The current tag for a review: model output from the cache when there is one, else the seed label. */
 export function tagReview(r: Review) { return tagger(r); }
 
-type AlertWriter = (metrics: Record<string, number | string>, tpl: { headline: string; detail: string; modelVersion: string }) => { headline: string; detail: string; modelVersion: string };
+type AlertWriter = (metrics: Record<string, number | string>, tpl: { headline: string; detail: string; modelVersion: string }) => { headline: string; detail: string; modelVersion: string; review?: ReviewStamp };
 let alertWriter: AlertWriter = (_m, tpl) => tpl;
 /** Plug in the L6 model (demo cache or live). Numbers must come only from the metrics. */
 export function setAlertWriter(fn: AlertWriter) { alertWriter = fn; }

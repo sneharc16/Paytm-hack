@@ -107,7 +107,7 @@ function PakkaSettings({ s, now }: { s: Session; now: string }) {
       setChecking(true);
       const r = await callModel<{ pass: boolean; issues: ReturnType<typeof lintOffer> }>("lint", { text: offer });
       setChecking(false);
-      setModelIssues({ text: offer, issues: r && !r.output.pass ? r.output.issues : [] });
+      setModelIssues({ text: offer, issues: r?.output && !r.output.pass ? r.output.issues : [] });
     }, 600);
     return () => clearTimeout(id);
   }, [offer]);

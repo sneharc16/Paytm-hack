@@ -36,6 +36,18 @@ export interface Plan {
 }
 
 export type Persona = "sunita" | "rahul" | "farhan" | "anjali";
+/** How an AI-written text was checked (src/llm/agents). key finds the full review trail in the demo cache. */
+export interface ReviewStamp {
+  status: "agreed" | "reviewer_final" | "template";
+  rounds: number;
+  key?: string;
+  reason?: string;
+  /** Per round, each criterion's verdict (kept for live answers, which are not in the demo cache). */
+  trail?: { round: number; verdicts: Record<string, "pass" | "fail"> }[];
+  /** How many personal items of each type were masked before the model saw the input. */
+  masked?: Record<string, number>;
+}
+
 export interface User { id: string; name: string; initials: string; city: string; lang: Lang; persona?: Persona }
 
 export interface Mandate {
