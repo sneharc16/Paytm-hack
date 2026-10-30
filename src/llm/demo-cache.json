@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-30T20:19:32.697Z",
+ "generatedAt": "2026-10-30T20:30:03.836Z",
  "entries": {
   "39efd864c77a30cba5757e336369b4f99ba54ca300acbc1225691ec975059cfd": {
    "task": "tagger",
@@ -6245,6 +6245,2658 @@
         "reason": "The draft offers no actions, so R3 automatically passes."
        }
       ]
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
+  },
+  "25c13f0439131cb98cc19ae6366143abce0cb5476894377f3dffdd51cf44565f": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 10400,
+    "amount_text": "₹10,400",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance का ₹10,400 का भुगतान",
+    "body": "परसों ₹10,400 का ऑटोपे शुल्क 9:30 PM के बाद लिया जाएगा। आप इसे चालू रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "voice_script": "नमस्ते। Griha Home Finance Ltd का ₹10,400 का ऑटोपे भुगतान परसों 9:30 PM के बाद होना है। आप अपनी ऐप में जाकर इसे चालू रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:20:02.703Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "af5e241cb00da2b666d430c5f799c997ca59e2543a9765f4d8571b5d35e8e35f": {
+   "task": "reminder",
+   "model": "gemini-3.6-flash",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 32400,
+    "amount_text": "₹32,400",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance का ₹32,400 का ऑटोपे",
+    "body": "परसों 9:30 PM के बाद Griha Home Finance का ₹32,400 का ऑटोपे भुगतान होना तय है। आप इसे ऐप में देख सकते हैं।",
+    "voice_script": "नमस्कार। Griha Home Finance Ltd के लिए ₹32,400 का ऑटोपे भुगतान परसों 9:30 PM के बाद होना तय है। आप ऐप में जाकर अपनी सुविधा अनुसार इसे देख सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:20:22.289Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 3,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "fail",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R2",
+        "by": "code",
+        "quote": "",
+        "fix": "missing: charge day \"परसों\""
+       },
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "0% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "50% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.6-flash",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 6
+   }
+  },
+  "08776695b08123d81299131563a655ebf40b44208ce0ad382ce384279afe68ce": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 10800,
+    "amount_text": "₹10,800",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹10,800 परसों",
+    "body": "परसों 9:30 PM के बाद ₹10,800 का पेमेंट होना है। आपके पास इसे चालू रखने का विकल्प है।",
+    "voice_script": "नमस्ते। Griha Home Finance Ltd का ₹10,800 का पेमेंट परसों 9:30 PM के बाद होना है। आप चाहें तो इस ऑटोपे को चालू रख सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:20:29.907Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "रोकने या बंद करने का विकल्प है",
+        "fix": "Remove the mention of pausing or canceling as it is an irrevocable loan EMI."
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
+  },
+  "218af53179b0f1c424926eae7a60fabe5556eaa871ba22560f1b3912cd177572": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "en",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "19 Oct",
+    "charge_day": "Today",
+    "charge_time_text": "after 9:30 PM",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI: ₹599 charge Today",
+    "body": "Your AutoPay for PadhoAI of ₹599 is scheduled for Today after 9:30 PM. You can keep, skip, pause or cancel.",
+    "voice_script": "Hello. Your AutoPay for PadhoAI by Vidyakosh Learning Pvt Ltd of ₹599 is scheduled for Today after 9:30 PM. You can keep, skip, pause or cancel.",
+    "language": "en"
+   },
+   "createdAt": "2026-10-30T20:20:33.365Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "b6fc4fe6807197b5696593b9f34eb689e70c7437a1cef6977cef38170f801c71": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "en",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "18 Oct",
+    "charge_day": "Today",
+    "charge_time_text": "after 9:30 PM",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 AutoPay Today",
+    "body": "Your AutoPay of ₹599 for PadhoAI is scheduled today after 9:30 PM. You can keep, skip, pause or cancel.",
+    "voice_script": "Your AutoPay for PadhoAI by Vidyakosh Learning Pvt Ltd of ₹599 is scheduled today after 9:30 PM. You can keep, skip, pause or cancel.",
+    "language": "en"
+   },
+   "createdAt": "2026-10-30T20:20:36.466Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "8cd2427ae0d01461aa6899a927fea5ce2c1db84b7386670264ba566f0e700d0e": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "19 अक्टूबर",
+    "charge_day": "आज",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:20:55.306Z",
+   "review": {
+    "status": "template",
+    "rounds": 5,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 4,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 5,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 10,
+    "binding": {
+     "use_template": true,
+     "remove": [],
+     "change": [],
+     "include": []
+    },
+    "reason": "reviewer_use_template"
+   }
+  },
+  "9a668f247fee237f66e931974918da90b040361eec2d5b2653c46f16a0a77677": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "20 अक्टूबर",
+    "charge_day": "आज",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:22:22.113Z",
+   "review": {
+    "status": "template",
+    "rounds": 5,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "54% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 4,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 5,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "31% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 10,
+    "binding": {
+     "use_template": true,
+     "remove": [],
+     "change": [],
+     "include": []
+    },
+    "reason": "reviewer_use_template"
+   }
+  },
+  "2783c28156f69c26ee93bda3b1e7c82f47c9b579a778648c30551b1910b12260": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "20 Oct",
+    "charge_day": "Aaj",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 charge Aaj",
+    "body": "PadhoAI ka ₹599 charge Aaj 9:30 PM ke baad hai. Aapke paas keep, skip, pause ya cancel karne ka choice hai.",
+    "voice_script": "PadhoAI ka ₹599 charge Vidyakosh Learning Pvt Ltd dwara Aaj 9:30 PM ke baad hone wala hai. Aapke paas keep, skip, pause ya cancel ka option hai.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:22:25.135Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "980aea428982b7e211136a21c7abea5f565a55ab99ede55ed64d1b6ae09b03b2": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "18 Oct",
+    "charge_day": "Aaj",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 AutoPay Aaj",
+    "body": "PadhoAI ka ₹599 AutoPay charge aaj 9:30 PM ke baad hai. Aap keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. Vidyakosh Learning Pvt Ltd ka ₹599 AutoPay charge aaj 9:30 PM ke baad hone wala hai. Aapke paas keep, skip, pause aur cancel karne ke choices hain.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:22:28.073Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "f4d5aacd4b8ae8fde41a660ae3c6aaf29c22fc46f650ac6631f0781438f05e0f": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "19 Oct",
+    "charge_day": "Aaj",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "not_opened",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ₹599 ke liye Aaj",
+    "body": "PadhoAI ka AutoPay ₹599 ke liye Aaj 9:30 PM ke baad hai. Aap keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "PadhoAI ka AutoPay Vidyakosh Learning Pvt Ltd ke liye Aaj 9:30 PM ke baad hone wala hai. Amount ₹599 hai. Aap keep, skip, pause ya cancel kar sakte hain.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:22:30.882Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "f4359be78e0953d022f9e420c2533f739c22b5207e4d537ce9e3ee62feb59646": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "20 अक्टूबर",
+    "charge_day": "आज",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:23:08.922Z",
+   "review": {
+    "status": "template",
+    "rounds": 5,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 4,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 5,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 10,
+    "binding": {
+     "use_template": true,
+     "remove": [],
+     "change": [],
+     "include": []
+    },
+    "reason": "reviewer_use_template"
+   }
+  },
+  "84d6486d4db9697493cbe1801b173c3f74309e5783e6c11f2e4913841b83ca76": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "follow_up",
+    "brand": "PadhoAI",
+    "registered_name": "Vidyakosh Learning Pvt Ltd",
+    "brand_verified": true,
+    "amount_rupees": 599,
+    "amount_text": "₹599",
+    "trial_amount_rupees": 1,
+    "trial_amount_text": "₹1",
+    "trial_date": "19 Oct",
+    "charge_day": "Aaj",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "skip",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": true,
+    "no_answer_outcome": "not_charged"
+   },
+   "output": {
+    "title": "PadhoAI ke liye ₹599 charge aaj",
+    "body": "PadhoAI ka ₹599 charge aaj 9:30 PM ke baad hai. Aap keep, skip, pause ya cancel kar sakte hain.",
+    "voice_script": "Namaste. Vidyakosh Learning Pvt Ltd ka PadhoAI charge ₹599 aaj 9:30 PM ke baad hone wala hai. Aapke paas keep, skip, pause aur cancel karne ke choices hain.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:23:11.724Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "4211576427e558d3f0ceaab4ef1a9887be6fe07cd34e7be4d2368466035a7be8": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 20700,
+    "amount_text": "₹20,700",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:24:01.635Z",
+   "review": {
+    "status": "template",
+    "rounds": 5,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "2% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "रोक सकते हैं या रद्द कर सकते हैं",
+        "fix": "Remove pause and cancel options as FACTS choices are keep, pause, cancel but mandates loan EMI rules don't allow pause/cancel."
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "50% Devanagari for hi"
+       }
+      ],
+      "contests": [
+       {
+        "criterion": "R3",
+        "factsQuote": "\"choices\":[\"keep\",\"pause\",\"cancel\"]",
+        "answer": "withdrawn",
+        "reason": "The choices keep, pause, and cancel are directly supported by the choices field in FACTS."
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "2% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 5,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "fail",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R2",
+        "by": "code",
+        "quote": "",
+        "fix": "missing: amount ₹20,700 in title, charge day \"परसों\""
+       },
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "32% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 10,
+    "binding": {
+     "use_template": true,
+     "remove": [],
+     "change": [],
+     "include": []
+    },
+    "reason": "reviewer_use_template"
+   }
+  },
+  "e6c2e12fcae42592976a6b2f11b30dae5fcc664d710249f39ee0bc142c8884ca": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 24200,
+    "amount_text": "₹24,200",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹24,200 Parson",
+    "body": "Griha Home Finance AutoPay of ₹24,200 is due Parson at 9:30 PM ke baad.",
+    "voice_script": "Griha Home Finance Ltd AutoPay of ₹24,200 is scheduled for Parson at 9:30 PM ke baad.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:24:07.435Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "You can keep, pause, or cancel this payment.",
+        "fix": "Remove the choices since loan EMIs do not allow pause or cancel according to FACTS choices."
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": [
+       {
+        "criterion": "R3",
+        "factsQuote": "choices",
+        "answer": "withdrawn",
+        "reason": "The draft offers no action."
+       }
+      ]
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
+  },
+  "195a51057a18f50abf99fd1aa8ab0bb704ffb2f0dcc038ff2c8fa09cf99bbc3c": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 19700,
+    "amount_text": "₹19,700",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹19,700 परसों",
+    "body": "गृह होम फाइनेंस लिमिटेड का भुगतान परसों 9:30 PM के बाद होगा।",
+    "voice_script": "गृह होम फाइनेंस लिमिटेड का भुगतान परसों 9:30 PM के बाद होगा। राशि ₹19,700 है।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:25:23.410Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 3,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "आप इसे रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+        "fix": "Remove the pause and cancel choices since choices are keep, pause, cancel on a loan EMI but FACTS say usage is unknown and loan EMI rules apply (no pause or cancel allowed if irrevocable, wait - here choices says keep, pause, cancel, let's check allowed actions). Actually FACTS choices are keep, pause, cancel. Wait, code check failed R6."
+       },
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "45% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "36% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 6
+   }
+  },
+  "35eb74ed7c7e444e0299f11f56ae15663a38a109a82c85e9cf071b999081cf1f": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 29100,
+    "amount_text": "₹29,100",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:25:43.114Z",
+   "review": {
+    "status": "template",
+    "rounds": 5,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "57% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "55% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "55% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 4,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "54% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 5,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "54% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite",
+     "consolidator": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 11,
+    "binding": {
+     "use_template": false,
+     "remove": [],
+     "change": [
+      {
+       "from": "9:30 PM",
+       "to": "रात 9:30"
+      }
+     ],
+     "include": []
+    },
+    "reason": "final_check:R6:57% Devanagari for hi;script_not_devanagari"
+   }
+  },
+  "439e1604639d919e942ff7440fb6478b49d7d2f808ee383ddf79e6dcc9546eb0": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 15900,
+    "amount_text": "₹15,900",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹15,900",
+    "body": "Griha Home Finance AutoPay of ₹15,900 is scheduled for Parson at 9:30 PM ke baad.",
+    "voice_script": "Griha Home Finance Ltd AutoPay of ₹15,900 is scheduled for Parson at 9:30 PM ke baad.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:25:46.359Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "bf6d90b1b18109a0c969835b5974a1ac83f837d2db77504f74ca2d50183c2ffa": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 31800,
+    "amount_text": "₹31,800",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹31,800",
+    "body": "परसों 9:30 PM के बाद गृह होम फाइनेंस लिमिटेड का भुगतान होना है।",
+    "voice_script": "गृह होम फाइनेंस लिमिटेड का ₹31,800 का भुगतान परसों 9:30 PM के बाद होना है। आप चाहें तो इसे रख सकते हैं, रोक सकते हैं या रद्द कर सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:25:48.927Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "50% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
+  },
+  "2d67064241250974c6a2b656e84a4775628c0845931447e48b0d49495e1cb5fd": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 34700,
+    "amount_text": "₹34,700",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:26:05.100Z",
+   "review": {
+    "status": "template",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "2% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 3,
+    "reason": "generator_max_tokens"
+   }
+  },
+  "8ae57f23a4344dcc439d8ae8f233cd34dcd78fca54aa00a0f2a9aedbad3aa005": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 38500,
+    "amount_text": "₹38,500",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹38,500 परसों",
+    "body": "Griha Home Finance के लिए ₹38,500 का ऑटोपे परसों 9:30 PM के बाद है। आप इसे रख सकते हैं, रोक सकते हैं या बंद कर सकते हैं।",
+    "voice_script": "Griha Home Finance Ltd के लिए ₹38,500 का ऑटोपे परसों 9:30 PM के बाद होने वाला है। आप इसे रख सकते हैं, रोक सकते हैं या बंद कर सकते हैं।",
+    "language": "hi"
+   },
+   "createdAt": "2026-10-30T20:27:07.505Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "2% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 4
+   }
+  },
+  "e1af560787c582a0644d650a90eddf0d890fe9d85da36b47ad0e3e4fa8a7435f": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 21800,
+    "amount_text": "₹21,800",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:28:39.686Z",
+   "review": {
+    "status": "template",
+    "rounds": 5,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "29% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "28% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "31% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 4,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "40% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 5,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "44% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite",
+     "consolidator": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 11,
+    "binding": {
+     "use_template": false,
+     "remove": [],
+     "change": [
+      {
+       "from": "Griha Home Finance ₹21,800 परसों",
+       "to": "गृह होम फाइनेंस ₹21,800 परसों"
+      },
+      {
+       "from": "Griha Home Finance का भुगतान परसों 9:30 PM के बाद ₹21,800 होगा।",
+       "to": "गृह होम फाइनेंस का भुगतान परसों 9:30 PM के बाद ₹21,800 होगा।"
+      },
+      {
+       "from": "Griha Home Finance Ltd का भुगतान परसों 9:30 PM के बाद होगा। यह राशि ₹21,800 है। आपके पास विकल्प हैं।",
+       "to": "गृह होम फाइनेंस लिमिटेड का भुगतान परसों 9:30 PM के बाद होगा। यह राशि ₹21,800 है। आपके पास विकल्प हैं।"
+      }
+     ],
+     "include": []
+    },
+    "reason": "final_check:R2:missing: brand in title;title_missing_brand"
+   }
+  },
+  "ca49d69809e20166449cb4d8ef7aad9c9815c8e10c345373a048c87f9d49f917": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "en",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 23900,
+    "amount_text": "₹23,900",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "30 Oct",
+    "charge_time_text": "after 9:30 PM",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹23,900 on 30 Oct",
+    "body": "Your AutoPay for Griha Home Finance of ₹23,900 is due on 30 Oct after 9:30 PM.",
+    "voice_script": "Hello. Your AutoPay for Griha Home Finance Ltd of ₹23,900 is scheduled for 30 Oct after 9:30 PM.",
+    "language": "en"
+   },
+   "createdAt": "2026-10-30T20:28:43.593Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "945ebe61d81af66d83c68f553cd2a8a709964a58a12c627ec22567a6103549eb": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 11000,
+    "amount_text": "₹11,000",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹11,000",
+    "body": "Griha Home Finance AutoPay of ₹11,000 is scheduled for Parson at 9:30 PM ke baad.",
+    "voice_script": "Griha Home Finance Ltd AutoPay of ₹11,000 is scheduled for Parson at 9:30 PM ke baad.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:28:46.520Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 1,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 2
+   }
+  },
+  "5a413dbacf0549cbccea421b99216077f7c794b3eb2554c924fcfd8072d14413": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hi",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 9800,
+    "amount_text": "₹9,800",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "परसों",
+    "charge_time_text": "9:30 PM के बाद",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": null,
+   "createdAt": "2026-10-30T20:28:54.149Z",
+   "review": {
+    "status": "template",
+    "rounds": 5,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "6% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "1% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 3,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "2% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 4,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "34% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 5,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "fail",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R6",
+        "by": "code",
+        "quote": "",
+        "fix": "34% Devanagari for hi"
+       }
+      ],
+      "contests": []
+     }
+    ],
+    "models": {
+     "generator": "gemini-3.5-flash-lite",
+     "reviewer": "gemini-3.5-flash-lite"
+    },
+    "version": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+    "calls": 10,
+    "binding": {
+     "use_template": true,
+     "remove": [],
+     "change": [],
+     "include": []
+    },
+    "reason": "reviewer_use_template"
+   }
+  },
+  "38fa2640ff85d7e393686793085e5abcfbeca4301410c1cc2b01ba0b03ed0a56": {
+   "task": "reminder",
+   "model": "gemini-3.5-flash-lite",
+   "promptVersion": "l1-v3+gen-v1+rev-v2+con-v1+rubric-v2",
+   "input": {
+    "language": "hinglish",
+    "kind": "remind",
+    "brand": "Griha Home Finance",
+    "registered_name": "Griha Home Finance Ltd",
+    "brand_verified": true,
+    "amount_rupees": 21600,
+    "amount_text": "₹21,600",
+    "trial_amount_rupees": null,
+    "trial_amount_text": null,
+    "trial_date": null,
+    "charge_day": "Parson",
+    "charge_time_text": "9:30 PM ke baad",
+    "usage": "unknown",
+    "choices": [
+     "keep",
+     "pause",
+     "cancel"
+    ],
+    "skip_is_merchant_offer": false,
+    "no_answer_outcome": "charged"
+   },
+   "output": {
+    "title": "Griha Home Finance ₹21,600 Parson",
+    "body": "Griha Home Finance Ltd AutoPay of ₹21,600 is scheduled for Parson at 9:30 PM ke baad.",
+    "voice_script": "Griha Home Finance Ltd AutoPay of ₹21,600 is scheduled for Parson at 9:30 PM ke baad.",
+    "language": "hinglish"
+   },
+   "createdAt": "2026-10-30T20:30:03.828Z",
+   "review": {
+    "status": "agreed",
+    "rounds": 2,
+    "trail": [
+     {
+      "round": 1,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "fail",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [
+       {
+        "criterion": "R3",
+        "by": "reviewer",
+        "quote": "Aap ise keep, pause ya cancel kar sakte hain.",
+        "fix": "Remove the choices since loans do not allow pause or cancel."
+       }
+      ],
+      "contests": []
+     },
+     {
+      "round": 2,
+      "verdicts": {
+       "R1": "pass",
+       "R2": "pass",
+       "R3": "pass",
+       "R4": "pass",
+       "R5": "pass",
+       "R6": "pass",
+       "R7": "pass",
+       "R8": "pass",
+       "R9": "pass",
+       "R10": "pass",
+       "R11": "pass"
+      },
+      "fails": [],
+      "contests": []
      }
     ],
     "models": {
