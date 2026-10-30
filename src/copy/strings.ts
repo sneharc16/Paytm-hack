@@ -21,7 +21,7 @@ export const STRINGS = {
   "sheet.lede.trial_unused": r("{trialDate} ko aapne {trialAmount} ka trial liya tha. Uske baad {brand} app nahi khula.", "{trialDate} को आपने {trialAmount} का ट्रायल लिया था। उसके बाद {brand} ऐप नहीं खुला।", "You started a {trialAmount} trial on {trialDate}. The {brand} app hasn't been opened since."),
   "sheet.lede.trial": r("{trialDate} ko aapne {trialAmount} ka trial liya tha.", "{trialDate} को आपने {trialAmount} का ट्रायल लिया था।", "You started a {trialAmount} trial on {trialDate}."),
   "sheet.lede.first": r("Ye is AutoPay ka pehla charge hai.", "यह इस AutoPay का पहला चार्ज है।", "This is the first charge on this AutoPay."),
-  "sheet.listen": r("Hindi mein sunein", "हिंदी में सुनें", "Listen in Hindi"),
+  "sheet.listen": r("Sunein", "सुनें", "Listen"),
   "sheet.changed": r("Aapne {choice} chuna tha. Badalna hai toh naya option chuniye.", "आपने {choice} चुना था। बदलना है तो नया विकल्प चुनिए।", "You chose {choice}. To change it, pick another option."),
   "timeline.now": r("Aapko bataya", "आपको बताया", "We told you"),
   "timeline.end": r("{amount} katega", "{amount} कटेगा", "{amount} will be charged"),

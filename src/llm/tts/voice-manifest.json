@@ -1,0 +1,30 @@
+{
+ "generatedAt": "2026-10-30T05:02:15.735Z",
+ "voices": {
+  "hi": "Lekha",
+  "hinglish": "Lekha",
+  "en": "Rishi"
+ },
+ "notes": {
+  "e6136a3491b78e7791fe83ac6a1a945cde766a4a43d9e806fd134d3dc86e4a0e": {
+   "file": "/audio/v/177d5fb0ee38d641.m4a",
+   "voice": "Lekha",
+   "language": "hinglish"
+  },
+  "cf81a674dc98d01e66f517fa547f1d9c10bcab98d745ff8615f0ed6a9c6f893e": {
+   "file": "/audio/v/ff6851b4084c0744.m4a",
+   "voice": "Lekha",
+   "language": "hi"
+  },
+  "ffe2b9ea76ba81f384c562576285a9a425a478cebd10b2ba6d6f34d4a3127a00": {
+   "file": "/audio/v/c10c23ad75426d20.m4a",
+   "voice": "Lekha",
+   "language": "hinglish"
+  },
+  "b1483d786377f6dda225ec7d92a78cd6a818de826c19d29d9981544a6d72cc69": {
+   "file": "/audio/v/9c04becd0687690b.m4a",
+   "voice": "Lekha",
+   "language": "hinglish"
+  }
+ }
+}

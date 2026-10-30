@@ -1,8 +1,8 @@
 "use client";
 // Consumer app, /app (PRD 20.1): C1 list, C2 Doosri Haan sheet, C3 PIN pad, C4 result, C5 retry,
 // C6 refund offer and tracker, C7 and C8 case and callback, C9 detail, C10 Pakka se poochho.
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Info, Lock, Mic, Phone, ShieldCheck, Clock, Volume2, Pause, Check, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, Info, Lock, Mic, Phone, ShieldCheck, Clock, Check, X } from "lucide-react";
 import { t, type StringKey } from "@/copy/strings";
 import { addMin, ms, peakWindow } from "@/engine/clock";
 import { intakeTemplate } from "@/engine/actions";
@@ -12,6 +12,8 @@ import type { Choice, Lang, Persona } from "@/engine/types";
 import { dayMonth, inr, relativeDay, timeIST } from "@/lib/format";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
 import { callModel } from "@/lib/llm-client";
+import { sheetVoiceText } from "@/lib/voice";
+import { ListenButton } from "./ListenButton";
 import { PERSONAS, isCollect, needsAnswer, pillFor, rowsFor, sectionOf, type Row } from "@/lib/views";
 import { AIFooter, Amount, DebitTimeline, KillSwitchBanner, LangToggle, MerchantTile, PakkaSeal, StatusPill } from "@/components/shared";
 import type { Session } from "@/engine/session";
@@ -194,9 +196,6 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
   const label = (c: Choice) => choiceLabel(lang, c, cheaper ? inr(cheaper.amount) : undefined);
   const [choice, setChoice] = useState<Choice | null>(cs.decision ?? null);
   const [busy, setBusy] = useState(false);
-  const [audio, setAudio] = useState<"idle" | "playing" | "error">("idle");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  useEffect(() => () => { audioRef.current?.pause(); window.speechSynthesis?.cancel(); }, []);
   const day = relativeDay(cs.dueOverride ?? c.dueAt, now, lang);
   const amount = inr(cs.amountOverride ?? c.amount);
   const p = { day, amount, brand: mer.brand, trialDate: m.trialStartedAt ? dayMonth(m.trialStartedAt, lang) : "", trialAmount: plan.trialAmount ? inr(plan.trialAmount) : "" };
@@ -211,22 +210,8 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
     { id: "pause", desc: t(lang, "choice.pause.desc"), pin: true },
     { id: "cancel", desc: t(lang, "choice.cancel.desc", p), pin: true },
   ];
-  const listen = () => {
-    if (audio === "playing") { window.speechSynthesis?.cancel(); audioRef.current?.pause(); setAudio("idle"); return; }
-    // The recorded note is Sunita's PadhoAI reminder; anything else uses the browser's Hindi voice.
-    const recorded = m.userId === "u_sunita" && mer.id === "m_padhoai" ? "/audio/sunita-padhoai-hi.m4a" : null;
-    const a = recorded ? new Audio(recorded) : null;
-    audioRef.current = a;
-    if (a) a.onended = () => setAudio("idle");
-    (a ? a.play() : Promise.reject(new Error("no recording"))).then(() => setAudio("playing")).catch(() => {
-      const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-      const voice = synth?.getVoices().find((v) => v.lang.startsWith("hi"));
-      if (!synth || !voice) { setAudio("error"); return; }
-      const u = new SpeechSynthesisUtterance(`${t("hi", "sheet.title", { ...p, day: relativeDay(c.dueAt, now, "hi") })}. ${t("hi", "namegap", { legal: mer.legalName, brand: mer.brand })}`);
-      u.voice = voice; u.lang = voice.lang; u.onend = () => setAudio("idle");
-      synth.speak(u); setAudio("playing");
-    });
-  };
+  // Spoken in the customer's language: the reminder that was sent (recorded for the story), else the sheet's own words.
+  const voiceText = sheetVoiceText(s, cycleId, lang) ?? `${t(lang, "sheet.title", p)}. ${lede}${hasNameGap(mer.brand, mer.legalName) && mer.brandVerified ? ` ${t(lang, "namegap", { legal: mer.legalName, brand: mer.brand })}` : ""}`;
   const confirm = async () => {
     if (!choice) return;
     if (choice === "pause" || choice === "cancel") return onPin(choice);
@@ -239,11 +224,8 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <PakkaSeal />
-        <button onClick={listen} className="btn-soft inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-semibold">
-          {audio === "playing" ? <Pause size={16} aria-hidden /> : <Volume2 size={16} aria-hidden />}{t(lang, "sheet.listen")}
-        </button>
+        <ListenButton key={`${lang}|${voiceText}`} text={voiceText} lang={lang} />
       </div>
-      {audio === "error" && <p className="text-[14px] text-slate">{t(lang, "voice.error")}</p>}
       <h2 className="text-[23px] font-bold leading-7 text-navy">{t(lang, "sheet.title", p)}</h2>
       <p className="text-[16px] text-slate">{lede}</p>
       <DebitTimeline startMs={ms(cs.noticeAt ?? c.noticeAt)} endMs={ms(addMin(c.dueAt, -130))} nowMs={ms(now)}
@@ -602,6 +584,8 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState<{ intent: string; mandateId?: string; candidates: string[]; caseCode?: string } | null>(null);
+  // The model's reply, shown only when the review loop approved it; otherwise the facts card below is the answer.
+  const [reply, setReply] = useState<string | null>(null);
   const facts = useMemo(() => {
     if (!answer?.mandateId) return null;
     const m = s.idx.mandate.get(answer.mandateId)!;
@@ -610,6 +594,7 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
     const c = (s.idx.cyclesByMandate.get(m.id) ?? []).reduce((a, b) => (b.seq > a.seq ? b : a));
     return { m, mer, plan, c };
   }, [answer, s]);
+  const factsText = facts ? t(lang, "ask.facts", { legal: facts.mer.legalName, brand: facts.mer.brand, plan: facts.plan.name, amount: inr(facts.c.amount), when: `${dayMonth(facts.c.dueAt, lang)}, ${timeIST(facts.c.dueAt)}` }) : "";
   const submit = async () => {
     if (!text.trim()) return;
     setBusy(true);
@@ -621,6 +606,7 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
     const r = (await send({ kind: "question", userId, text, intake })) as typeof answer;
     setBusy(false);
     setAnswer(r);
+    setReply(live?.output?.reply && live.review && live.review.status !== "template" ? live.output.reply : null);
     if (r?.intent === "never_approved") onFraud(r.caseCode, r.mandateId);
   };
   if (!open) return (
@@ -632,13 +618,22 @@ function AskPakka({ s, userId, lang, onFraud, ask }: { s: Session; userId: strin
         <input autoFocus value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder={t(lang, "ask.placeholder")}
           className="h-12 min-w-0 flex-1 rounded-[8px] border border-line-strong px-3 text-[16px]" />
         <button aria-label="Speak" className="flex h-12 w-12 items-center justify-center rounded-[8px] border border-line-strong text-navy"><Mic size={20} /></button>
-        <button aria-label="Close" onClick={() => { setOpen(false); setAnswer(null); }} className="text-slate"><X size={20} /></button>
+        <button aria-label="Close" onClick={() => { setOpen(false); setAnswer(null); setReply(null); }} className="text-slate"><X size={20} /></button>
       </div>
       {busy && <p className="mt-2 text-[14px] text-slate">{t(lang, "button.working")}</p>}
+      {reply && answer?.intent !== "never_approved" && (
+        <div className="mt-3 flex items-start gap-3 rounded-[12px] bg-sky-soft p-3">
+          <p className="flex-1 text-[15px]">{reply}</p>
+          <ListenButton key={`${lang}|${reply}`} text={reply} lang={lang} />
+        </div>
+      )}
       {facts && answer?.intent !== "never_approved" && (
         <div className="mt-3 rounded-[12px] border border-line p-3">
           <div className="flex items-center gap-3"><MerchantTile brand={facts.mer.brand} tile={facts.mer.tile} /><div className="flex-1 text-[16px] font-semibold">{facts.mer.brand}</div><Amount paise={facts.c.amount} lang={lang} /></div>
-          <p className="mt-2 text-[15px]">{t(lang, "ask.facts", { legal: facts.mer.legalName, brand: facts.mer.brand, plan: facts.plan.name, amount: inr(facts.c.amount), when: `${dayMonth(facts.c.dueAt, lang)}, ${timeIST(facts.c.dueAt)}` })}</p>
+          <div className="mt-2 flex items-start gap-3">
+            <p className="flex-1 text-[15px]">{factsText}</p>
+            {!reply && <ListenButton key={`${lang}|${factsText}`} text={factsText} lang={lang} />}
+          </div>
           {needsAnswer({ cs: s.state.cycle(facts.c.id) } as Row) && <button onClick={() => ask(facts.c.id)} className="mt-3 h-11 w-full rounded-full btn-primary text-[15px] font-semibold text-white">{t(lang, "sheet.question")}</button>}
         </div>
       )}
