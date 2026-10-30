@@ -19,6 +19,8 @@ export const setTable = (lang: RegionalCode, table: Table) => tables.set(lang, {
 export const getTable = (lang: RegionalCode) => tables.get(lang) ?? {};
 export const clearTableForTests = (lang: RegionalCode) => tables.delete(lang);
 export const bakedLanguages = () => [...tables.keys()];
+/** Lines this language has no translation for yet (new copy added after the bake). */
+export const missingLines = (lang: RegionalCode) => { const t = getTable(lang); return Object.keys(sourceLines()).filter((k) => !(k in t)); };
 
 /** The English source of every line to translate. */
 export function sourceLines(): Record<string, string> {

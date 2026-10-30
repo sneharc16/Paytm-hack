@@ -16,6 +16,8 @@ export interface Row { mandate: Mandate; merchant: Merchant; plan: Plan; cycle: 
 /** The cycle a list row is about: the in-window cycle if there is one, else the latest. */
 export function currentCycle(s: Session, mandateId: string): Cycle {
   const cycles = s.idx.cyclesByMandate.get(mandateId) ?? [];
+  // A live world holds the next few charges ahead: the current one is the first not yet settled.
+  if (s.world.live) return [...cycles].sort((a, b) => a.seq - b.seq).find((c) => !["succeeded", "skipped"].includes(s.state.cycle(c.id).status)) ?? cycles[cycles.length - 1];
   return cycles.reduce((a, b) => (b.seq > a.seq ? b : a), cycles[0]);
 }
 

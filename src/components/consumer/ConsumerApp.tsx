@@ -1,36 +1,43 @@
 "use client";
 // Consumer app, /app (PRD 20.1): C1 list, C2 Doosri Haan sheet, C3 PIN pad, C4 result, C5 retry,
 // C6 refund offer and tracker, C7 and C8 case and callback, C9 detail, C10 Pakka se poochho.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, Info, Lock, Mic, Phone, ShieldCheck, Clock, Volume2, Pause, Check, Square, X } from "lucide-react";
 import { type StringKey } from "@/copy/strings";
 import { baseLang, isRegional, langInfo, type UiLang } from "@/copy/languages";
 import { hasTable, tr, uiDayMonth, uiRelativeDay } from "@/copy/regional";
 import { speakWithSarvam, startListening, toEnglish, useRegional } from "@/lib/regional-client";
-import { addMin, ms, peakWindow } from "@/engine/clock";
+import { addMin, istDay, ms, peakWindow } from "@/engine/clock";
 import { hasNameGap } from "@/engine/namegap";
+import type { Command } from "@/engine/commands";
 import type { Choice, Persona } from "@/engine/types";
 import { inr, timeIST } from "@/lib/format";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
 import { callModel } from "@/lib/llm-client";
-import { PERSONAS, isCollect, needsAnswer, pillFor, rowsFor, sectionOf, type Row } from "@/lib/views";
+import { PERSONAS, currentCycle, isCollect, needsAnswer, pillFor, rowsFor, sectionOf, type Row } from "@/lib/views";
 import { AIFooter, Amount, DebitTimeline, KillSwitchBanner, LangPicker, MerchantTile, PakkaSeal, StatusPill } from "@/components/shared";
 import type { Session } from "@/engine/session";
 
 type Screen = { name: "list" } | { name: "detail"; mandateId: string } | { name: "retry"; mandateId: string };
-type Sheet = null | { name: "decision"; cycleId: string } | { name: "pin"; cycleId: string; choice: "pause" | "cancel" } | { name: "result"; cycleId: string; choice: Choice; status: string } | { name: "fraud"; code?: string; mandateId?: string } | { name: "escalate" };
+type Sheet = null | { name: "decision"; cycleId: string } | { name: "pin"; cycleId: string; choice: "pause" | "cancel" } | { name: "result"; cycleId: string; choice: Choice; status: string } | { name: "fraud"; code?: string; mandateId?: string } | { name: "escalate" } | { name: "custom"; node: ReactNode };
+
+/** Who runs the engine behind the phone: the demo replay (useSync) or a real person's server (Pakka live). */
+export interface Host { send: (c: Command) => Promise<unknown>; /** What the pause and cancel options say they need (the PIN, or Pakka live's passkey). */ confirmTag?: StringKey }
+const HostCtx = createContext<Host | null>(null);
+export const HostProvider = HostCtx.Provider;
+const useHost = () => useContext(HostCtx)!;
 
 function readParam(k: string) { return typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(k); }
 
 export default function ConsumerApp({ embedded = false }: { embedded?: boolean }) {
   const start = useSync((s) => s.start);
   const session = useSync((s) => s.session);
+  const send = useSync((s) => s.send);
   useSync((s) => s.version);
   const now = useSimNow();
   const [persona, setPersona] = useState<Persona>("sunita");
   const [langOverride, setLangOverride] = useState<Partial<Record<Persona, UiLang>>>({});
-  const [screen, setScreen] = useState<Screen>({ name: "list" });
-  const [sheet, setSheet] = useState<Sheet>(null);
+  const [reset, setReset] = useState(0);
 
   useEffect(() => {
     start(sessionIdFromUrl());
@@ -53,31 +60,12 @@ export default function ConsumerApp({ embedded = false }: { embedded?: boolean }
     setLangOverride(next);
     try { localStorage.setItem("pakka-lang", JSON.stringify(next)); } catch { /* storage blocked */ }
   };
-  const kill = session.state.killSwitch.global;
+  const pick = (p: Persona) => { setPersona(p); setReset((x) => x + 1); };
 
   const body = (
-    <div dir={langInfo(lang).rtl ? "rtl" : "ltr"} lang={langInfo(lang).sarvam} className="relative flex h-full flex-col overflow-hidden bg-canvas">
-      <div className="flex h-8 items-center justify-between bg-surface px-5 text-[13px] font-semibold text-ink">
-        <span className="tnum">{timeIST(now).replace(/ (AM|PM)/, "")}</span><span className="text-slate">4G</span>
-      </div>
-      <KillSwitchBanner on={kill} lang={lang} />
-      {screen.name === "list" && <ListScreen s={session} userId={userId} lang={lang} now={now} setLang={setLang} open={(r) => setScreen(r.cycle.group === "collect" ? { name: "retry", mandateId: r.mandate.id } : { name: "detail", mandateId: r.mandate.id })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} onFraud={(code, mandateId) => setSheet({ name: "fraud", code, mandateId })} onEscalate={() => setSheet({ name: "escalate" })} />}
-      {screen.name === "detail" && <DetailScreen s={session} mandateId={screen.mandateId} lang={lang} now={now} back={() => setScreen({ name: "list" })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} />}
-      {screen.name === "retry" && <RetryScreen s={session} mandateId={screen.mandateId} lang={lang} now={now} back={() => setScreen({ name: "list" })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} />}
-      {sheet && (
-        <div className="absolute inset-0 z-20 flex flex-col justify-end">
-          <button aria-label="Close" className="anim-backdrop absolute inset-0 bg-[rgba(10,25,55,.42)]" onClick={() => setSheet(null)} />
-          <div role="dialog" aria-modal className="anim-sheet relative max-h-[92%] overflow-y-auto rounded-t-[28px] bg-surface px-4 pb-5 pt-2 shadow-[var(--shadow-sheet)]" onKeyDown={(e) => e.key === "Escape" && setSheet(null)}>
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line-strong" />
-            {sheet.name === "decision" && <DecisionSheet s={session} cycleId={sheet.cycleId} lang={lang} now={now} onPin={(choice) => setSheet({ name: "pin", cycleId: sheet.cycleId, choice })} onDone={(choice, status) => setSheet({ name: "result", cycleId: sheet.cycleId, choice, status })} />}
-            {sheet.name === "pin" && <PinPad s={session} userId={userId} cycleId={sheet.cycleId} choice={sheet.choice} lang={lang} onDone={(status) => setSheet({ name: "result", cycleId: sheet.cycleId, choice: sheet.choice, status })} />}
-            {sheet.name === "result" && <ResultState s={session} cycleId={sheet.cycleId} choice={sheet.choice} status={sheet.status} lang={lang} now={now} close={() => setSheet(null)} />}
-            {sheet.name === "fraud" && <FraudLaneSheet s={session} code={sheet.code} mandateId={sheet.mandateId} userId={userId} lang={lang} onCancel={(cycleId) => setSheet({ name: "pin", cycleId, choice: "cancel" })} />}
-            {sheet.name === "escalate" && <EscalationPath lang={lang} />}
-          </div>
-        </div>
-      )}
-    </div>
+    <HostProvider value={{ send }}>
+      <PhoneScreens key={`${persona}|${reset}`} s={session} userId={userId} lang={lang} setLang={setLang} now={now} />
+    </HostProvider>
   );
 
   if (embedded) return <div className="h-full">{body}</div>;
@@ -86,21 +74,84 @@ export default function ConsumerApp({ embedded = false }: { embedded?: boolean }
       <div className="hidden items-center gap-2 sm:flex">
         <span className="text-[13px] text-slate">{tr("en", "persona.switch")}</span>
         {PERSONAS.map((p) => (
-          <button key={p.id} onClick={() => { setPersona(p.id); setScreen({ name: "list" }); setSheet(null); }}
+          <button key={p.id} onClick={() => pick(p.id)}
             className={`rounded-full px-3 py-1 text-[13px] font-semibold ${persona === p.id ? "btn-primary text-white" : "border border-line-strong text-navy"}`}>{p.label}</button>
         ))}
       </div>
       <div className="h-[100dvh] w-full overflow-hidden sm:h-[844px] sm:w-[390px] sm:rounded-[36px] sm:border-[10px] sm:border-ink">{body}</div>
       <div className="flex gap-2 sm:hidden">
-        {PERSONAS.map((p) => <button key={p.id} onClick={() => { setPersona(p.id); setScreen({ name: "list" }); setSheet(null); }} className="text-[12px] text-slate underline">{p.label}</button>)}
+        {PERSONAS.map((p) => <button key={p.id} onClick={() => pick(p.id)} className="text-[12px] text-slate underline">{p.label}</button>)}
       </div>
     </main>
   );
 }
 
+/** The phone itself: list, detail, sheets. `listTop` adds content under the list header (Pakka live uses it for
+ *  messages and adding AutoPays); `confirm` replaces the PIN pad (Pakka live confirms with a passkey). */
+export function PhoneScreens({ s: session, userId, lang, setLang, now, listTop, confirm, statusRight }: {
+  s: Session; userId: string; lang: UiLang; setLang: (l: UiLang) => void; now: string;
+  listTop?: (open: (node: ReactNode | null) => void) => ReactNode;
+  confirm?: (p: { cycleId: string; choice: "pause" | "cancel"; done: (status: string) => void }) => ReactNode;
+  statusRight?: ReactNode;
+}) {
+  const [screen, setScreen] = useState<Screen>({ name: "list" });
+  const [sheet, setSheet] = useState<Sheet>(null);
+  const kill = session.state.killSwitch.global;
+  const openCustom = (node: ReactNode | null) => setSheet(node ? { name: "custom", node } : null);
+  return (
+    <div dir={langInfo(lang).rtl ? "rtl" : "ltr"} lang={langInfo(lang).sarvam} className="relative flex h-full flex-col overflow-hidden bg-canvas">
+      <div className="flex h-8 items-center justify-between bg-surface px-5 text-[13px] font-semibold text-ink">
+        <span className="tnum">{timeIST(now).replace(/ (AM|PM)/, "")}</span>{statusRight ?? <span className="text-slate">4G</span>}
+      </div>
+      <KillSwitchBanner on={kill} lang={lang} />
+      {screen.name === "list" && <ListScreen s={session} userId={userId} lang={lang} now={now} setLang={setLang} top={listTop?.(openCustom)} open={(r) => setScreen(r.cycle.group === "collect" ? { name: "retry", mandateId: r.mandate.id } : { name: "detail", mandateId: r.mandate.id })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} onFraud={(code, mandateId) => setSheet({ name: "fraud", code, mandateId })} onEscalate={() => setSheet({ name: "escalate" })} />}
+      {screen.name === "detail" && <DetailScreen s={session} mandateId={screen.mandateId} lang={lang} now={now} back={() => setScreen({ name: "list" })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} />}
+      {screen.name === "retry" && <RetryScreen s={session} mandateId={screen.mandateId} lang={lang} now={now} back={() => setScreen({ name: "list" })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} />}
+      {sheet && (
+        <div className="absolute inset-0 z-20 flex flex-col justify-end">
+          <button aria-label="Close" className="anim-backdrop absolute inset-0 bg-[rgba(10,25,55,.42)]" onClick={() => setSheet(null)} />
+          <div role="dialog" aria-modal className="anim-sheet relative max-h-[92%] overflow-y-auto rounded-t-[28px] bg-surface px-4 pb-5 pt-2 shadow-[var(--shadow-sheet)]" onKeyDown={(e) => e.key === "Escape" && setSheet(null)}>
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line-strong" />
+            {sheet.name === "decision" && <DecisionSheet s={session} cycleId={sheet.cycleId} lang={lang} now={now} onPin={(choice) => setSheet({ name: "pin", cycleId: sheet.cycleId, choice })} onDone={(choice, status) => setSheet({ name: "result", cycleId: sheet.cycleId, choice, status })} />}
+            {sheet.name === "pin" && (confirm
+              ? confirm({ cycleId: sheet.cycleId, choice: sheet.choice, done: (status) => setSheet({ name: "result", cycleId: sheet.cycleId, choice: sheet.choice, status }) })
+              : <PinPad s={session} userId={userId} cycleId={sheet.cycleId} choice={sheet.choice} lang={lang} onDone={(status) => setSheet({ name: "result", cycleId: sheet.cycleId, choice: sheet.choice, status })} />)}
+            {sheet.name === "result" && <ResultState s={session} cycleId={sheet.cycleId} choice={sheet.choice} status={sheet.status} lang={lang} now={now} close={() => setSheet(null)} />}
+            {sheet.name === "fraud" && <FraudLaneSheet s={session} code={sheet.code} mandateId={sheet.mandateId} userId={userId} lang={lang} onCancel={(cycleId) => setSheet({ name: "pin", cycleId, choice: "cancel" })} />}
+            {sheet.name === "escalate" && <EscalationPath lang={lang} />}
+            {sheet.name === "custom" && sheet.node}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Read `text` aloud in `lang` with Sarvam (Bulbul), falling back to the browser's voice. */
+export function ListenButton({ text, lang, onNavy = false }: { text: string; lang: UiLang; onNavy?: boolean }) {
+  const [state, setState] = useState<"idle" | "busy">("idle");
+  const ref = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => () => { ref.current?.pause(); }, []);
+  const go = async () => {
+    if (state === "busy") { ref.current?.pause(); window.speechSynthesis?.cancel(); setState("idle"); return; }
+    setState("busy");
+    const a = await speakWithSarvam(text, lang, () => setState("idle"));
+    if (a) { ref.current = a; return; }
+    const synth = window.speechSynthesis, want = langInfo(lang).sarvam.slice(0, 2);
+    const voice = synth?.getVoices().find((v) => v.lang.startsWith(want));
+    if (!synth || !voice) { setState("idle"); return; }
+    const u = new SpeechSynthesisUtterance(text); u.voice = voice; u.lang = voice.lang; u.onend = () => setState("idle"); synth.speak(u);
+  };
+  return (
+    <button onClick={go} className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-semibold ${onNavy ? "bg-white/20 text-white" : "btn-soft"}`}>
+      {state === "busy" ? <Pause size={14} aria-hidden /> : <Volume2 size={14} aria-hidden />}{tr(lang, "sheet.listen")}
+    </button>
+  );
+}
+
 // ---------- C1 ----------
-function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscalate }: {
-  s: Session; userId: string; lang: UiLang; now: string; setLang: (l: UiLang) => void; open: (r: Row) => void; ask: (cycleId: string) => void;
+function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscalate, top }: {
+  s: Session; userId: string; lang: UiLang; now: string; setLang: (l: UiLang) => void; open: (r: Row) => void; ask: (cycleId: string) => void; top?: ReactNode;
   onFraud: (code?: string, mandateId?: string) => void; onEscalate: () => void;
 }) {
   const rows = rowsFor(s, userId).sort((a, b) => ms(a.cycle.dueAt) - ms(b.cycle.dueAt));
@@ -114,6 +165,13 @@ function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscal
     { key: "section.interop", rows: rows.filter((r) => sectionOf(r, now) === "interop") },
   ];
   const first = asks[0] ?? collects[0];
+  // The demo's line says "tomorrow"; when the asked-about charge is another day, the day is named.
+  const tomorrow = asks.length > 0 && istDay(asks[0].cycle.dueAt) === istDay(addMin(now, 24 * 60));
+  const cardTitle = !first ? "" : asks.length ? (tomorrow ? tr(lang, "nudge.card.title", { n: soonCount }) : tr(lang, "nudge.card.title.day", { n: soonCount, day: uiRelativeDay(asks[0].cycle.dueAt, now, lang) }))
+    : first.cs.status === "failed_business" ? tr(lang, "failed.title", { amount: inr(first.cycle.amount) })
+    : first.cs.status === "retry_scheduled" && first.cs.retryAt ? tr(lang, "retry.done", { when: `${uiRelativeDay(first.cs.retryAt, now, lang).toLowerCase()} ${tr(lang, "row.after", { time: "9:30 PM" })}` })
+    : tr(lang, "nudge.card.collect", { brand: first.merchant.brand, amount: inr(first.cycle.amount), day: uiRelativeDay(first.cycle.dueAt, now, lang) });
+  const cardSub = asks.length > 0 ? tr(lang, "nudge.card.sub", { brand: asks[0].merchant.brand, amount: inr(asks[0].cycle.amount) }) : "";
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center gap-2 bg-surface px-4 py-3 shadow-[0_1px_0_var(--line)]">
@@ -123,21 +181,17 @@ function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscal
       </header>
       <LangNotice lang={lang} />
       <div className="min-h-0 flex-1 overflow-y-auto pb-24">
+        {top}
         <CaseCards s={s} userId={userId} lang={lang} now={now} onFraud={onFraud} onEscalate={onEscalate} />
         {first && (
           <div className="mx-4 mt-4 rounded-[20px] bg-gradient-to-br from-sky to-blue px-4 py-4 text-white shadow-[0_10px_24px_rgba(11,114,231,0.30)]">
-            <PakkaSeal onNavy />
-            <p className="mt-2 text-[17px] font-semibold leading-6">
-              {asks.length ? tr(lang, "nudge.card.title", { n: soonCount })
-                : first.cs.status === "failed_business" ? tr(lang, "failed.title", { amount: inr(first.cycle.amount) })
-                : first.cs.status === "retry_scheduled" && first.cs.retryAt ? tr(lang, "retry.done", { when: `${uiRelativeDay(first.cs.retryAt, now, lang).toLowerCase()} ${tr(lang, "row.after", { time: "9:30 PM" })}` })
-                : tr(lang, "nudge.card.collect", { brand: first.merchant.brand, amount: inr(first.cycle.amount), day: uiRelativeDay(first.cycle.dueAt, now, lang) })}
-            </p>
-            {asks.length > 0 && <p className="mt-1 text-[14px] text-white/80">{tr(lang, "nudge.card.sub", { brand: asks[0].merchant.brand, amount: inr(asks[0].cycle.amount) })}</p>}
+            <div className="flex items-center justify-between"><PakkaSeal onNavy /><ListenButton onNavy lang={lang} text={`${cardTitle}. ${cardSub}`} /></div>
+            <p className="mt-2 text-[17px] font-semibold leading-6">{cardTitle}</p>
+            {cardSub && <p className="mt-1 text-[14px] text-white/80">{cardSub}</p>}
             <button onClick={() => (asks.length ? ask(asks[0].cycle.id) : open(first))} className="press mt-3 h-[38px] rounded-full bg-white px-5 text-[15px] font-semibold text-blue">{tr(lang, "nudge.card.cta")}</button>
           </div>
         )}
-        {rows.length === 0 && <p className="p-6 text-slate">{tr(lang, "list.empty")}</p>}
+        {rows.length === 0 && !top && <p className="p-6 text-slate">{tr(lang, "list.empty")}</p>}
         {groups.map((g) => g.rows.length > 0 && (
           <section key={g.key}>
             <h2 className="px-5 pb-2 pt-4 text-[14px] font-semibold text-slate">
@@ -194,7 +248,7 @@ function choiceLabel(lang: UiLang, c: Choice, amountFor?: string) {
 }
 
 function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; cycleId: string; lang: UiLang; now: string; onPin: (c: "pause" | "cancel") => void; onDone: (c: Choice, status: string) => void }) {
-  const send = useSync((x) => x.send);
+  const { send, confirmTag } = useHost();
   const c = s.idx.cycle.get(cycleId)!;
   const cs = s.state.cycle(cycleId);
   const m = s.idx.mandate.get(c.mandateId)!;
@@ -290,7 +344,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
                 {(o.offer || o.pin) && (
                   <span className="mt-1 flex items-center gap-1 text-[13px] text-slate">
                     {o.offer && <span className="rounded-full bg-offer-wash px-2 py-px text-[12.5px] font-semibold text-offer">{tr(lang, "tag.offer", { brand: mer.brand })}</span>}
-                    {o.pin && <><Lock size={16} strokeWidth={1.8} aria-hidden />{tr(lang, "tag.pin")}</>}
+                    {o.pin && <><Lock size={16} strokeWidth={1.8} aria-hidden />{tr(lang, confirmTag ?? "tag.pin")}</>}
                   </span>
                 )}
               </span>
@@ -309,7 +363,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
 
 // ---------- C3 ----------
 function PinPad({ s, userId, cycleId, choice, lang, onDone }: { s: Session; userId: string; cycleId: string; choice: "pause" | "cancel"; lang: UiLang; onDone: (status: string) => void }) {
-  const send = useSync((x) => x.send);
+  const { send } = useHost();
   const [digits, setDigits] = useState("");
   const [err, setErr] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -370,6 +424,7 @@ function ResultState({ s, cycleId, choice, status, lang, now, close }: { s: Sess
       {verified ? <span className="anim-pop flex h-14 w-14 items-center justify-center rounded-full bg-green-wash"><Check size={32} className="text-green" aria-hidden /></span> : <Clock size={40} className="text-amber" aria-hidden />}
       <h2 className="text-[20px] font-bold leading-[26px] text-navy">{title}</h2>
       {sub && <p className="text-[16px] text-slate">{sub}</p>}
+      <ListenButton lang={lang} text={sub ? `${title} ${sub}` : title} />
       <div className="w-full py-2"><DebitTimeline startMs={ms(c.noticeAt)} endMs={ms(addMin(c.dueAt, -130))} nowMs={ms(now)} ended={choice !== "keep" && choice !== "downgrade"} variant="compact" /></div>
       <button onClick={close} className="h-12 w-full rounded-full btn-primary text-[16px] font-semibold text-white">{tr(lang, "button.ok")}</button>
     </div>
@@ -378,10 +433,10 @@ function ResultState({ s, cycleId, choice, status, lang, now, close }: { s: Sess
 
 // ---------- C5 ----------
 function RetryScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mandateId: string; lang: UiLang; now: string; back: () => void; ask: (cycleId: string) => void }) {
-  const send = useSync((x) => x.send);
+  const { send } = useHost();
   const m = s.idx.mandate.get(mandateId)!;
   const mer = s.idx.merchant.get(m.merchantId)!;
-  const cycle = (s.idx.cyclesByMandate.get(mandateId) ?? []).reduce((a, b) => (b.seq > a.seq ? b : a));
+  const cycle = currentCycle(s, mandateId);
   const cs = s.state.cycle(cycle.id);
   const [busy, setBusy] = useState(false);
   const exec = [...s.state.executions.values()].filter((e) => e.cycleId === cycle.id).sort((a, b) => a.attempt - b.attempt);
@@ -451,18 +506,17 @@ function RetryScreen({ s, mandateId, lang, now, back, ask }: { s: Session; manda
 
 // ---------- C9 ----------
 function DetailScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mandateId: string; lang: UiLang; now: string; back: () => void; ask: (cycleId: string) => void }) {
-  const send = useSync((x) => x.send);
+  const { send } = useHost();
   const m = s.idx.mandate.get(mandateId)!;
   const mer = s.idx.merchant.get(m.merchantId)!;
   const plan = s.idx.plan.get(m.planId)!;
-  const cycles = s.idx.cyclesByMandate.get(mandateId) ?? [];
-  const cycle = cycles.reduce((a, b) => (b.seq > a.seq ? b : a));
+  const cycle = currentCycle(s, mandateId);
   const hist = [...s.state.executions.values()].filter((e) => s.idx.cycle.get(e.cycleId)?.mandateId === mandateId || s.world.history.some((h) => h.id === e.id && h.mandateId === mandateId)).slice(-6);
   const rows: [StringKey, string][] = [
     ["detail.amount", inr(m.amountRule === "max" ? cycle.amount : plan.amount)],
     ["detail.when", `${tr(lang, "row.monthly")}, ${uiDayMonth(cycle.dueAt, lang)}`],
     ["detail.where", tr(lang, m.createdVia === "paytm" ? "detail.via_paytm" : "detail.via_other")],
-    ["detail.validity", uiDayMonth(m.validityEnd, lang) + " 2030"],
+    ["detail.validity", `${uiDayMonth(m.validityEnd, lang)} ${new Date(m.validityEnd).getUTCFullYear()}`],
     ...(m.trialStartedAt ? [["detail.trial", `${inr(plan.trialAmount ?? 0)}, ${uiDayMonth(m.trialStartedAt, lang)}`] as [StringKey, string]] : []),
   ];
   return (
@@ -477,7 +531,8 @@ function DetailScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mand
           <div className="flex-1"><div className="text-[17px] font-semibold">{mer.brand}</div><div className="text-[14px] text-slate">{mer.legalName}</div></div>
           <Amount paise={cycle.amount} size="l" lang={lang} />
         </div>
-        <dl className="mt-4 divide-y divide-line card">
+        <div className="mt-3 flex justify-end"><ListenButton lang={lang} text={`${mer.brand}. ${rows.map(([k, v]) => `${tr(lang, k)}: ${v}`).join(". ")}`} /></div>
+        <dl className="mt-2 divide-y divide-line card">
           {rows.map(([k, v]) => <div key={k} className="flex justify-between px-4 py-3 text-[15px]"><dt className="text-slate">{tr(lang, k)}</dt><dd className="font-semibold">{v}</dd></div>)}
         </dl>
         {hist.length > 0 && (
@@ -508,7 +563,7 @@ function DetailScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mand
 
 // ---------- C6, C7, C8 ----------
 function CaseCards({ s, userId, lang, now, onFraud, onEscalate }: { s: Session; userId: string; lang: UiLang; now: string; onFraud: (code?: string, mandateId?: string) => void; onEscalate: () => void }) {
-  const send = useSync((x) => x.send);
+  const { send } = useHost();
   const refunds = [...s.state.refunds.values()].filter((r) => r.userId === userId);
   const cases = [...s.state.cases.values()].filter((c) => c.userId === userId);
   return (
@@ -616,7 +671,7 @@ function FraudLaneSheet({ s, code, mandateId, lang, onCancel }: { s: Session; co
 
 // ---------- C10 ----------
 function AskPakka({ s, userId, lang, onFraud, ask, onLang }: { s: Session; userId: string; lang: UiLang; onFraud: (code?: string, mandateId?: string) => void; ask: (cycleId: string) => void; onLang: (l: UiLang) => void }) {
-  const send = useSync((x) => x.send);
+  const { send } = useHost();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -626,7 +681,7 @@ function AskPakka({ s, userId, lang, onFraud, ask, onLang }: { s: Session; userI
     const m = s.idx.mandate.get(answer.mandateId)!;
     const mer = s.idx.merchant.get(m.merchantId)!;
     const plan = s.idx.plan.get(m.planId)!;
-    const c = (s.idx.cyclesByMandate.get(m.id) ?? []).reduce((a, b) => (b.seq > a.seq ? b : a));
+    const c = currentCycle(s, m.id);
     return { m, mer, plan, c };
   }, [answer, s]);
   const [mic, setMic] = useState<{ stop: () => void } | null>(null);

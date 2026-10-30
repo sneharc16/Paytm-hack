@@ -56,21 +56,32 @@ export async function translateDeck(lang: RegionalCode, skip: Table = {}): Promi
   return { table, failed, outOfCredits };
 }
 
+/** Lines Sarvam could not translate well, with when it last tried: not asked again for an hour. */
+const failedLines = new Map<string, number>();
+const RETRY_FAILED_MS = 3_600_000;
+
+/** The whole deck for a language: the baked lines, plus any line added since the bake translated live by Sarvam
+ *  (checked line by line and cached), so new screens are in the person's language too. */
 export async function copyDeck(req: Request): Promise<Response> {
   const lang = new URL(req.url).searchParams.get("lang") ?? "";
   if (!isRegional(lang)) return fail(400, "UNKNOWN_LANGUAGE");
-  const bakedTable = (baked as { langs?: Record<string, Table> }).langs?.[lang];
-  if (bakedTable && Object.keys(bakedTable).length) return json(200, { ok: true, data: { lang, table: bakedTable, source: "baked" } });
-  const mem = decks.get(lang) ?? readCache()[lang];
-  if (mem && Object.keys(mem).length) { decks.set(lang, mem); return json(200, { ok: true, data: { lang, table: mem, source: "cache" } }); }
-  if (!sarvamEnabled()) return fail(503, "NO_SARVAM_KEY", "Set SARVAM_API_KEY to translate on demand");
-  if (limited(req, 6)) return fail(429, "RATE_LIMITED");
+  const bakedTable = (baked as { langs?: Record<string, Table> }).langs?.[lang] ?? {};
+  const have: Table = { ...bakedTable, ...(decks.get(lang) ?? readCache()[lang] ?? {}) };
+  const now = Date.now();
+  const missing = Object.keys(sourceLines()).filter((k) => !(k in have) && now - (failedLines.get(`${lang}|${k}`) ?? 0) > RETRY_FAILED_MS);
+  const source = Object.keys(bakedTable).length ? "baked" : "cache";
+  if (!missing.length || !sarvamEnabled() || limited(req, 6)) {
+    if (Object.keys(have).length) return json(200, { ok: true, data: { lang, table: have, source } });
+    return sarvamEnabled() ? fail(429, "RATE_LIMITED") : fail(503, "NO_SARVAM_KEY", "Set SARVAM_API_KEY to translate on demand");
+  }
   let p = inflight.get(lang);
-  if (!p) { p = translateDeck(lang); inflight.set(lang, p); }
+  if (!p) { p = translateDeck(lang, have); inflight.set(lang, p); }
   try {
     const { table, failed } = await p;
-    if (Object.keys(table).length) { decks.set(lang, table); writeCache(lang, table); }
-    return json(200, { ok: true, data: { lang, table, source: "sarvam", failed: failed.length } });
+    for (const f of failed) failedLines.set(`${lang}|${f.split(":")[0]}`, now);
+    const live: Table = { ...(decks.get(lang) ?? readCache()[lang] ?? {}), ...table };
+    if (Object.keys(table).length) { decks.set(lang, live); writeCache(lang, live); }
+    return json(200, { ok: true, data: { lang, table: { ...bakedTable, ...live }, source: `${source}+sarvam`, translated: Object.keys(table).length, failed: failed.length } });
   } finally { inflight.delete(lang); }
 }
 

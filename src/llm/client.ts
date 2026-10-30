@@ -184,6 +184,7 @@ function userContent(task: Task, input: unknown): string {
     case "case_summary": return `FACTS:\n${json}`;
     case "lint": return `TEXT:\n${(input as { text: string }).text}`;
     case "alert": return `METRICS:\n${json}`;
+    case "sms": return `Message:\n${(input as { text: string }).text}`;
   }
 }
 

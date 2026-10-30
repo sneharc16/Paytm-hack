@@ -2,6 +2,10 @@
 
 An AI teammate for UPI AutoPay that asks before the money moves. Prototype for the Paytm Build for India AI Hackathon, Problem Statement 3. All merchants and people are fictional. No real money moves.
 
+## Pakka live: try it for real
+
+Open `/live`, create an account with a passkey (Touch ID, Windows Hello or your phone), pick any of 24 languages and add the AutoPays you actually have, typed or by pasting a bank SMS. Pakka then runs on the real clock: the bank notice, the risk score, a reminder written live by Sarvam in your language (and read aloud), your decision, and a pause or cancel confirmed with your passkey. Only money is simulated; nothing touches your bank. Set `SARVAM_API_KEY` for live text, translation and voice; without it the hand-written templates are used. For a hosted setup run `supabase/migrations/0003_live.sql` and call `GET /api/live/cron` every few minutes with `CRON_SECRET`.
+
 ## Run it
 
 ```bash

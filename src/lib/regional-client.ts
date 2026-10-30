@@ -4,12 +4,12 @@
 // through /api/voice/*, so the Sarvam key stays on the server.
 import { create } from "zustand";
 import { isRegional, type UiLang } from "@/copy/languages";
-import { hasTable, setTable, type Table } from "@/copy/regional";
+import { hasTable, missingLines, setTable, type Table } from "@/copy/regional";
 
 type Status = "ready" | "loading" | "unavailable";
 interface RegionalState { version: number; status: Partial<Record<string, Status>>; ensure: (lang: UiLang) => Promise<void> }
 
-const CACHE = "pakka-regional-v1";
+const CACHE = "pakka-regional-v2";
 function fromStorage(lang: string): Table | null {
   try { return (JSON.parse(localStorage.getItem(CACHE) ?? "{}") as Record<string, Table>)[lang] ?? null; } catch { return null; }
 }
@@ -21,20 +21,26 @@ export const useRegional = create<RegionalState>((set, get) => ({
   version: 0,
   status: {},
   async ensure(lang) {
-    if (!isRegional(lang) || hasTable(lang) || get().status[lang] === "loading") return;
+    const st = get().status[lang];
+    if (!isRegional(lang) || st === "loading" || st === "ready" || st === "unavailable") return;
+    const ready = () => set({ version: get().version + 1, status: { ...get().status, [lang]: "ready" } });
     const stored = fromStorage(lang);
-    if (stored && Object.keys(stored).length) { setTable(lang, stored); set({ version: get().version + 1, status: { ...get().status, [lang]: "ready" } }); return; }
-    set({ status: { ...get().status, [lang]: "loading" } });
+    if (stored && Object.keys(stored).length) setTable(lang, stored);
+    // Complete (baked, or cached here): nothing to fetch. Otherwise the server fills the gaps live with Sarvam.
+    if (hasTable(lang) && missingLines(lang).length === 0) { ready(); return; }
+    const had = hasTable(lang);
+    if (!had) set({ status: { ...get().status, [lang]: "loading" } });
     try {
       const r = (await fetch(`/api/voice/copy?lang=${lang}`).then((x) => x.json())) as { ok: boolean; data?: { table: Table } };
       if (r.ok && r.data && Object.keys(r.data.table).length) {
         setTable(lang, r.data.table);
         toStorage(lang, r.data.table);
-        set({ version: get().version + 1, status: { ...get().status, [lang]: "ready" } });
+        ready();
         return;
       }
     } catch { /* offline */ }
-    set({ status: { ...get().status, [lang]: "unavailable" } });
+    // A baked deck still works for every line it has; new lines show in the base language.
+    if (had) ready(); else set({ status: { ...get().status, [lang]: "unavailable" } });
   },
 }));
 

@@ -2,7 +2,7 @@
 // synchronously, so replay stays deterministic. Anything missing or failing a check falls back to the template,
 // and the flight recorder says which one was used.
 import { setSummarizer } from "@/engine/actions";
-import { setWriter, type ReminderFacts } from "@/engine/explain";
+import { setWriter, type ReminderFacts, type Written } from "@/engine/explain";
 import { setAlertWriter, setTagger } from "@/engine/radar";
 import { lookup } from "./cache";
 import { factcheckAlert, factcheckReminder, factcheckSummary } from "./factcheck";
@@ -20,6 +20,18 @@ export function reminderInput(f: ReminderFacts) {
  *  failed-charge notices describe something that already happened and keep their templates. */
 export const MODEL_KINDS = new Set(["ask", "tell", "follow_up", "collect", "remind"]);
 
+// Pakka live: the server asks Sarvam for a message before the engine needs it (the engine itself stays
+// synchronous), keyed by the exact facts. A dry run of the tick collects which facts will be needed.
+const liveTexts = new Map<string, Written>();
+let capture: ReminderFacts[] | null = null;
+export const liveKey = (f: ReminderFacts) => JSON.stringify([f.cycleId, f.kind, f.language, reminderInput(f)]);
+export function setLiveText(f: ReminderFacts, w: Written) { if (liveTexts.size > 5000) liveTexts.clear(); liveTexts.set(liveKey(f), w); }
+/** Run `fn` and return the reminder facts it would have asked the model for that have no live text yet. */
+export function captureReminders(fn: () => void): ReminderFacts[] {
+  capture = [];
+  try { fn(); return capture; } finally { capture = null; }
+}
+
 let installed = false;
 export function installModelHooks() {
   if (installed) return;
@@ -27,6 +39,9 @@ export function installModelHooks() {
 
   setWriter((facts, tpl) => {
     if (!MODEL_KINDS.has(facts.kind)) return tpl;
+    const live = liveTexts.get(liveKey(facts));
+    if (live) return live;
+    if (capture) capture.push(facts);
     const hit = lookup("reminder", reminderInput(facts));
     if (!hit) return tpl;
     const out = ReminderOut.safeParse(hit.output);
