@@ -14,12 +14,20 @@
     "check:live": "tsx --tsconfig tsconfig.json scripts/check-live.ts",
     "try:hindi": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/try-hindi.ts",
     "bake:sarvam": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/bake-sarvam.ts",
-    "sarvam:first-call": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/sarvam-first-call.ts"
+    "sarvam:first-call": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/sarvam-first-call.ts",
+    "b2b:story": "tsx --tsconfig tsconfig.json scripts/b2b-story.ts",
+    "agents": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/agents/pakka-agents.ts",
+    "b2b:live-demo": "tsx --tsconfig tsconfig.json scripts/b2b-live-demo.ts",
+    "b2b:verify": "tsx --tsconfig tsconfig.json scripts/b2b-verify.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
     "@fontsource/mukta": "^5.3.0",
     "@google/genai": "^2.31.0",
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.0.3",
     "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
