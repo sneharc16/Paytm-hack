@@ -2,7 +2,7 @@
 // Consumer app, /app (PRD 20.1): C1 list, C2 Doosri Haan sheet, C3 PIN pad, C4 result, C5 retry,
 // C6 refund offer and tracker, C7 and C8 case and callback, C9 detail, C10 Pakka se poochho.
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, Info, Lock, Mic, Phone, ShieldCheck, Clock, Volume2, Pause, Check, Square, X } from "lucide-react";
+import { ChevronLeft, Info, Lock, Mic, Phone, ShieldCheck, Clock, Volume2, Pause, Check, Square, X, Plus } from "lucide-react";
 import { type StringKey } from "@/copy/strings";
 import { baseLang, isRegional, langInfo, type UiLang } from "@/copy/languages";
 import { hasTable, tr, uiDayMonth, uiRelativeDay } from "@/copy/regional";
@@ -16,6 +16,7 @@ import type { Intake } from "@/engine/resolve";
 import type { Command } from "@/engine/commands";
 import type { Choice, Persona } from "@/engine/types";
 import { inr, timeIST } from "@/lib/format";
+import { useLive } from "@/lib/live-client";
 import { sessionIdFromUrl, useSimNow, useSync } from "@/lib/sync/client";
 import { callModel } from "@/lib/llm-client";
 import { PERSONAS, currentCycle, isCollect, needsAnswer, pillFor, rowsFor, sectionOf, type Row } from "@/lib/views";
@@ -108,7 +109,7 @@ export function PhoneScreens({ s: session, userId, lang, setLang, now, listTop, 
         <span className="tnum">{timeIST(now).replace(/ (AM|PM)/, "")}</span>{statusRight ?? <span className="text-slate">4G</span>}
       </div>
       <KillSwitchBanner on={kill} lang={lang} />
-      {screen.name === "list" && <ListScreen s={session} userId={userId} lang={lang} now={now} setLang={setLang} top={listTop?.(openCustom)} open={(r) => setScreen(r.cycle.group === "collect" ? { name: "retry", mandateId: r.mandate.id } : { name: "detail", mandateId: r.mandate.id })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} onFraud={(code, mandateId) => setSheet({ name: "fraud", code, mandateId })} onEscalate={() => setSheet({ name: "escalate" })} />}
+      {screen.name === "list" && <ListScreen s={session} userId={userId} lang={lang} now={now} setLang={setLang} top={listTop?.(openCustom)} openCustom={openCustom} open={(r) => setScreen(r.cycle.group === "collect" ? { name: "retry", mandateId: r.mandate.id } : { name: "detail", mandateId: r.mandate.id })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} onFraud={(code, mandateId) => setSheet({ name: "fraud", code, mandateId })} onEscalate={() => setSheet({ name: "escalate" })} />}
       {screen.name === "detail" && <DetailScreen s={session} mandateId={screen.mandateId} lang={lang} now={now} back={() => setScreen({ name: "list" })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} />}
       {screen.name === "retry" && <RetryScreen s={session} mandateId={screen.mandateId} lang={lang} now={now} back={() => setScreen({ name: "list" })} ask={(cycleId) => setSheet({ name: "decision", cycleId })} />}
       {sheet && (
@@ -154,11 +155,27 @@ export function ListenButton({ text, lang, onNavy = false }: { text: string; lan
 }
 
 // ---------- C1 ----------
-function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscalate, top }: {
+function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscalate, top, openCustom }: {
   s: Session; userId: string; lang: UiLang; now: string; setLang: (l: UiLang) => void; open: (r: Row) => void; ask: (cycleId: string) => void; top?: ReactNode;
+  openCustom: (node: ReactNode | null) => void;
   onFraud: (code?: string, mandateId?: string) => void; onEscalate: () => void;
 }) {
+  const [tab, setTab] = useState<"autopay" | "mf">("autopay");
+  const [customMf, setCustomMf] = useState<CustomMfFund[]>(() => {
+    try {
+      const saved = typeof window !== "undefined" ? localStorage.getItem("pakka-demo-mf-sips") : null;
+      return saved ? (JSON.parse(saved) as CustomMfFund[]) : [];
+    } catch { return []; }
+  });
+  const addCustomMf = (f: CustomMfFund) => {
+    setCustomMf((prev) => {
+      const next = [...prev, f];
+      try { localStorage.setItem("pakka-demo-mf-sips", JSON.stringify(next)); } catch { /* storage blocked */ }
+      return next;
+    });
+  };
   const rows = rowsFor(s, userId).sort((a, b) => ms(a.cycle.dueAt) - ms(b.cycle.dueAt));
+  const mfCount = rows.filter((r) => r.merchant.category === "mutual_fund").length + (s.world.live ? 0 : 3) + customMf.length;
   const asks = rows.filter(needsAnswer);
   const collects = rows.filter((r) => isCollect(r) && ms(r.cycle.dueAt) - ms(now) < 2 * 86_400_000);
   const soonCount = rows.filter((r) => sectionOf(r, now) === "soon" && !["skipped", "opted_out", "succeeded"].includes(r.cs.status)).length;
@@ -180,35 +197,504 @@ function ListScreen({ s, userId, lang, now, setLang, open, ask, onFraud, onEscal
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center gap-2 bg-surface px-4 py-3 shadow-[0_1px_0_var(--line)]">
         <ChevronLeft size={20} strokeWidth={1.8} className="text-blue" aria-hidden />
-        <h1 className="flex-1 text-[20px] font-bold text-navy">{tr(lang, "list.title")}</h1>
+        <h1 className="flex-1 text-[20px] font-bold text-navy">{tr(lang, tab === "mf" ? "mf.title" : "list.title")}</h1>
         <LangPicker lang={lang} onChange={setLang} />
       </header>
+      <div role="tablist" className="grid grid-cols-2 gap-1.5 border-b border-line bg-surface px-4 py-2">
+        <button role="tab" aria-selected={tab === "autopay"} onClick={() => setTab("autopay")}
+          className={`flex h-9 items-center justify-center gap-1.5 rounded-full text-[14px] font-semibold transition-colors ${tab === "autopay" ? "btn-primary text-white" : "bg-canvas text-navy hover:bg-sky-soft/50"}`}>
+          <span>{tr(lang, "tab.autopay")}</span>
+          <span className={`rounded-full px-1.5 py-px text-[12px] ${tab === "autopay" ? "bg-white/20 text-white" : "bg-surface text-slate"}`}>{rows.length}</span>
+        </button>
+        <button role="tab" aria-selected={tab === "mf"} onClick={() => setTab("mf")}
+          className={`flex h-9 items-center justify-center gap-1.5 rounded-full text-[14px] font-semibold transition-colors ${tab === "mf" ? "btn-primary text-white" : "bg-canvas text-navy hover:bg-sky-soft/50"}`}>
+          <span>{tr(lang, "tab.mf")}</span>
+          <span className={`rounded-full px-1.5 py-px text-[12px] ${tab === "mf" ? "bg-white/20 text-white" : "bg-surface text-slate"}`}>{mfCount}</span>
+        </button>
+      </div>
       <LangNotice lang={lang} />
-      <div className="min-h-0 flex-1 overflow-y-auto pb-24">
-        {top}
-        <CaseCards s={s} userId={userId} lang={lang} now={now} onFraud={onFraud} onEscalate={onEscalate} />
-        {first && (
-          <div className="mx-4 mt-4 rounded-[20px] bg-gradient-to-br from-sky to-blue px-4 py-4 text-white shadow-[0_10px_24px_rgba(11,114,231,0.30)]">
-            <div className="flex items-center justify-between"><PakkaSeal onNavy /><ListenButton onNavy lang={lang} text={`${cardTitle}. ${cardSub}`} /></div>
-            <p className="mt-2 text-[17px] font-semibold leading-6">{cardTitle}</p>
-            {cardSub && <p className="mt-1 text-[14px] text-white/80">{cardSub}</p>}
-            <button onClick={() => (asks.length ? ask(asks[0].cycle.id) : open(first))} className="press mt-3 h-[38px] rounded-full bg-white px-5 text-[15px] font-semibold text-blue">{tr(lang, "nudge.card.cta")}</button>
+      {tab === "mf" ? (
+        <MutualFundsTab s={s} userId={userId} lang={lang} now={now} open={open} ask={ask} top={top} openCustom={openCustom} customMf={customMf} onAddCustomMf={addCustomMf} />
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto pb-24">
+          {top}
+          <CaseCards s={s} userId={userId} lang={lang} now={now} onFraud={onFraud} onEscalate={onEscalate} />
+          {first && (
+            <div className="mx-4 mt-4 rounded-[20px] bg-gradient-to-br from-sky to-blue px-4 py-4 text-white shadow-[0_10px_24px_rgba(11,114,231,0.30)]">
+              <div className="flex items-center justify-between"><PakkaSeal onNavy /><ListenButton onNavy lang={lang} text={`${cardTitle}. ${cardSub}`} /></div>
+              <p className="mt-2 text-[17px] font-semibold leading-6">{cardTitle}</p>
+              {cardSub && <p className="mt-1 text-[14px] text-white/80">{cardSub}</p>}
+              <button onClick={() => (asks.length ? ask(asks[0].cycle.id) : open(first))} className="press mt-3 h-[38px] rounded-full bg-white px-5 text-[15px] font-semibold text-blue">{tr(lang, "nudge.card.cta")}</button>
+            </div>
+          )}
+          {rows.length === 0 && !top && <p className="p-6 text-slate">{tr(lang, "list.empty")}</p>}
+          {groups.map((g) => g.rows.length > 0 && (
+            <section key={g.key}>
+              <h2 className="px-5 pb-2 pt-4 text-[14px] font-semibold text-slate">
+                {g.key === "soon" ? soonLabel(g.rows[0].cycle.dueAt, now, lang) : tr(lang, g.key)}
+              </h2>
+              <div className="card mx-4 overflow-hidden">
+                {g.rows.map((r) => <MandateRow key={r.mandate.id} r={r} lang={lang} now={now} onClick={() => (needsAnswer(r) ? ask(r.cycle.id) : open(r))} />)}
+              </div>
+            </section>
+          ))}
+          <div className="flex items-start gap-2 px-4 py-4"><Info size={16} className="mt-0.5 text-mist" aria-hidden /><AIFooter lang={lang} align="left" list /></div>
+        </div>
+      )}
+      <AskPakka s={s} userId={userId} lang={lang} onFraud={onFraud} ask={ask} onLang={setLang} />
+    </div>
+  );
+}
+
+interface CustomMfFund {
+  id: string;
+  brand: string;
+  legalName: string;
+  tile: { bg: string; fg: string };
+  amount: number;
+  interval: "month" | "quarter" | "year";
+  nextDue: string;
+}
+
+interface MfInstallment {
+  id: string;
+  fundId: string;
+  brand: string;
+  legalName: string;
+  tile: { bg: string; fg: string };
+  amount: number;
+  interval: "month" | "quarter" | "year";
+  dueAt: string;
+  dayIso: string;
+  pill: { kind: "answer" | "neutral" | "done" | "muted" | "fraud"; key: string } | null;
+  activeOutflow: boolean;
+  row?: Row;
+}
+
+const DEMO_MF_FUNDS: { id: string; brand: string; legalName: string; tile: { bg: string; fg: string }; amount: number; dayOfMonth: string }[] = [
+  { id: "demo_mf_flexi", brand: "Parag Flexi Cap Direct", legalName: "PPFAS Asset Management Pvt Ltd", tile: { bg: "#E6EEF9", fg: "#2D5C9E" }, amount: 500000, dayOfMonth: "05" },
+  { id: "demo_mf_nifty", brand: "Bharat Nifty 50 Index", legalName: "UTI Mutual Fund AMC Ltd", tile: { bg: "#E3F1E6", fg: "#2E6B3A" }, amount: 350000, dayOfMonth: "15" },
+  { id: "demo_mf_midcap", brand: "Pragati Midcap Direct", legalName: "HDFC Asset Management Co Ltd", tile: { bg: "#FCE8EF", fg: "#9A2C55" }, amount: 250000, dayOfMonth: "22" },
+];
+
+const MF_TILES: { bg: string; fg: string }[] = [
+  { bg: "#EFE8F7", fg: "#5B3A8C" },
+  { bg: "#E6EEF9", fg: "#2D5C9E" },
+  { bg: "#E3F1E6", fg: "#2E6B3A" },
+  { bg: "#FCE8EF", fg: "#9A2C55" },
+  { bg: "#FFF0DC", fg: "#8A5300" },
+];
+
+function MutualFundsTab({ s, userId, lang, now, open, ask, top, openCustom, customMf, onAddCustomMf }: {
+  s: Session; userId: string; lang: UiLang; now: string; open: (r: Row) => void; ask: (cycleId: string) => void; top?: ReactNode;
+  openCustom: (node: ReactNode | null) => void;
+  customMf: CustomMfFund[];
+  onAddCustomMf: (f: CustomMfFund) => void;
+}) {
+  const todayIso = istDay(now);
+  const [preset, setPreset] = useState<"all" | "this_month" | "next_30" | "next_90" | "custom">("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const applyPreset = (p: typeof preset) => {
+    setPreset(p);
+    if (p === "all") {
+      setFromDate("");
+      setToDate("");
+    } else if (p === "this_month") {
+      const ym = todayIso.slice(0, 7);
+      const [y, m] = ym.split("-").map(Number);
+      const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      setFromDate(`${ym}-01`);
+      setToDate(`${ym}-${String(last).padStart(2, "0")}`);
+    } else if (p === "next_30") {
+      setFromDate(todayIso);
+      setToDate(new Date(ms(ist(`${todayIso} 12:00`)) + 30 * 86_400_000).toISOString().slice(0, 10));
+    } else if (p === "next_90") {
+      setFromDate(todayIso);
+      setToDate(addMonths(todayIso, 3));
+    }
+  };
+
+  const allItems = useMemo<MfInstallment[]>(() => {
+    const out: MfInstallment[] = [];
+    const userRows = rowsFor(s, userId).filter((r) => r.merchant.category === "mutual_fund");
+    const stepOf = { month: 1, quarter: 3, year: 12 } as const;
+
+    for (const r of userRows) {
+      const m = r.mandate;
+      const mer = r.merchant;
+      const plan = r.plan;
+      const revoked = s.state.mandateStatus.get(m.id) === "revoked";
+      const cycles = [...(s.idx.cyclesByMandate.get(m.id) ?? [])].sort((a, b) => a.seq - b.seq);
+      const seenDays = new Set<string>();
+      for (const c of cycles) {
+        const cs = s.state.cycle(c.id);
+        const dueAt = cs.dueOverride ?? c.dueAt;
+        const dayIso = istDay(dueAt);
+        seenDays.add(dayIso);
+        const rowForCycle: Row = { mandate: m, merchant: mer, plan, cycle: c, cs, user: r.user };
+        const pill = pillFor(rowForCycle) ?? { kind: "neutral" as const, key: "pill.scheduled" };
+        const activeOutflow = !revoked && !["skipped", "opted_out"].includes(cs.status);
+        out.push({
+          id: c.id, fundId: m.id, brand: mer.brand, legalName: mer.legalName, tile: mer.tile,
+          amount: cs.amountOverride ?? c.amount, interval: plan.interval, dueAt, dayIso, pill, activeOutflow, row: r,
+        });
+      }
+      // Project upcoming SIP dates up to 3 installments ahead so multi-month date filters show future SIP debits
+      if (!revoked && cycles.length > 0) {
+        const baseDay = istDay(r.cs.dueOverride ?? r.cycle.dueAt);
+        for (let k = 1; k <= 3; k++) {
+          const nextDay = addMonths(baseDay, k * stepOf[plan.interval]);
+          if (seenDays.has(nextDay)) continue;
+          seenDays.add(nextDay);
+          const dueAt = ist(`${nextDay} 10:00`);
+          out.push({
+            id: `${m.id}_proj_${k}`, fundId: m.id, brand: mer.brand, legalName: mer.legalName, tile: mer.tile,
+            amount: r.cs.amountOverride ?? r.cycle.amount, interval: plan.interval, dueAt, dayIso: nextDay,
+            pill: { kind: "neutral", key: "pill.scheduled" }, activeOutflow: true, row: r,
+          });
+        }
+      }
+    }
+
+    // In demo mode, include realistic multi-fund SIP installments across Oct, Nov, Dec 2026
+    if (!s.world.live) {
+      const baseMonth = todayIso.slice(0, 7);
+      for (const df of DEMO_MF_FUNDS) {
+        for (let mOff = 0; mOff < 3; mOff++) {
+          const dayIso = addMonths(`${baseMonth}-${df.dayOfMonth}`, mOff);
+          const dueAt = ist(`${dayIso} 10:00`);
+          const charged = dayIso < todayIso;
+          out.push({
+            id: `${df.id}_${dayIso}`, fundId: df.id, brand: df.brand, legalName: df.legalName, tile: df.tile,
+            amount: df.amount, interval: "month", dueAt, dayIso,
+            pill: { kind: charged ? "done" : "neutral", key: charged ? "pill.charged" : "pill.scheduled" },
+            activeOutflow: true,
+          });
+        }
+      }
+    }
+
+    // Include any custom SIP funds added in demo mode
+    for (const cf of customMf) {
+      for (let mOff = 0; mOff < 4; mOff++) {
+        const dayIso = addMonths(cf.nextDue, mOff * stepOf[cf.interval]);
+        const dueAt = ist(`${dayIso} 10:00`);
+        const charged = dayIso < todayIso;
+        out.push({
+          id: `${cf.id}_${dayIso}`, fundId: cf.id, brand: cf.brand, legalName: cf.legalName, tile: cf.tile,
+          amount: cf.amount, interval: cf.interval, dueAt, dayIso,
+          pill: { kind: charged ? "done" : "neutral", key: charged ? "pill.charged" : "pill.scheduled" },
+          activeOutflow: true,
+        });
+      }
+    }
+
+    return out.sort((a, b) => (a.dayIso < b.dayIso ? -1 : a.dayIso > b.dayIso ? 1 : a.brand.localeCompare(b.brand)));
+  }, [s, userId, todayIso, customMf]);
+
+  const filtered = useMemo(() => {
+    return allItems.filter((item) => {
+      if (fromDate && item.dayIso < fromDate) return false;
+      if (toDate && item.dayIso > toDate) return false;
+      return true;
+    });
+  }, [allItems, fromDate, toDate]);
+
+  const totalPaise = useMemo(() => filtered.reduce((sum, x) => sum + (x.activeOutflow ? x.amount : 0), 0), [filtered]);
+
+  const byFund = useMemo(() => {
+    const map = new Map<string, { fundId: string; brand: string; legalName: string; tile: { bg: string; fg: string }; total: number; count: number; interval: "month" | "quarter" | "year"; row?: Row }>();
+    for (const item of filtered) {
+      const cur = map.get(item.fundId) ?? { fundId: item.fundId, brand: item.brand, legalName: item.legalName, tile: item.tile, total: 0, count: 0, interval: item.interval, row: item.row };
+      if (item.activeOutflow) {
+        cur.total += item.amount;
+        cur.count += 1;
+      }
+      map.set(item.fundId, cur);
+    }
+    return [...map.values()].sort((a, b) => b.total - a.total);
+  }, [filtered]);
+
+  const presets: { id: typeof preset; label: StringKey }[] = [
+    { id: "all", label: "mf.filter.all" },
+    { id: "this_month", label: "mf.filter.this_month" },
+    { id: "next_30", label: "mf.filter.next_30" },
+    { id: "next_90", label: "mf.filter.next_90" },
+  ];
+
+  const openAddSip = () => openCustom(
+    <AddMfSipSheet s={s} lang={lang} todayIso={todayIso} onAddCustomMf={onAddCustomMf} close={() => openCustom(null)} />
+  );
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto pb-24">
+      <div className="mx-4 mt-3 flex items-center justify-between gap-2">
+        <p className="text-[14px] font-semibold text-slate">{tr(lang, "mf.sub")}</p>
+        <button onClick={openAddSip} className="press inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full btn-primary px-4 text-[14.5px] font-semibold text-white">
+          <Plus size={16} aria-hidden />{tr(lang, "mf.add")}
+        </button>
+      </div>
+
+      <div className="mx-4 mt-2.5 flex flex-col gap-2.5 rounded-[16px] border border-line bg-surface p-3.5 shadow-[0_2px_8px_rgba(10,25,55,0.04)]">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {presets.map((p) => (
+              <button key={p.id} onClick={() => applyPreset(p.id)}
+                className={`rounded-full px-3 py-1 text-[12.5px] font-semibold transition-colors ${preset === p.id ? "btn-primary text-white" : "border border-line-strong bg-canvas text-navy"}`}>
+                {tr(lang, p.label)}
+              </button>
+            ))}
+          </div>
+          {(fromDate || toDate) && (
+            <button onClick={() => applyPreset("all")} className="shrink-0 text-[12.5px] font-semibold text-blue underline">
+              {tr(lang, "mf.filter.clear")}
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2 pt-0.5">
+          <label className="flex flex-col gap-0.5 text-[12px] font-semibold text-slate">
+            {tr(lang, "mf.filter.from")}
+            <input type="date" value={fromDate} onChange={(e) => { setPreset("custom"); setFromDate(e.target.value); }}
+              className="h-9 rounded-[8px] border border-line-strong bg-canvas px-2.5 text-[13px] font-normal text-ink" />
+          </label>
+          <label className="flex flex-col gap-0.5 text-[12px] font-semibold text-slate">
+            {tr(lang, "mf.filter.to")}
+            <input type="date" value={toDate} onChange={(e) => { setPreset("custom"); setToDate(e.target.value); }}
+              className="h-9 rounded-[8px] border border-line-strong bg-canvas px-2.5 text-[13px] font-normal text-ink" />
+          </label>
+        </div>
+      </div>
+
+      <div className="mx-4 mt-3 rounded-[20px] bg-gradient-to-br from-navy to-blue px-4 py-4 text-white shadow-[0_10px_24px_rgba(11,114,231,0.24)]">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-semibold uppercase tracking-wide text-white/80">{tr(lang, "mf.total")}</span>
+          <ListenButton onNavy lang={lang} text={`${tr(lang, "mf.total")}: ${inr(totalPaise)}. ${tr(lang, "mf.funds_count", { funds: byFund.length, txns: filtered.length })}`} />
+        </div>
+        <div className="mt-1 tnum text-[28px] font-extrabold leading-8">{inr(totalPaise)}</div>
+        <p className="mt-1 text-[13.5px] text-white/85">
+          {tr(lang, "mf.funds_count", { funds: byFund.length, txns: filtered.length })}
+          {(fromDate || toDate) ? ` (${fromDate || "..."} to ${toDate || "..."})` : ""}
+        </p>
+      </div>
+
+      {byFund.length > 0 && (
+        <section className="mx-4 mt-4">
+          <h2 className="pb-2 text-[14px] font-semibold text-slate">{tr(lang, "mf.where_title")}</h2>
+          <div className="card divide-y divide-line overflow-hidden">
+            {byFund.map((f) => {
+              const pct = totalPaise > 0 ? Math.round((f.total / totalPaise) * 100) : 0;
+              return (
+                <div key={f.fundId} onClick={() => f.row && (needsAnswer(f.row) ? ask(f.row.cycle.id) : open(f.row))}
+                  className={`flex flex-col gap-1.5 px-4 py-3 ${f.row ? "cursor-pointer hover:bg-canvas" : ""}`}>
+                  <div className="flex items-center gap-3">
+                    <MerchantTile brand={f.brand} tile={f.tile} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[15px] font-semibold text-ink">{f.brand}</div>
+                      <div className="truncate text-[12.5px] text-slate">{f.legalName}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="tnum text-[15.5px] font-bold text-navy">{inr(f.total)}</div>
+                      <div className="tnum text-[12px] font-semibold text-blue">{pct}% ({f.count}x)</div>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-canvas">
+                    <div className="h-full rounded-full bg-blue transition-all" style={{ width: `${Math.max(pct, 4)}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      <section className="mx-4 mt-4">
+        <h2 className="pb-2 text-[14px] font-semibold text-slate">{tr(lang, "mf.schedule_title")}</h2>
+        {filtered.length === 0 ? (
+          <p className="card p-5 text-center text-[14.5px] text-slate">{tr(lang, "mf.empty")}</p>
+        ) : (
+          <div className="card overflow-hidden">
+            <div className="grid grid-cols-[1.5fr_0.9fr_1fr] items-center border-b border-line bg-canvas px-3.5 py-2 text-[12px] font-bold uppercase tracking-wide text-slate">
+              <span>{tr(lang, "mf.col.fund")}</span>
+              <span>{tr(lang, "mf.col.date")}</span>
+              <span className="text-right">{tr(lang, "mf.col.amount")}</span>
+            </div>
+            <div className="divide-y divide-line">
+              {filtered.map((item) => (
+                <div key={item.id} onClick={() => item.row && (needsAnswer(item.row) ? ask(item.row.cycle.id) : open(item.row))}
+                  className={`grid grid-cols-[1.5fr_0.9fr_1fr] items-center gap-2 px-3.5 py-3 text-left transition-colors ${item.row ? "cursor-pointer hover:bg-canvas active:bg-sky-soft/60" : ""}`}>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <MerchantTile brand={item.brand} tile={item.tile} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[14.5px] font-semibold text-ink">{item.brand}</div>
+                      <div className="truncate text-[12px] text-slate">{item.legalName}</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="tnum text-[13.5px] font-semibold text-navy">{uiDayMonth(item.dueAt, lang)}</span>
+                    <span className="text-[11.5px] text-slate">{uiRelativeDay(item.dueAt, now, lang)}</span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <Amount paise={item.amount} lang={lang} />
+                    {item.pill && <StatusPill kind={item.pill.kind}>{tr(lang, item.pill.key as StringKey)}</StatusPill>}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-        {rows.length === 0 && !top && <p className="p-6 text-slate">{tr(lang, "list.empty")}</p>}
-        {groups.map((g) => g.rows.length > 0 && (
-          <section key={g.key}>
-            <h2 className="px-5 pb-2 pt-4 text-[14px] font-semibold text-slate">
-              {g.key === "soon" ? soonLabel(g.rows[0].cycle.dueAt, now, lang) : tr(lang, g.key)}
-            </h2>
-            <div className="card mx-4 overflow-hidden">
-              {g.rows.map((r) => <MandateRow key={r.mandate.id} r={r} lang={lang} now={now} onClick={() => (needsAnswer(r) ? ask(r.cycle.id) : open(r))} />)}
-            </div>
-          </section>
-        ))}
-        <div className="flex items-start gap-2 px-4 py-4"><Info size={16} className="mt-0.5 text-mist" aria-hidden /><AIFooter lang={lang} align="left" list /></div>
+      </section>
+      <div className="flex items-start gap-2 px-4 py-4"><Info size={16} className="mt-0.5 text-mist" aria-hidden /><AIFooter lang={lang} align="left" list /></div>
+    </div>
+  );
+}
+
+const SAMPLE_SIP_SMS = "Dear Investor, your UPI AutoPay SIP mandate for Nippon Small Cap Fund of Rs.4,500.00 monthly to Nippon Life India Asset Management Ltd was created on 18-10-2026. -HDFC Bank";
+
+function parseSipSmsClient(text: string, today: string) {
+  const amountMatch = /(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)/i.exec(text)?.[1];
+  const amount = amountMatch ? Number(amountMatch.replace(/,/g, "")) : null;
+  const legal = /((?:[A-Z][A-Za-z0-9&']*\s+){1,7}(?:Pvt\.?\s*Ltd|Private Limited|Limited|Ltd))/.exec(text)?.[1]?.trim() ?? null;
+  const named = /(?:for|towards)\s+([A-Z][A-Za-z0-9]*(?:\s[A-Z][A-Za-z0-9]*){0,5})\b/.exec(text)?.[1]?.trim() ?? null;
+  const brand = named && !(legal ?? "").startsWith(named) ? named : null;
+  const interval: "month" | "quarter" | "year" = /\bquarter/i.test(text) ? "quarter" : /\b(year|yearly|annual)/i.test(text) ? "year" : "month";
+  const m = /\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})\b/.exec(text);
+  let nextDue = addMonths(today, 1);
+  if (m) {
+    const d = `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    if (d > today) nextDue = d;
+    else {
+      let next = addMonths(d, 1);
+      while (next <= today) next = addMonths(next, 1);
+      nextDue = next;
+    }
+  }
+  return { brand, legalName: legal, amount, interval, nextDue };
+}
+
+function AddMfSipSheet({ s, lang, todayIso, onAddCustomMf, close }: {
+  s: Session; lang: UiLang; todayIso: string; onAddCustomMf: (f: CustomMfFund) => void; close: () => void;
+}) {
+  const [sms, setSms] = useState("");
+  const [note, setNote] = useState<string | null>(null);
+  const [f, setF] = useState({
+    brand: "",
+    legalName: "",
+    amount: "",
+    interval: "month" as "month" | "quarter" | "year",
+    nextDue: addMonths(todayIso, 1),
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
+
+  const fromSms = async (textToRead = sms) => {
+    if (!textToRead.trim()) return;
+    setBusy(true);
+    setNote(null);
+    if (s.world.live) {
+      const r = await useLive.getState().readSms(textToRead);
+      setBusy(false);
+      if (!("error" in r)) {
+        const d = r.draft;
+        setF((x) => ({
+          ...x,
+          brand: d.brand ?? x.brand,
+          legalName: d.legalName ?? x.legalName,
+          amount: d.amount ? String(d.amount / 100) : x.amount,
+          interval: d.interval ?? x.interval,
+          nextDue: d.nextDue ?? x.nextDue,
+        }));
+        setNote(tr(lang, r.found ? "live.sms.found" : "live.sms.none"));
+        return;
+      }
+    }
+    const parsed = parseSipSmsClient(textToRead, todayIso);
+    setBusy(false);
+    setF((x) => ({
+      ...x,
+      brand: parsed.brand ?? x.brand,
+      legalName: parsed.legalName ?? x.legalName,
+      amount: parsed.amount ? String(parsed.amount) : x.amount,
+      interval: parsed.interval,
+      nextDue: parsed.nextDue,
+    }));
+    setNote(tr(lang, parsed.brand || parsed.amount ? "live.sms.found" : "live.sms.none"));
+  };
+
+  const amountPaise = Math.round((Number(f.amount.replace(/[,\s₹]/g, "")) || 0) * 100);
+  const ok = f.brand.trim().length > 0 && amountPaise >= 100 && /^\d{4}-\d{2}-\d{2}$/.test(f.nextDue);
+
+  const save = async () => {
+    if (!ok) return;
+    setBusy(true);
+    setErr(null);
+    if (s.world.live) {
+      const e = await useLive.getState().addAutopay({
+        brand: f.brand.trim(),
+        legalName: f.legalName.trim() || f.brand.trim(),
+        kind: "sip",
+        amount: amountPaise,
+        interval: f.interval,
+        nextDue: f.nextDue,
+        trial: null,
+        source: sms.trim() ? "sms" : "typed",
+      });
+      setBusy(false);
+      if (e) { setErr(e); return; }
+      close();
+      return;
+    }
+    const tile = MF_TILES[Math.floor(Math.random() * MF_TILES.length)];
+    onAddCustomMf({
+      id: `custom_mf_${Date.now()}`,
+      brand: f.brand.trim(),
+      legalName: f.legalName.trim() || f.brand.trim(),
+      tile,
+      amount: amountPaise,
+      interval: f.interval,
+      nextDue: f.nextDue,
+    });
+    setBusy(false);
+    close();
+  };
+
+  const field = "h-11 rounded-[8px] border border-line-strong bg-surface px-3 text-[16px] font-normal";
+  const label = "flex flex-col gap-1 text-[14px] font-semibold text-ink";
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-[20px] font-bold text-navy">{tr(lang, "mf.add.title")}</h2>
+        <button type="button" onClick={() => { setSms(SAMPLE_SIP_SMS); void fromSms(SAMPLE_SIP_SMS); }}
+          className="rounded-full bg-sky-soft px-3 py-1 text-[12.5px] font-semibold text-blue">
+          {tr(lang, "mf.sample_sms")}
+        </button>
       </div>
-      <AskPakka s={s} userId={userId} lang={lang} onFraud={onFraud} ask={ask} onLang={setLang} />
+      <label className={label}>{tr(lang, "live.sms")}
+        <textarea value={sms} onChange={(e) => setSms(e.target.value)} rows={3} maxLength={800} className="rounded-[8px] border border-line-strong p-3 text-[14.5px] font-normal" />
+      </label>
+      <button type="button" disabled={busy || !sms.trim()} onClick={() => void fromSms(sms)} className="h-10 rounded-full border border-line-strong text-[14.5px] font-semibold text-navy disabled:text-mist">
+        {busy ? tr(lang, "button.working") : tr(lang, "live.sms.read")}
+      </button>
+      {note && <p role="status" className="rounded-[10px] bg-canvas px-3 py-2 text-[13.5px] text-slate">{note}</p>}
+      <label className={label}>{tr(lang, "mf.f.fund")}<input value={f.brand} onChange={(e) => set("brand", e.target.value)} maxLength={40} className={field} /></label>
+      <label className={label}>{tr(lang, "mf.f.amc")}<input value={f.legalName} onChange={(e) => set("legalName", e.target.value)} maxLength={80} className={field} /></label>
+      <div className="grid grid-cols-2 gap-2">
+        <label className={label}>{tr(lang, "live.f.amount")}<input value={f.amount} onChange={(e) => set("amount", e.target.value)} inputMode="decimal" className={field} /></label>
+        <label className={label}>{tr(lang, "live.f.due")}<input type="date" value={f.nextDue} onChange={(e) => set("nextDue", e.target.value)} className={field} /></label>
+      </div>
+      <label className={label}>{tr(lang, "live.f.interval")}
+        <select value={f.interval} onChange={(e) => set("interval", e.target.value as "month" | "quarter" | "year")} className={field}>
+          {(["month", "quarter", "year"] as const).map((k) => <option key={k} value={k}>{tr(lang, `live.f.${k}` as StringKey)}</option>)}
+        </select>
+      </label>
+      {err && <p role="alert" className="text-[14px] text-red">{tr(lang, "live.err.generic")}</p>}
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        <button type="button" onClick={close} className="h-12 rounded-full border border-line-strong text-[16px] font-semibold text-navy">{tr(lang, "live.notnow")}</button>
+        <button type="button" disabled={busy || !ok} onClick={() => void save()} className="h-12 rounded-full btn-primary text-[16px] font-semibold text-white disabled:bg-line-strong disabled:text-slate">{busy ? tr(lang, "button.working") : tr(lang, "live.save")}</button>
+      </div>
     </div>
   );
 }

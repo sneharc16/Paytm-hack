@@ -219,7 +219,7 @@ export function readSmsByRules(text: string, today: string) {
   const brand = named && !(legal ?? "").startsWith(named) ? named : null;
   const nextDue = dateFromSms(text, today) ?? addMonths(today, 1);
   const interval = /\b(month|monthly|mahina|mahine)\b/i.test(text) ? "month" : /\bquarter/i.test(text) ? "quarter" : /\b(year|yearly|annual)/i.test(text) ? "year" : null;
-  const kind = /\b(loan|emi)\b/i.test(text) ? "emi" : /\b(sip|mutual fund)\b/i.test(text) ? "sip" : /\binsurance\b/i.test(text) ? "insurance" : /\b(electricity|bill|gas|broadband|recharge)\b/i.test(text) ? "bill" : "subscription";
+  const kind = /\b(loan|emi)\b/i.test(text) ? "emi" : /\b(sip|mutual fund|amc|folio|asset management|flexi\s*cap|mid\s*cap|small\s*cap|index fund|elss|nifty)\b/i.test(text) ? "sip" : /\binsurance\b/i.test(text) ? "insurance" : /\b(electricity|bill|gas|broadband|recharge)\b/i.test(text) ? "bill" : "subscription";
   return { brand: brand ?? null, legalName: legal ?? null, amount: amount ? Math.round(rupees(amount) * 100) : null, interval, nextDue, kind } as const;
 }
 
