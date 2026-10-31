@@ -2,7 +2,11 @@
 // the common page chrome, a framed screenshot window, and a few WAAPI motions.
 import { defineSegment, type PlayerContext } from "videowright";
 import "./pakka.css";
-import { SCRIPT } from "../videos/pakka_explainer/script";
+import { SCRIPT as V1 } from "../videos/pakka_explainer/script";
+import { NEW_SCRIPT as V2 } from "../videos/pakka_explainer_v2/script";
+
+// Scene ids are unique across videos, so one lookup serves both explainers.
+const SCRIPT: Record<string, string[]> = { ...V1, ...V2 };
 
 export type Q = (ref: string) => HTMLElement;
 export type Step = (q: Q, ctx: PlayerContext) => void | Promise<void>;

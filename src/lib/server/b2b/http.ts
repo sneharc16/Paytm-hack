@@ -1,4 +1,5 @@
 import { unstable_rethrow } from "next/navigation";
+import { readBoundedJson } from "@/lib/server/security";
 import { NotFound } from "./runtime";
 
 // JSON responses for the business API. Errors carry a stable code; internals and stack traces never leave.
@@ -7,9 +8,7 @@ export const errJson = (status: number, code: string, message = code, extra: Rec
   Response.json({ ok: false, error: { code, message, ...extra } }, { status });
 
 export async function readJson(req: Request, limit = 64 * 1024): Promise<{ raw: string; body: unknown } | null> {
-  const raw = await req.text();
-  if (raw.length > limit) return null;
-  try { return { raw, body: raw ? JSON.parse(raw) : {} }; } catch { return null; }
+  return readBoundedJson(req, limit);
 }
 
 /** A refusal from the engine is a 4xx with its reason as the code; anything thrown is a bare 500. */

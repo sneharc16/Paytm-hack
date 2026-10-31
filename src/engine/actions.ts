@@ -15,6 +15,7 @@ import type { Choice, ISO, MerchantSettings, ReviewStamp } from "./types";
 const PERSON = "Priya Nair";
 
 export function verifyPin(s: Session, at: ISO, userId: string, digits: string): { pinToken: string } | { error: "WRONG_PIN" } {
+  if (!s.idx.user.has(userId)) return { error: "WRONG_PIN" };
   const r = bank.verifyPin(userId, digits, `${s.id}|${s.events.length}`);
   if ("pinToken" in r) s.emit({ actor: "customer", simAt: at, type: "pin_verified", payload: { userId, pinToken: r.pinToken } });
   return r;
@@ -34,9 +35,11 @@ const DECISION_RULE: Record<Choice, string> = {
 export type DecisionOutcome = { status: string; actionId?: string; reason?: string };
 
 export function customerDecision(s: Session, at: ISO, cycleId: string, choice: Choice, opts: { pinToken?: string; autoplayed?: boolean } = {}): DecisionOutcome {
-  const c = s.idx.cycle.get(cycleId)!;
+  const c = s.idx.cycle.get(cycleId);
+  if (!c) return { status: "ignored", reason: "UNKNOWN_CYCLE" };
   const cs = s.state.cycle(cycleId);
-  const mandate = s.idx.mandate.get(c.mandateId)!;
+  const mandate = s.idx.mandate.get(c.mandateId);
+  if (!mandate) return { status: "ignored", reason: "UNKNOWN_AUTOPAY" };
   const cutoff = addMin(c.dueAt, -60);
   // Same choice again (a double tap): the gateway returns the first action.
   if (cs.decision === choice && choice !== "pause" && choice !== "cancel") {
@@ -83,6 +86,7 @@ export function retrySlot(s: Session, cycleId: string, at: ISO): { slotStart: IS
 }
 
 export function topupConfirmed(s: Session, at: ISO, cycleId: string, opts: { autoplayed?: boolean } = {}): DecisionOutcome {
+  if (!s.idx.cycle.has(cycleId)) return { status: "ignored", reason: "UNKNOWN_CYCLE" };
   const cs = s.state.cycle(cycleId);
   // After the fourth attempt the cycle is exhausted; the tap still goes to the gateway so the block is recorded.
   if (cs.status !== "failed_business" && cs.status !== "exhausted") return { status: "ignored", reason: cs.status };
@@ -229,6 +233,7 @@ export function intakeTemplate(text: string): Intake {
 }
 
 export function askQuestion(s: Session, at: ISO, userId: string, text: string, intake: Intake = intakeTemplate(text), opts: { autoplayed?: boolean } = {}) {
+  if (!s.idx.user.has(userId)) return { intent: "other" as const, mandateId: undefined, candidates: [] as string[], caseCode: undefined };
   intake ??= intakeTemplate(text);
   // The log keeps the question masked: phone numbers, UPI IDs, OTPs and the like never reach storage.
   const user = s.idx.user.get(userId);
@@ -254,6 +259,7 @@ export function askQuestion(s: Session, at: ISO, userId: string, text: string, i
 }
 
 export function setMerchantSettings(s: Session, at: ISO, merchantId: string, settings: Partial<MerchantSettings>, by: string, opts: { autoplayed?: boolean } = {}) {
+  if (!s.idx.merchant.has(merchantId)) return { ok: false as const, issues: ["UNKNOWN_MERCHANT"] };
   const issues = Object.values(settings.offerCopy ?? {}).flatMap((txt) => (txt ? lintOffer(txt) : []));
   if (issues.length) return { ok: false as const, issues };
   s.emit({ actor: "merchant", simAt: at, type: "merchant_settings_changed", subjectType: "merchant", subjectId: merchantId, payload: { merchantId, settings, by, autoplayed: !!opts.autoplayed } });
@@ -285,6 +291,7 @@ export function merchantWithdrawNotice(s: Session, at: ISO, cycleId: string) {
 
 /** "Hamesha chalne do": the customer says this mandate is wanted, so its score is 0 from now on (PRD 11.4). No PIN. */
 export function setAlwaysKeep(s: Session, at: ISO, mandateId: string) {
+  if (!s.idx.mandate.has(mandateId)) return { status: "ignored", reason: "UNKNOWN_AUTOPAY" };
   if (s.state.alwaysKeep.has(mandateId)) return { status: "duplicate" };
   s.emit({ actor: "customer", simAt: at, type: "decision_recorded", subjectType: "mandate", subjectId: mandateId, payload: { mandateId, choice: "always_keep" } });
   return { status: "executed" };

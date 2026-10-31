@@ -18,6 +18,6 @@ export function optOut(s: EngineState, mandateId: string, pinToken: string | und
   if (!m) return { error: "MANDATE_INACTIVE" };
   if (m.irrevocable) return { error: "IRREVOCABLE" };
   if (s.mandateStatus.get(mandateId) !== "active") return { error: "MANDATE_INACTIVE" };
-  if (!pinToken || !s.pinTokens.has(pinToken)) return { error: "PIN_REQUIRED" };
+  if (!pinToken || s.pinTokens.get(pinToken) !== m.userId) return { error: "PIN_REQUIRED" };
   return { ok: true };
 }

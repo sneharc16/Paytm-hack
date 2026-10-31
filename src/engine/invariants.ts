@@ -6,7 +6,7 @@ import type { Session } from "./session";
 export function checkInvariants(s: Session): string[] {
   const fail: string[] = [];
   const st = s.state;
-  const optOutTokens = new Set<string>();
+  const optOutTokens = new Map<string, string>();
   const autoPerDay = new Map<string, number>();
   const nudgesPerCycle = new Map<string, number>();
   for (const e of s.events) {
@@ -19,8 +19,13 @@ export function checkInvariants(s: Session): string[] {
       const k = `${m.merchantId}|${istDay(e.simAt)}`;
       autoPerDay.set(k, (autoPerDay.get(k) ?? 0) + e.payload.amount);
     }
-    if (e.type === "pin_verified") optOutTokens.add(e.payload.pinToken);
-    if (e.type === "action_executed" && e.payload.actionType === "requestUserOptOut" && !optOutTokens.has(e.payload.pinToken)) fail.push(`5: opt-out without a PIN token (event ${e.id})`);
+    if (e.type === "pin_verified" && e.payload.pinToken && e.payload.userId) optOutTokens.set(e.payload.pinToken, e.payload.userId);
+    if (e.type === "action_executed" && e.payload.actionType === "requestUserOptOut") {
+      const owner = optOutTokens.get(e.payload.pinToken);
+      const mandate = s.idx.mandate.get(e.payload.mandateId);
+      if (!owner || owner !== mandate?.userId) fail.push(`5: opt-out without a PIN token (event ${e.id})`);
+      optOutTokens.delete(e.payload.pinToken);
+    }
     if (e.type === "action_executed" && e.subjectType && e.payload.actionType !== "sendNudge" && e.payload.actionType !== "executeCharge" && e.payload.actionType !== "recordDecision") {
       const cycle = e.subjectType === "cycle" ? s.idx.cycle.get(e.subjectId!) : undefined;
       const mandate = cycle ? s.idx.mandate.get(cycle.mandateId) : e.subjectType === "mandate" ? s.idx.mandate.get(e.subjectId!) : undefined;

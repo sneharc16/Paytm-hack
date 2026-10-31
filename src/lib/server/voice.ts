@@ -8,17 +8,16 @@ import { isRegional, isUiLang, langInfo, type RegionalCode, type UiLang } from "
 import { checkTranslation, forFormalModel, protect, restore, sourceLines, type Table } from "@/copy/regional";
 import baked from "@/copy/regional.json";
 import { mask, piiIn } from "@/lib/privacy/mask";
+import { allowedOrigins } from "@/lib/server/b2b/auth";
+import { BoundedRateLimiter, checkNonCrossOrigin, clientIp, readBoundedJson } from "@/lib/server/security";
 import { listen, sarvamEnabled, speak, translate } from "./sarvam";
 
 const json = (status: number, body: unknown) => Response.json(body, { status, headers: { "cache-control": "no-store" } });
 const fail = (status: number, code: string, message = code) => json(status, { ok: false, error: { code, message } });
 
-const hits = new Map<string, { n: number; reset: number }>();
-function limited(req: Request, perMinute: number): boolean {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const now = Date.now(), b = hits.get(ip);
-  if (!b || b.reset < now) { hits.set(ip, { n: 1, reset: now + 60_000 }); return false; }
-  return ++b.n > perMinute;
+const voiceLimiter = new BoundedRateLimiter(4096, 60_000);
+function limited(req: Request, bucket: string, perMinute: number): boolean {
+  return voiceLimiter.limited(`voice:${bucket}:${clientIp(req)}`, perMinute);
 }
 
 // ---------------- copy deck ----------------
@@ -71,7 +70,7 @@ export async function copyDeck(req: Request): Promise<Response> {
   const now = Date.now();
   const missing = Object.keys(sourceLines()).filter((k) => !(k in have) && now - (failedLines.get(`${lang}|${k}`) ?? 0) > RETRY_FAILED_MS);
   const source = Object.keys(bakedTable).length ? "baked" : "cache";
-  if (!missing.length || !sarvamEnabled() || limited(req, 6)) {
+  if (!missing.length || !sarvamEnabled() || limited(req, "copy", 6)) {
     if (Object.keys(have).length) return json(200, { ok: true, data: { lang, table: have, source } });
     return sarvamEnabled() ? fail(429, "RATE_LIMITED") : fail(503, "NO_SARVAM_KEY", "Set SARVAM_API_KEY to translate on demand");
   }
@@ -79,7 +78,13 @@ export async function copyDeck(req: Request): Promise<Response> {
   if (!p) { p = translateDeck(lang, have); inflight.set(lang, p); }
   try {
     const { table, failed } = await p;
-    for (const f of failed) failedLines.set(`${lang}|${f.split(":")[0]}`, now);
+    for (const f of failed) {
+      if (failedLines.size >= 2048) {
+        const oldest = failedLines.keys().next().value;
+        if (oldest !== undefined) failedLines.delete(oldest);
+      }
+      failedLines.set(`${lang}|${f.split(":")[0]}`, now);
+    }
     const live: Table = { ...(decks.get(lang) ?? readCache()[lang] ?? {}), ...table };
     if (Object.keys(table).length) { decks.set(lang, live); writeCache(lang, live); }
     return json(200, { ok: true, data: { lang, table: { ...bakedTable, ...live }, source: `${source}+sarvam`, translated: Object.keys(table).length, failed: failed.length } });
@@ -88,8 +93,10 @@ export async function copyDeck(req: Request): Promise<Response> {
 
 // ---------------- speak ----------------
 export async function speakRoute(req: Request): Promise<Response> {
-  if (limited(req, 30)) return fail(429, "RATE_LIMITED");
-  const body = (await req.json().catch(() => null)) as { text?: unknown; lang?: unknown } | null;
+  if (!checkNonCrossOrigin(req, allowedOrigins(req))) return fail(403, "CROSS_ORIGIN");
+  if (limited(req, "speak", 30)) return fail(429, "RATE_LIMITED");
+  const j = await readBoundedJson(req, 8 * 1024, { requireJsonContentType: false });
+  const body = (j?.body ?? null) as { text?: unknown; lang?: unknown } | null;
   const text = typeof body?.text === "string" ? body.text.trim() : "";
   const lang = typeof body?.lang === "string" && isUiLang(body.lang) ? body.lang : null;
   if (!text || text.length > 700 || !lang) return fail(400, "INVALID", "text up to 700 characters and a known lang");
@@ -120,8 +127,11 @@ export function withoutAddedBrands(english: string, said: string): string {
 
 // ---------------- listen ----------------
 export async function listenRoute(req: Request): Promise<Response> {
-  if (limited(req, 20)) return fail(429, "RATE_LIMITED");
+  if (!checkNonCrossOrigin(req, allowedOrigins(req))) return fail(403, "CROSS_ORIGIN");
+  if (limited(req, "listen", 20)) return fail(429, "RATE_LIMITED");
   if (!sarvamEnabled()) return fail(503, "NO_SARVAM_KEY");
+  const declared = Number(req.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declared) && declared > 2_500_000) return fail(413, "TOO_LONG", "Keep it under 30 seconds");
   const form = await req.formData().catch(() => null);
   const audio = form?.get("audio");
   const hint = form?.get("hint");
@@ -140,8 +150,10 @@ export async function listenRoute(req: Request): Promise<Response> {
 // ---------------- translate a customer's own words ----------------
 /** POST { text, from? } -> English, for the intake. Up to 300 characters. */
 export async function toEnglishRoute(req: Request): Promise<Response> {
-  if (limited(req, 30)) return fail(429, "RATE_LIMITED");
-  const body = (await req.json().catch(() => null)) as { text?: unknown; from?: unknown } | null;
+  if (!checkNonCrossOrigin(req, allowedOrigins(req))) return fail(403, "CROSS_ORIGIN");
+  if (limited(req, "english", 30)) return fail(429, "RATE_LIMITED");
+  const j = await readBoundedJson(req, 8 * 1024, { requireJsonContentType: false });
+  const body = (j?.body ?? null) as { text?: unknown; from?: unknown } | null;
   const text = typeof body?.text === "string" ? body.text.trim() : "";
   if (!text || text.length > 300) return fail(400, "INVALID");
   if (!sarvamEnabled()) return fail(503, "NO_SARVAM_KEY");
@@ -151,4 +163,4 @@ export async function toEnglishRoute(req: Request): Promise<Response> {
   return r.ok ? json(200, { ok: true, data: { english: withoutAddedBrands(r.data, text).slice(0, 300) } }) : fail(502, "TRANSLATE_FAILED", r.reason);
 }
 
-export function resetVoiceCachesForTests() { decks.clear(); inflight.clear(); }
+export function resetVoiceCachesForTests() { decks.clear(); inflight.clear(); failedLines.clear(); voiceLimiter.clear(); }

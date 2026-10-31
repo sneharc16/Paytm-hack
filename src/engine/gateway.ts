@@ -72,7 +72,7 @@ export function run(s: Session, at: ISO, a: PlannedAction): GatewayResult {
   const mandateActive = !mandateId || st.mandateStatus.get(mandateId) === "active";
   if (!mandateActive && ["requestMerchantDowngrade", "requestMerchantSkip", "requestUserOptOut", "executeCharge", "scheduleRetry", "sendNudge"].includes(a.type)) return block("MANDATE_INACTIVE");
   if (mandate?.irrevocable && (a.type === "requestMerchantSkip" || a.type === "requestMerchantDowngrade" || a.type === "requestUserOptOut" || (a.type === "recordDecision" && p.choice !== "keep"))) return block("IRREVOCABLE");
-  if (a.type === "requestUserOptOut" && (!p.pinToken || !st.pinTokens.has(p.pinToken))) return block("PIN_REQUIRED");
+  if (a.type === "requestUserOptOut" && (!p.pinToken || !mandate || st.pinTokens.get(p.pinToken) !== mandate.userId)) return block("PIN_REQUIRED");
   if (a.type === "executeCharge" && isPeak(new Date(at))) {
     st.addTimer(nextOffPeak(new Date(at)).toISOString(), "retry", a.cycleId!);
     return block("PEAK_WINDOW", { replannedTo: nextOffPeak(new Date(at)).toISOString() });

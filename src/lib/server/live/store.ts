@@ -8,6 +8,12 @@ import type { PasskeyCredential } from "@/b2b/crypto";
 import type { UiLang } from "@/copy/languages";
 import type { LiveAutopay, LiveProfile } from "@/engine/live";
 import type { PakkaEvent } from "@/engine/types";
+import { safeChildPath } from "@/lib/server/security";
+
+export const VALID_LIVE_USER_ID = /^lu_[a-z0-9_]{4,48}$/;
+function assertLiveUserId(id: string) {
+  if (!VALID_LIVE_USER_ID.test(id)) throw new Error("INVALID_USER_ID");
+}
 
 export interface LiveDoc {
   version: number;
@@ -29,8 +35,9 @@ export interface LiveStore {
 export class MemoryLiveStore implements LiveStore {
   kind: LiveStore["kind"] = "memory";
   protected docs = new Map<string, LiveDoc>();
-  async get(id: string) { const d = this.docs.get(id); return d ? structuredClone(d) : null; }
+  async get(id: string) { assertLiveUserId(id); const d = this.docs.get(id); return d ? structuredClone(d) : null; }
   async put(doc: LiveDoc) {
+    assertLiveUserId(doc.profile.id);
     const cur = this.docs.get(doc.profile.id)?.version ?? 0;
     if (cur !== doc.version - 1) throw new LiveConflict("VERSION_CONFLICT");
     this.docs.set(doc.profile.id, structuredClone(doc));
@@ -46,10 +53,15 @@ export class FileLiveStore extends MemoryLiveStore {
   constructor(private dir: string) {
     super();
     mkdirSync(dir, { recursive: true });
-    for (const f of readdirSync(dir)) if (f.endsWith(".json")) this.docs.set(f.slice(0, -5), JSON.parse(readFileSync(path.join(dir, f), "utf8")));
+    for (const f of readdirSync(dir)) {
+      if (f.endsWith(".json") && VALID_LIVE_USER_ID.test(f.slice(0, -5))) {
+        this.docs.set(f.slice(0, -5), JSON.parse(readFileSync(path.join(dir, f), "utf8")));
+      }
+    }
   }
   protected persist(doc: LiveDoc) {
-    const file = path.join(this.dir, `${doc.profile.id}.json`), tmp = `${file}.${process.pid}.tmp`;
+    assertLiveUserId(doc.profile.id);
+    const file = safeChildPath(this.dir, `${doc.profile.id}.json`), tmp = `${file}.${process.pid}.tmp`;
     writeFileSync(tmp, JSON.stringify(doc));
     renameSync(tmp, file);
   }
@@ -59,11 +71,13 @@ export class SupabaseLiveStore implements LiveStore {
   kind = "supabase" as const;
   constructor(private db: SupabaseClient) {}
   async get(id: string) {
+    assertLiveUserId(id);
     const { data, error } = await this.db.from("live_people").select("doc").eq("id", id).maybeSingle();
     if (error) throw new Error(error.message);
     return data ? (data.doc as LiveDoc) : null;
   }
   async put(doc: LiveDoc) {
+    assertLiveUserId(doc.profile.id);
     if (doc.version === 1) {
       const { error } = await this.db.from("live_people").insert({ id: doc.profile.id, version: 1, doc });
       if (error) throw error.code === "23505" ? new LiveConflict(error.message) : new Error(error.message);

@@ -41,8 +41,13 @@ export default function Hub() {
     QRCode.toDataURL(url, { margin: 1, width: 160, color: { dark: "#002E6E", light: "#FFFFFF" } }).then(setQr).catch(() => setQr(""));
   }, [id]);
   const create = async () => {
-    if (SYNC_MODE === "local") { setId(`DEMO-${10 + Math.floor(Math.random() * 90)}`); return; }
-    const r = await fetch("/api/sessions", { method: "POST" }).then((x) => x.json());
+    if (SYNC_MODE === "local") {
+      const buf = new Uint8Array(6);
+      crypto.getRandomValues(buf);
+      setId(`DEMO-${Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("").toUpperCase()}`);
+      return;
+    }
+    const r = await fetch("/api/sessions", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).then((x) => x.json());
     if (r.ok) setId(r.data.id);
   };
   const q = `session=${id}`;
@@ -218,7 +223,7 @@ export default function Hub() {
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <label htmlFor="session" className="text-[14px] font-semibold text-white/80">Session</label>
-                <input id="session" value={id} onChange={(e) => setId(e.target.value.toUpperCase())} className="h-11 w-36 rounded-full border border-white/25 bg-white/10 px-4 text-[16px] font-semibold text-white" />
+                <input id="session" value={id} maxLength={36} onChange={(e) => setId(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))} className="h-11 min-w-36 max-w-56 rounded-full border border-white/25 bg-white/10 px-4 text-[16px] font-semibold text-white" />
                 <button onClick={create} className="press h-11 rounded-full bg-white px-5 text-[15px] font-semibold text-navy">New session</button>
               </div>
             </div>

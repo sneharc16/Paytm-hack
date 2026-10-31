@@ -40,12 +40,12 @@ export async function verifyRegistration(rp: RelyingParty, response: Registratio
     const x = key.get(cose.COSEKEYS.x as never) as Uint8Array | undefined, y = key.get(cose.COSEKEYS.y as never) as Uint8Array | undefined;
     if (!x || !y || x.length !== 32 || y.length !== 32) return { error: "Unsupported P-256 key" };
     const raw = new Uint8Array(65); raw[0] = 4; raw.set(x, 1); raw.set(y, 33);
-    return { id: v.registrationInfo.credential.id, alg: -7, publicKey: toHex(raw), addedAt: at };
+    return { id: v.registrationInfo.credential.id, alg: -7, publicKey: toHex(raw), addedAt: at, signCount: v.registrationInfo.credential.counter };
   }
   if (alg === -8) {
     const x = key.get(cose.COSEKEYS.x as never) as Uint8Array | undefined;
     if (!x || x.length !== 32) return { error: "Unsupported Ed25519 key" };
-    return { id: v.registrationInfo.credential.id, alg: -8, publicKey: toHex(x), addedAt: at };
+    return { id: v.registrationInfo.credential.id, alg: -8, publicKey: toHex(x), addedAt: at, signCount: v.registrationInfo.credential.counter };
   }
   return { error: "Use a passkey with P-256 or Ed25519" };
 }

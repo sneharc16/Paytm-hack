@@ -77,7 +77,7 @@ export class EngineState {
   actionCount = 0;
   queued: string[] = []; // action keys blocked by the kill switch, in order
   killSwitch = { global: false, merchants: new Set<string>() };
-  pinTokens = new Set<string>();
+  pinTokens = new Map<string, string>(); // pinToken -> userId (owner-bound, single-use)
   refunds = new Map<string, RefundState>();
   refundReserved = new Map<string, Paise>(); // `${merchantId}|${istDay}` -> paise reserved on the auto path
   cases = new Map<string, CaseState>();
@@ -179,7 +179,7 @@ export class EngineState {
         break;
       }
       case "pin_verified":
-        this.pinTokens.add(p.pinToken);
+        if (p.pinToken && p.userId) this.pinTokens.set(p.pinToken, p.userId);
         break;
       case "topup_confirmed":
         this.cycle(p.cycleId).topupAt = e.simAt;
@@ -204,6 +204,7 @@ export class EngineState {
         const a = this.actions.get(p.key);
         if (a) a.status = "executed";
         if (p.actionType === "requestUserOptOut") {
+          if (p.pinToken) this.pinTokens.delete(p.pinToken);
           const used = this.skipsUsed(p.mandateId);
           const max = maxSkipsAllowed();
           if (p.kind === "pause" && used < max) {

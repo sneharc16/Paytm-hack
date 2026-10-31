@@ -4,7 +4,8 @@ import { z } from "zod";
 import type { RegistrationResponseJSON } from "@simplewebauthn/server";
 import { acceptInvite, addPasskey, agentCommand, createOrg, OrgInput, personCommand, proposeQueue, unsignedProposals, workFor } from "@/b2b/live";
 import { sha256 } from "@/lib/hash";
-import { apiKeyHash, authAgent, authPerson, SESSION_COOKIE, sameOrigin, type AuthFail } from "./auth";
+import { BoundedRateLimiter, clientIp, verifyCronAuth } from "@/lib/server/security";
+import { allowedOrigins, apiKeyHash, authAgent, authPerson, SESSION_COOKIE, sameOrigin, type AuthFail } from "./auth";
 import { errJson, fromResult, guarded, okJson, readJson } from "./http";
 import { loginOptions, registrationOptions, relyingParty, userFromHandle, verifyLogin, verifyRegistration, type AssertionJSON } from "./passkeys";
 import { createOrgLedger, nowIso, readOrg, tickAll, writeOrg } from "./runtime";
@@ -13,6 +14,7 @@ import { cookie, randomId, randomToken, readCookie, readToken, signToken } from 
 
 const CHAL = "pakka_b2b_chal";
 const SESSION_TTL = 8 * 3600;
+const ceremonyLimiter = new BoundedRateLimiter(4096, 60_000);
 const fail = (a: AuthFail) => errJson(a.status, a.code);
 export const inviteTokenHash = (token: string) => sha256(`PAKKA_B2B_INVITE_V1|${token}`);
 
@@ -26,6 +28,7 @@ const clearChal = (req: Request) => cookie(CHAL, "", 0, req);
 
 // ---------------- company creation ----------------
 export const createOrgOptions = (req: Request) => guarded(async () => {
+  if (ceremonyLimiter.limited(`b2b-org:${clientIp(req)}`, 20)) return errJson(429, "RATE_LIMITED");
   const j = await readJson(req);
   const input = OrgInput.safeParse((j?.body as { org?: unknown })?.org);
   if (!input.success) return errJson(400, "INVALID", input.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
@@ -53,6 +56,7 @@ export const createOrgFinish = (req: Request) => guarded(async () => {
 
 // ---------------- sign in ----------------
 export const signInOptions = (req: Request) => guarded(async () => {
+  if (ceremonyLimiter.limited(`b2b-signin:${clientIp(req)}`, 40)) return errJson(429, "RATE_LIMITED");
   const { nonce, options } = loginOptions(relyingParty(req));
   return withCookies(okJson({ options }), [cookie(CHAL, signToken("chal", { kind: "login", nonce }, 300), 300, req)]);
 });
@@ -123,7 +127,8 @@ export const prepare = (req: Request) => guarded(async () => {
   if (!p.success) return errJson(400, "INVALID");
   if (p.data.what === "invite") {
     const token = randomToken(24), inviteId = randomId("inv_", 8);
-    const link = `${new URL(req.url).origin}/business/live/join?org=${a.orgId}&invite=${inviteId}#${token}`;
+    const baseOrigin = allowedOrigins(req)[0];
+    const link = `${baseOrigin}/business/live/join?org=${a.orgId}&invite=${inviteId}#${token}`;
     return okJson({ inviteId, token, tokenHash: inviteTokenHash(token), link });
   }
   const apiKey = `pk_${a.orgId.slice(3)}_${randomToken(24)}`;
@@ -131,8 +136,9 @@ export const prepare = (req: Request) => guarded(async () => {
 });
 
 // ---------------- invites ----------------
-const InviteRef = z.object({ org: z.string().regex(/^co_[a-z0-9]+$/), invite: z.string(), token: z.string().min(20).max(100) });
+const InviteRef = z.object({ org: z.string().regex(/^co_[a-z0-9]+$/), invite: z.string().max(64), token: z.string().min(20).max(100) });
 export const joinOptions = (req: Request) => guarded(async () => {
+  if (ceremonyLimiter.limited(`b2b-join:${clientIp(req)}`, 30)) return errJson(429, "RATE_LIMITED");
   const j = await readJson(req);
   const p = InviteRef.safeParse(j?.body);
   if (!p.success) return errJson(400, "INVALID");
@@ -162,6 +168,7 @@ export const joinFinish = (req: Request) => guarded(async () => {
 export const passkeyOptions = (req: Request) => guarded(async () => {
   const a = await authPerson(req);
   if (!a.ok) return fail(a);
+  if (ceremonyLimiter.limited(`b2b-pk:${a.orgId}:${a.person.id}`, 20)) return errJson(429, "RATE_LIMITED");
   const options = await registrationOptions(relyingParty(req), a.orgId, a.person.id, a.person.email ?? a.person.name, a.person.name, a.person.credentials ?? []);
   return withCookies(okJson({ options }), [cookie(CHAL, signToken("chal", { kind: "passkey", challenge: options.challenge, orgId: a.orgId, personId: a.person.id }, 300), 300, req)]);
 });
@@ -171,17 +178,17 @@ export const passkeyFinish = (req: Request) => guarded(async () => {
   const a = await authPerson(req);
   if (!a.ok) return fail(a);
   const c = readToken<{ kind: string; challenge: string; orgId: string; personId: string }>("chal", readCookie(req, CHAL));
-  if (!c || c.kind !== "passkey" || c.personId !== a.person.id) return errJson(400, "CHALLENGE_EXPIRED");
+  if (!c || c.kind !== "passkey" || c.orgId !== a.orgId || c.personId !== a.person.id) return errJson(400, "CHALLENGE_EXPIRED");
+  if (!(await b2bStore().useOnce(`chal:${c.challenge}`, new Date(Date.now() + 600_000).toISOString()))) return errJson(400, "CHALLENGE_USED");
   const j = await readJson(req);
   const cred = await verifyRegistration(relyingParty(req), (j?.body as { response: RegistrationResponseJSON })?.response, c.challenge, nowIso());
   if ("error" in cred) return errJson(400, "PASSKEY_REJECTED", cred.error);
-  return fromResult(await writeOrg(a.orgId, (t, now) => addPasskey(t, now, a.person.id, cred)));
+  return withCookies(fromResult(await writeOrg(a.orgId, (t, now) => addPasskey(t, now, a.person.id, cred))), [clearChal(req)]);
 });
 
 // ---------------- cron ----------------
 export const cron = (req: Request) => guarded(async () => {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) return errJson(401, "UNAUTHORIZED");
+  if (!verifyCronAuth(req)) return errJson(401, "UNAUTHORIZED");
   return okJson(await tickAll());
 });
 

@@ -5,6 +5,12 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync, readdir
 import path from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { LedgerEvent } from "@/b2b/types";
+import { safeChildPath } from "@/lib/server/security";
+
+export const VALID_ORG_ID = /^co_[a-z0-9_]{3,48}$/;
+function assertOrgId(orgId: string) {
+  if (!VALID_ORG_ID.test(orgId)) throw new Error("INVALID_ORG_ID");
+}
 
 export class ConflictError extends Error {}
 
@@ -24,8 +30,9 @@ export class MemoryStore implements B2BStore {
   kind: B2BStore["kind"] = "memory";
   protected logs = new Map<string, LedgerEvent[]>();
   protected once = new Map<string, string>();
-  async events(orgId: string) { return structuredClone(this.logs.get(orgId) ?? []); }
+  async events(orgId: string) { assertOrgId(orgId); return structuredClone(this.logs.get(orgId) ?? []); }
   async append(orgId: string, afterSeq: number, events: LedgerEvent[]) {
+    assertOrgId(orgId);
     const log = this.logs.get(orgId) ?? [];
     if ((log.at(-1)?.seq ?? 0) !== afterSeq) throw new ConflictError("SEQ_CONFLICT");
     this.logs.set(orgId, [...log, ...structuredClone(events)]);
@@ -33,9 +40,14 @@ export class MemoryStore implements B2BStore {
   }
   async orgIds() { return [...this.logs.keys()]; }
   async useOnce(key: string, expiresAt: string) {
+    if (!key || key.length > 256) return false;
     const now = new Date().toISOString();
     for (const [k, exp] of this.once) if (exp < now) this.once.delete(k);
     if (this.once.has(key)) return false;
+    if (this.once.size >= 16_384) {
+      const oldest = this.once.keys().next().value;
+      if (oldest !== undefined) this.once.delete(oldest);
+    }
     this.once.set(key, expiresAt);
     this.persistOnce();
     return true;
@@ -51,7 +63,11 @@ export class FileStore extends MemoryStore {
   constructor(private dir: string) {
     super();
     mkdirSync(path.join(dir, "orgs"), { recursive: true });
-    for (const f of readdirSync(path.join(dir, "orgs"))) if (f.endsWith(".json")) this.logs.set(f.slice(0, -5), JSON.parse(readFileSync(path.join(dir, "orgs", f), "utf8")));
+    for (const f of readdirSync(path.join(dir, "orgs"))) {
+      if (f.endsWith(".json") && VALID_ORG_ID.test(f.slice(0, -5))) {
+        this.logs.set(f.slice(0, -5), JSON.parse(readFileSync(path.join(dir, "orgs", f), "utf8")));
+      }
+    }
     const once = path.join(dir, "once.json");
     if (existsSync(once)) this.once = new Map(Object.entries(JSON.parse(readFileSync(once, "utf8"))));
   }
@@ -60,8 +76,11 @@ export class FileStore extends MemoryStore {
     writeFileSync(tmp, JSON.stringify(data));
     renameSync(tmp, file);
   }
-  protected persist(orgId: string) { this.write(path.join(this.dir, "orgs", `${orgId}.json`), this.logs.get(orgId)); }
-  protected persistOnce() { this.write(path.join(this.dir, "once.json"), Object.fromEntries(this.once)); }
+  protected persist(orgId: string) {
+    assertOrgId(orgId);
+    this.write(safeChildPath(path.join(this.dir, "orgs"), `${orgId}.json`), this.logs.get(orgId));
+  }
+  protected persistOnce() { this.write(safeChildPath(this.dir, "once.json"), Object.fromEntries(this.once)); }
 }
 
 type Row = { seq: number; at: string; company_id: string; type: string; actor: LedgerEvent["actor"]; rule_id: string | null; payload: LedgerEvent["payload"]; prev: string; hash: string };
@@ -71,6 +90,7 @@ export class SupabaseStore implements B2BStore {
   kind = "supabase" as const;
   constructor(private db: SupabaseClient) {}
   async events(orgId: string) {
+    assertOrgId(orgId);
     const out: LedgerEvent[] = [];
     for (let from = 0; ; from += PAGE) {
       const { data, error } = await this.db.from("b2b_events").select("seq,at,company_id,type,actor,rule_id,payload,prev,hash").eq("org_id", orgId).order("seq").range(from, from + PAGE - 1);
@@ -80,6 +100,7 @@ export class SupabaseStore implements B2BStore {
     }
   }
   async append(orgId: string, afterSeq: number, events: LedgerEvent[]) {
+    assertOrgId(orgId);
     const { error } = await this.db.rpc("b2b_append", { p_org: orgId, p_after: afterSeq, p_events: events });
     if (error) throw error.message.includes("SEQ_CONFLICT") ? new ConflictError(error.message) : new Error(error.message);
   }

@@ -3,15 +3,18 @@
 // Only money is simulated: charges go to the NPCI simulator. Everything else is the person's own data and time.
 import { generateRegistrationOptions, type RegistrationResponseJSON } from "@simplewebauthn/server";
 import { z } from "zod";
-import { b64uDecode, challengeFor, verifyWebAuthn } from "@/b2b/crypto";
+import { b64uDecode, challengeFor, isValidSignCount, verifyWebAuthn, webAuthnSignCount } from "@/b2b/crypto";
 import { isUiLang, baseLang, type UiLang } from "@/copy/languages";
-import { passkeyVerified } from "@/engine/actions";
-import { applyCommand, Command } from "@/engine/commands";
-import { addMonths, AutopayInput, checkAutopay, istDate } from "@/engine/live";
-import type { Lang } from "@/engine/types";
+import { intakeTemplate, passkeyVerified } from "@/engine/actions";
+import { applyCommand, type Command } from "@/engine/commands";
+import { addMonths, AutopayInput, buildLiveWorld, checkAutopay, horizonFrom, istDate } from "@/engine/live";
+import type { Intake } from "@/engine/resolve";
+import type { Lang, ReviewStamp } from "@/engine/types";
 import { sha256 } from "@/lib/hash";
 import { llmEnabled, runTask } from "@/llm/client";
-import { SmsOut } from "@/llm/schemas";
+import { intakeInput } from "@/llm/inputs";
+import { IntakeOut, SmsOut } from "@/llm/schemas";
+import { BoundedRateLimiter, checkSameOriginWrite, clientIp, verifyCronAuth } from "@/lib/server/security";
 import { errJson, guarded as guardedB2B, okJson, readJson } from "@/lib/server/b2b/http";
 import { relyingParty, toSig, verifyRegistration, type AssertionJSON } from "@/lib/server/b2b/passkeys";
 import { b2bStore } from "@/lib/server/b2b/store";
@@ -33,16 +36,12 @@ function withCookies(res: Response, cookies: string[]): Response {
   for (const c of cookies) h.append("set-cookie", c);
   return new Response(res.body, { status: res.status, headers: h });
 }
-const sameOrigin = (req: Request) => { const o = req.headers.get("origin"); return !o || relyingParty(req).origins.includes(o); };
+const sameOrigin = (req: Request) => checkSameOriginWrite(req, relyingParty(req).origins);
 const sessionCookie = (req: Request, id: string) => cookie(SESSION, signToken("live-session", { u: id, sid: randomToken(16) }, SESSION_TTL), SESSION_TTL, req);
 
-const hits = new Map<string, { n: number; reset: number }>();
-function limited(key: string, perMinute: number) {
-  const now = Date.now(), b = hits.get(key);
-  if (!b || b.reset < now) { hits.set(key, { n: 1, reset: now + 60_000 }); return false; }
-  return ++b.n > perMinute;
-}
-const ip = (req: Request) => req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+const liveLimiter = new BoundedRateLimiter(4096, 60_000);
+const limited = (key: string, perMinute: number) => liveLimiter.limited(key, perMinute);
+const ip = (req: Request) => clientIp(req);
 
 async function who(req: Request): Promise<string | null> {
   const s = readToken<{ u: string; sid: string }>("live-session", readCookie(req, SESSION));
@@ -115,12 +114,24 @@ export const signInFinish = (req: Request) => guarded(async () => {
   const id = /^live:(lu_[a-f0-9]{16})$/.exec(handle)?.[1];
   const doc = id ? await liveStore().get(id) : null;
   if (!a || !doc) return errJson(400, "UNKNOWN_PASSKEY");
-  if (!verifyWebAuthn(doc.profile.credentials.find((x) => x.id === a.id), relyingParty(req), loginMessage(c.nonce), toSig(a))) return errJson(401, "PASSKEY_REJECTED");
+  const cred = doc.profile.credentials.find((x) => x.id === a.id);
+  const sig = toSig(a);
+  if (!verifyWebAuthn(cred, relyingParty(req), loginMessage(c.nonce), sig)) return errJson(401, "PASSKEY_REJECTED");
   if (!(await b2bStore().useOnce(`live-login:${c.nonce}`, new Date(Date.now() + 600_000).toISOString()))) return errJson(400, "CHALLENGE_USED");
+  const nextCount = webAuthnSignCount(sig);
+  if (!isValidSignCount(cred!.signCount, nextCount)) return errJson(401, "PASSKEY_REJECTED");
+  if (nextCount !== null && nextCount > (cred!.signCount ?? 0)) {
+    await withPerson(doc.profile.id, { mutate: (d) => {
+      const target = d.profile.credentials.find((x) => x.id === a.id);
+      if (target && nextCount > (target.signCount ?? 0)) target.signCount = nextCount;
+      return null;
+    } });
+  }
   return withCookies(okJson({ id: doc.profile.id }), [sessionCookie(req, doc.profile.id), cookie(CHAL, "", 0, req)]);
 });
 
 export const signOut = (req: Request) => guarded(async () => {
+  if (!sameOrigin(req)) return errJson(403, "CROSS_ORIGIN");
   const s = readToken<{ sid?: string; exp: number }>("live-session", readCookie(req, SESSION));
   if (s?.sid) await b2bStore().useOnce(`live-signout:${s.sid}`, new Date(s.exp + 60_000).toISOString());
   return withCookies(okJson({}), [cookie(SESSION, "", 0, req)]);
@@ -212,14 +223,15 @@ function dateFromSms(text: string, today: string): string | null {
 
 /** The rule-based reader: the template behind the model, and the check on what the model said. */
 export function readSmsByRules(text: string, today: string) {
-  const amount = /(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)/i.exec(text)?.[1];
-  // A company name is a run of capitalised words ending in Pvt Ltd, Private Limited, Limited or Ltd.
-  const legal = /((?:[A-Z][A-Za-z0-9&']*\s+){1,6}(?:Pvt\.?\s*Ltd|Private Limited|Limited|Ltd))/.exec(text)?.[1]?.trim();
-  const named = /(?:for|towards)\s+([A-Z][A-Za-z0-9]*(?:\s[A-Z][A-Za-z0-9]*){0,3})\b/.exec(text)?.[1]?.trim();
+  const clean = text.slice(0, 800).replace(/\s+/g, " ").trim();
+  const amount = /(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)/i.exec(clean)?.[1];
+  // Linear-time bounded word matching (single spaces after normalization) to prevent catastrophic regex backtracking.
+  const legal = /(?:^| )([A-Z][A-Za-z0-9&']{0,30}(?: [A-Z][A-Za-z0-9&']{0,30}){0,5} (?:Pvt\.? Ltd|Private Limited|Limited|Ltd))\b/.exec(clean)?.[1]?.trim();
+  const named = /\b(?:for|towards) ([A-Z][A-Za-z0-9]{0,30}(?: [A-Z][A-Za-z0-9]{0,30}){0,3})\b/.exec(clean)?.[1]?.trim();
   const brand = named && !(legal ?? "").startsWith(named) ? named : null;
-  const nextDue = dateFromSms(text, today) ?? addMonths(today, 1);
-  const interval = /\b(month|monthly|mahina|mahine)\b/i.test(text) ? "month" : /\bquarter/i.test(text) ? "quarter" : /\b(year|yearly|annual)/i.test(text) ? "year" : null;
-  const kind = /\b(loan|emi)\b/i.test(text) ? "emi" : /\b(sip|mutual fund|amc|folio|asset management|flexi\s*cap|mid\s*cap|small\s*cap|index fund|elss|nifty)\b/i.test(text) ? "sip" : /\binsurance\b/i.test(text) ? "insurance" : /\b(electricity|bill|gas|broadband|recharge)\b/i.test(text) ? "bill" : "subscription";
+  const nextDue = dateFromSms(clean, today) ?? addMonths(today, 1);
+  const interval = /\b(month|monthly|mahina|mahine)\b/i.test(clean) ? "month" : /\bquarter/i.test(clean) ? "quarter" : /\b(year|yearly|annual)/i.test(clean) ? "year" : null;
+  const kind = /\b(loan|emi)\b/i.test(clean) ? "emi" : /\b(sip|mutual fund|amc|folio|asset management|flexi\s*cap|mid\s*cap|small\s*cap|index fund|elss|nifty)\b/i.test(clean) ? "sip" : /\binsurance\b/i.test(clean) ? "insurance" : /\b(electricity|bill|gas|broadband|recharge)\b/i.test(clean) ? "bill" : "subscription";
   return { brand: brand ?? null, legalName: legal ?? null, amount: amount ? Math.round(rupees(amount) * 100) : null, interval, nextDue, kind } as const;
 }
 
@@ -258,8 +270,31 @@ export const readSms = (req: Request) => guarded(async () => {
 });
 
 // ---------------- decisions and questions ----------------
-const ALLOWED = new Set(["customer_decision", "topup_confirmed", "always_keep", "refund_answer", "question"]);
+// Strict customer-only command schema: strips any client-supplied pinToken, userId, or pre-computed AI intake/review stamps.
+const LiveCustomerCommand = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("customer_decision"), cycleId: z.string().min(1).max(64), choice: z.enum(["keep", "skip", "pause", "cancel", "downgrade"]) }),
+  z.object({ kind: z.literal("topup_confirmed"), cycleId: z.string().min(1).max(64) }),
+  z.object({ kind: z.literal("always_keep"), mandateId: z.string().min(1).max(64) }),
+  z.object({ kind: z.literal("refund_answer"), executionId: z.string().min(1).max(64), yes: z.boolean() }),
+  z.object({ kind: z.literal("question"), text: z.string().trim().min(1).max(300) }),
+]);
 export const confirmMessage = (userId: string, cycleId: string, choice: string, ts: string) => `PAKKA_LIVE_CONFIRM_V1|${userId}|${cycleId}|${choice}|${ts}`;
+
+async function serverIntakeForLive(doc: LiveDoc, text: string): Promise<Intake | undefined> {
+  if (!llmEnabled()) return undefined;
+  const now = nowIso();
+  const m = intakeInput(buildLiveWorld(doc.profile, doc.autopays, horizonFrom(now)), doc.profile.id, text, doc.profile.lang);
+  const r = await runTask(m.task, m.input, { useDemoCache: false, mask: m.mask, timeoutMs: 12_000, budgetMs: 12_000 });
+  const review: ReviewStamp | undefined = r.review && {
+    status: r.review.status, rounds: r.review.rounds, ...(r.review.reason ? { reason: r.review.reason.slice(0, 200) } : {}),
+    trail: r.review.trail.map((t) => ({ round: t.round, verdicts: t.verdicts })), masked: r.masked,
+  };
+  if (r.ok) {
+    const out = IntakeOut.safeParse(r.output);
+    if (out.success) return { ...out.data, modelVersion: r.promptVersion, review };
+  }
+  return review ? { ...intakeTemplate(text), review } : undefined;
+}
 
 export const command = (req: Request) => guarded(async () => {
   if (!sameOrigin(req)) return errJson(403, "CROSS_ORIGIN");
@@ -267,29 +302,48 @@ export const command = (req: Request) => guarded(async () => {
   if (!id) return errJson(401, "SIGN_IN");
   if (limited(`cmd:${id}`, 60)) return errJson(429, "RATE_LIMITED");
   const body = (await readJson(req))?.body as { command?: unknown; confirm?: { ts?: unknown; assertion?: AssertionJSON } } | undefined;
-  const parsed = Command.safeParse(body?.command);
-  if (!parsed.success || !ALLOWED.has(parsed.data.kind)) return errJson(400, "INVALID");
-  let cmd = parsed.data;
-  if (cmd.kind === "question") cmd = { ...cmd, userId: id }; // only ever about yourself
+  const parsed = LiveCustomerCommand.safeParse(body?.command);
+  if (!parsed.success) return errJson(400, "INVALID");
+  const rawCmd = parsed.data;
   let pinToken: string | undefined;
-  if (cmd.kind === "customer_decision" && (cmd.choice === "pause" || cmd.choice === "cancel")) {
+  let usedCredId: string | undefined;
+  let nextSignCount: number | null = null;
+  if (rawCmd.kind === "customer_decision" && (rawCmd.choice === "pause" || rawCmd.choice === "cancel")) {
     // The passkey stands in for the UPI PIN: it signs exactly this person, cycle, choice and time, once.
     const ts = body?.confirm?.ts, a = body?.confirm?.assertion;
     if (typeof ts !== "string" || !a || Math.abs(Date.now() - Date.parse(ts)) > CONFIRM_SKEW_MS) return errJson(401, "CONFIRM_WITH_PASSKEY");
     const doc = await liveStore().get(id);
-    if (!doc || !verifyWebAuthn(doc.profile.credentials.find((x) => x.id === a.id), relyingParty(req), confirmMessage(id, cmd.cycleId, cmd.choice, ts), toSig(a))) return errJson(401, "PASSKEY_REJECTED");
+    const cred = doc?.profile.credentials.find((x) => x.id === a.id);
+    const sig = toSig(a);
+    if (!doc || !verifyWebAuthn(cred, relyingParty(req), confirmMessage(id, rawCmd.cycleId, rawCmd.choice, ts), sig)) return errJson(401, "PASSKEY_REJECTED");
     if (!(await b2bStore().useOnce(`live-confirm:${sha256(a.response.clientDataJSON)}`, new Date(Date.now() + 2 * CONFIRM_SKEW_MS).toISOString()))) return errJson(409, "REPLAYED_SIGNATURE");
+    nextSignCount = webAuthnSignCount(sig);
+    if (!isValidSignCount(cred!.signCount, nextSignCount)) return errJson(401, "PASSKEY_REJECTED");
+    usedCredId = a.id;
     pinToken = `pk_${sha256(`${id}|${a.response.clientDataJSON}`).slice(0, 20)}`;
   }
-  const c = cmd;
-  const r = await withPerson(id, { act: (s, now) => {
-    const cycleId = "cycleId" in c ? c.cycleId : null;
-    if (cycleId && !s.idx.cycle.has(cycleId)) return { error: "UNKNOWN_CYCLE" };
-    if ("mandateId" in c && !s.idx.mandate.has(c.mandateId)) return { error: "UNKNOWN_AUTOPAY" };
-    if ("executionId" in c && !s.state.executions.has(c.executionId)) return { error: "UNKNOWN_CHARGE" };
-    if (pinToken && c.kind === "customer_decision") { passkeyVerified(s, now, id, pinToken); return applyCommand(s, now, { ...c, pinToken }); }
-    return applyCommand(s, now, c);
-  } });
+  let serverIntake: Intake | undefined;
+  if (rawCmd.kind === "question") {
+    const doc = await liveStore().get(id);
+    if (!doc) return errJson(401, "SIGN_IN");
+    serverIntake = await serverIntakeForLive(doc, rawCmd.text);
+  }
+  const c: Command = rawCmd.kind === "question" ? { kind: "question", userId: id, text: rawCmd.text, intake: serverIntake } : rawCmd;
+  const r = await withPerson(id, {
+    mutate: usedCredId && nextSignCount !== null ? (doc) => {
+      const target = doc.profile.credentials.find((x) => x.id === usedCredId);
+      if (target && nextSignCount! > (target.signCount ?? 0)) target.signCount = nextSignCount!;
+      return null;
+    } : undefined,
+    act: (s, now) => {
+      const cycleId = "cycleId" in c ? c.cycleId : null;
+      if (cycleId && !s.idx.cycle.has(cycleId)) return { error: "UNKNOWN_CYCLE" };
+      if ("mandateId" in c && !s.idx.mandate.has(c.mandateId)) return { error: "UNKNOWN_AUTOPAY" };
+      if ("executionId" in c && !s.state.executions.has(c.executionId)) return { error: "UNKNOWN_CHARGE" };
+      if (pinToken && c.kind === "customer_decision") { passkeyVerified(s, now, id, pinToken); return applyCommand(s, now, { ...c, pinToken }); }
+      return applyCommand(s, now, c);
+    },
+  });
   const result = r.result as { error?: string } | undefined;
   if (result?.error) return errJson(404, result.error);
   return okJson({ result: r.result ?? null, ...view(r) });
@@ -297,8 +351,7 @@ export const command = (req: Request) => guarded(async () => {
 
 // ---------------- cron ----------------
 export const cron = (req: Request) => guarded(async () => {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) return errJson(401, "UNAUTHORIZED");
+  if (!verifyCronAuth(req)) return errJson(401, "UNAUTHORIZED");
   return okJson(await tickEveryone());
 });
 

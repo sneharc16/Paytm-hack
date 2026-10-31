@@ -6,6 +6,7 @@ import { requestMessage, verifySig } from "@/b2b/crypto";
 import type { Agent, Person } from "@/b2b/types";
 import type { Treasury } from "@/b2b/treasury";
 import { sha256 } from "@/lib/hash";
+import { BoundedRateLimiter, checkSameOriginWrite } from "@/lib/server/security";
 import { readOrg } from "./runtime";
 import { b2bStore } from "./store";
 import { readCookie, readToken } from "./tokens";
@@ -20,12 +21,9 @@ export type AgentAuth = { ok: true; orgId: string; agent: Agent; t: Treasury };
 export const orgFromApiKey = (key: string) => /^pk_([a-z0-9]{6,40})_[A-Za-z0-9_-]{20,}$/.exec(key)?.[1];
 export const apiKeyHash = (key: string) => sha256(`PAKKA_B2B_APIKEY_V1|${key}`);
 
-const buckets = new Map<string, { n: number; reset: number }>();
+const agentBuckets = new BoundedRateLimiter(4096, 60_000);
 function rateOk(id: string, perMinute = 240) {
-  const now = Date.now();
-  const b = buckets.get(id);
-  if (!b || b.reset < now) { buckets.set(id, { n: 1, reset: now + 60_000 }); return true; }
-  return ++b.n <= perMinute;
+  return !agentBuckets.limited(id, perMinute);
 }
 
 export async function authAgent(req: Request, rawBody: string): Promise<AgentAuth | AuthFail> {
@@ -61,10 +59,9 @@ export async function authPerson(req: Request): Promise<PersonAuth | AuthFail> {
   return { ok: true, orgId: s.o, person, t };
 }
 
-/** Same-origin check for cookie-authenticated writes (SameSite=Strict already blocks most cross-site posts). */
+/** Strict same-origin & Sec-Fetch-Site check for cookie-authenticated writes. */
 export function sameOrigin(req: Request): boolean {
-  const origin = req.headers.get("origin");
-  return !origin || origin === new URL(req.url).origin || allowedOrigins(req).includes(origin);
+  return checkSameOriginWrite(req, allowedOrigins(req));
 }
 
 export function allowedOrigins(req: Request): string[] {

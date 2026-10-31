@@ -104,10 +104,25 @@ export function b64uDecode(s: string): Uint8Array | null {
 
 // ---------- passkeys (WebAuthn) ----------
 /** A passkey registered by a person. publicKey is raw: 65-byte uncompressed P-256 (alg -7) or 32-byte Ed25519 (alg -8). */
-export interface PasskeyCredential { id: string; alg: -7 | -8; publicKey: string; addedAt: string }
+export interface PasskeyCredential { id: string; alg: -7 | -8; publicKey: string; addedAt: string; signCount?: number }
 /** An assertion returned by navigator.credentials.get, all fields base64url. */
 export interface WebAuthnSig { credentialId: string; authenticatorData: string; clientDataJSON: string; signature: string }
 export interface RelyingParty { rpId: string; origins: string[] }
+
+/** Extract the 32-bit big-endian signature counter from WebAuthn authenticatorData[33..36]. */
+export function webAuthnSignCount(wa: WebAuthnSig | undefined): number | null {
+  const ad = wa ? b64uDecode(wa.authenticatorData) : null;
+  if (!ad || ad.length < 37) return null;
+  return new DataView(ad.buffer, ad.byteOffset + 33, 4).getUint32(0, false);
+}
+
+/** W3C WebAuthn clone check: synced passkeys report 0->0; counter-backed authenticators must strictly advance. */
+export function isValidSignCount(prevCount: number | undefined, nextCount: number | null): boolean {
+  if (nextCount === null) return false;
+  const prev = prevCount ?? 0;
+  if (prev === 0 && nextCount === 0) return true;
+  return nextCount > prev;
+}
 
 /** The WebAuthn challenge for a message: SHA-256 of its bytes, base64url. The person's device signs over it. */
 export const challengeFor = (message: string) => b64uEncode(sha256Bytes(enc.encode(message)));
@@ -120,7 +135,7 @@ const eqBytes = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.eve
  * name this relying party with user presence and user verification, and the signature must check out against
  * the credential's registered public key. Fails closed on anything unexpected.
  */
-export function verifyWebAuthn(cred: PasskeyCredential | undefined, rp: RelyingParty | null, message: string, wa: WebAuthnSig | undefined): boolean {
+export function verifyWebAuthn(cred: PasskeyCredential | undefined, rp: RelyingParty | null, message: string, wa: WebAuthnSig | undefined, opts?: { checkSignCount?: boolean }): boolean {
   try {
     if (!cred || !rp || !wa || wa.credentialId !== cred.id) return false;
     const cdBytes = b64uDecode(wa.clientDataJSON), ad = b64uDecode(wa.authenticatorData), sig = b64uDecode(wa.signature);
@@ -130,6 +145,7 @@ export function verifyWebAuthn(cred: PasskeyCredential | undefined, rp: RelyingP
     if (!eqBytes(ad.slice(0, 32), sha256Bytes(enc.encode(rp.rpId)))) return false;
     const flags = ad[32];
     if ((flags & 0x01) === 0 || (flags & 0x04) === 0) return false; // user present and user verified
+    if (opts?.checkSignCount && !isValidSignCount(cred.signCount, new DataView(ad.buffer, ad.byteOffset + 33, 4).getUint32(0, false))) return false;
     const signed = new Uint8Array(ad.length + 32);
     signed.set(ad);
     signed.set(sha256Bytes(cdBytes), ad.length);

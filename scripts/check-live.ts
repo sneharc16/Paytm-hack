@@ -1,5 +1,6 @@
 // Plays the whole story on a deployed site through its public API and checks the numbers.
 // Usage: pnpm check:live https://your-app.vercel.app
+import { randomBytes } from "node:crypto";
 import { DEMO_END } from "@/engine/clock";
 import { metrics } from "@/engine/metrics";
 import { ingest, Session } from "@/engine/session";
@@ -8,7 +9,7 @@ import { generateWorld } from "@/engine/world";
 
 async function main() {
   const base = process.argv[2];
-  const id = `LIVECHK-${Date.now() % 10000}`;
+  const id = `LIVECHK-${randomBytes(8).toString("hex").toUpperCase()}`;
   const post = (path: string, body: unknown) => fetch(`${base}/api/sessions/${id}/${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, body: await r.text() }));
   let t = Date.now();
   const jump = await post("clock", { action: "jump", value: DEMO_END });

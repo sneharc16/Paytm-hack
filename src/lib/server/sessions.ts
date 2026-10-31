@@ -2,6 +2,7 @@
 // server instance keeps a replica of the session, catches up from the store, advances it to the sim clock,
 // and appends what it produced. If another instance appended first, it re-reads and retries; the engine is
 // deterministic, so the retry produces the same events.
+import { randomBytes } from "node:crypto";
 import { tick } from "@/engine/agent";
 import { DEMO_END, ms, SESSION_START, simNow, type ClockState } from "@/engine/clock";
 import { applyCommand, type ClockCommand, type Command } from "@/engine/commands";
@@ -14,6 +15,10 @@ import { ConflictError, getStore } from "./store";
 
 installModelHooks();
 
+export const VALID_SESSION_ID = /^[A-Z0-9-]{3,36}$/;
+const MAX_REPLICAS = 100;
+const MAX_WORLDS = 8;
+
 interface Entry { session: Session; clock: ClockState; epoch: number; invariantFailures: string[] }
 
 const g = globalThis as unknown as { __pakka?: { worlds: Map<string, World>; replicas: Map<string, Entry>; n: number } };
@@ -21,22 +26,34 @@ const mem = (g.__pakka ??= { worlds: new Map(), replicas: new Map(), n: 6 });
 
 function world(seed: string) {
   let w = mem.worlds.get(seed);
-  if (!w) { w = generateWorld(seed); mem.worlds.set(seed, w); }
+  if (!w) {
+    if (mem.worlds.size >= MAX_WORLDS) {
+      const oldest = mem.worlds.keys().next().value;
+      if (oldest !== undefined) mem.worlds.delete(oldest);
+    }
+    w = generateWorld(seed);
+    mem.worlds.set(seed, w);
+  }
   return w;
 }
 
 const startClock = (): ClockState => ({ simAnchor: SESSION_START, realAnchor: Date.now(), speed: 60, paused: true });
 
 export function newSessionId() {
-  return `DEMO-${10 + Math.floor(Math.random() * 90)}`;
+  return `DEMO-${randomBytes(8).toString("hex").toUpperCase()}`;
 }
 
 /** Bring this instance's replica in line with the store. */
 async function sync(id: string): Promise<Entry> {
+  if (!VALID_SESSION_ID.test(id)) throw new Error("INVALID_SESSION_ID");
   const store = getStore();
   const row = await store.load(id, startClock());
   let e = mem.replicas.get(id);
   if (!e || e.epoch !== row.epoch) {
+    if (!mem.replicas.has(id) && mem.replicas.size >= MAX_REPLICAS) {
+      const oldest = mem.replicas.keys().next().value;
+      if (oldest !== undefined) mem.replicas.delete(oldest);
+    }
     e = { session: new Session(id, world(row.seed)), clock: row.clock, epoch: row.epoch, invariantFailures: [] };
     mem.replicas.set(id, e);
   }

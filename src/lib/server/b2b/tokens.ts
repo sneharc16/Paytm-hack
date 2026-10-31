@@ -3,6 +3,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { b64uDecode, b64uEncode } from "@/b2b/crypto";
+import { safeJsonParse } from "@/lib/server/security";
 
 let cached: Buffer | null = null;
 export const serverSecret = () => secret();
@@ -11,7 +12,7 @@ function secret(): Buffer {
   if (cached) return cached;
   const env = process.env.PAKKA_SESSION_SECRET;
   if (env && env.length >= 32) return (cached = Buffer.from(env));
-  if (process.env.NODE_ENV === "production" && process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error("Set PAKKA_SESSION_SECRET (32 or more characters)");
+  if (process.env.NODE_ENV === "production") throw new Error("Set PAKKA_SESSION_SECRET (32 or more characters)");
   const dir = process.env.PAKKA_DATA_DIR ?? path.join(process.cwd(), ".pakka-data");
   const file = path.join(dir, "session-secret");
   if (!existsSync(file)) { mkdirSync(dir, { recursive: true }); writeFileSync(file, randomBytes(48).toString("hex"), { mode: 0o600 }); }
@@ -26,13 +27,17 @@ export function signToken(purpose: string, payload: Record<string, unknown>, ttl
 }
 
 export function readToken<T extends Record<string, unknown>>(purpose: string, token: string | undefined | null): T | null {
-  if (!token || !token.includes(".")) return null;
-  const [body, sig] = token.split(".");
+  if (!token || token.length > 4096) return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [body, sig] = parts;
   const want = Buffer.from(mac(purpose, body)), got = Buffer.from(sig ?? "");
   if (want.length !== got.length || !timingSafeEqual(want, got)) return null;
   try {
-    const p = JSON.parse(new TextDecoder().decode(b64uDecode(body)!)) as T & { exp: number };
-    return p.exp > Date.now() ? p : null;
+    const decoded = b64uDecode(body);
+    if (!decoded) return null;
+    const p = safeJsonParse<T & { exp: number }>(new TextDecoder().decode(decoded));
+    return typeof p?.exp === "number" && p.exp > Date.now() ? p : null;
   } catch { return null; }
 }
 
@@ -49,6 +54,6 @@ export function readCookie(req: Request, name: string): string | undefined {
   return undefined;
 }
 export function cookie(name: string, value: string, maxAge: number, req: Request): string {
-  const secure = new URL(req.url).protocol === "https:" ? "; Secure" : "";
+  const secure = process.env.NODE_ENV === "production" || new URL(req.url).protocol === "https:" ? "; Secure" : "";
   return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure}`;
 }
