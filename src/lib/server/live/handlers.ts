@@ -7,7 +7,7 @@ import { b64uDecode, challengeFor, verifyWebAuthn } from "@/b2b/crypto";
 import { isUiLang, baseLang, type UiLang } from "@/copy/languages";
 import { passkeyVerified } from "@/engine/actions";
 import { applyCommand, Command } from "@/engine/commands";
-import { AutopayInput, checkAutopay, istDate } from "@/engine/live";
+import { addMonths, AutopayInput, checkAutopay, istDate } from "@/engine/live";
 import type { Lang } from "@/engine/types";
 import { sha256 } from "@/lib/hash";
 import { llmEnabled, runTask } from "@/llm/client";
@@ -186,6 +186,30 @@ const rupees = (s: string) => Number(s.replace(/,/g, ""));
 const amountsIn = (text: string) => [...text.matchAll(/(\d[\d,]*(?:\.\d{1,2})?)/g)].map((m) => rupees(m[1]));
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
+/** Date (YYYY-MM-DD) from the message: if in the future, keep as-is; if today or past, 1 month after that date. */
+function dateFromSms(text: string, today: string): string | null {
+  const year = (y?: string) => (y ? (y.length === 2 ? `20${y}` : y) : today.slice(0, 4));
+  const maxDay = addMonths(today, 13);
+  const candidates: string[] = [];
+  for (const m of text.matchAll(/\b(\d{4})[-/](\d{2})[-/](\d{2})\b/g)) candidates.push(`${m[1]}-${m[2]}-${m[3]}`);
+  for (const m of text.matchAll(/\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})\b/g)) candidates.push(`${year(m[3])}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`);
+  for (const m of text.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?[\s-]*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s-,]*(\d{2,4})?\b/gi)) {
+    candidates.push(`${year(m[3])}-${String(MONTHS.indexOf(m[2].toLowerCase()) + 1).padStart(2, "0")}-${m[1].padStart(2, "0")}`);
+  }
+  for (const m of text.matchAll(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s-]+(\d{1,2})(?:st|nd|rd|th)?(?:[\s,]+(\d{2,4}))?\b/gi)) {
+    candidates.push(`${year(m[3])}-${String(MONTHS.indexOf(m[1].toLowerCase()) + 1).padStart(2, "0")}-${m[2].padStart(2, "0")}`);
+  }
+  const valid = candidates.filter((d) => /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(d) && !Number.isNaN(Date.parse(d)) && d <= maxDay);
+  const future = valid.find((d) => d > today);
+  if (future) return future;
+  if (valid[0]) {
+    let next = addMonths(valid[0], 1);
+    while (next <= today) next = addMonths(next, 1);
+    return next;
+  }
+  return null;
+}
+
 /** The rule-based reader: the template behind the model, and the check on what the model said. */
 export function readSmsByRules(text: string, today: string) {
   const amount = /(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)/i.exec(text)?.[1];
@@ -193,13 +217,7 @@ export function readSmsByRules(text: string, today: string) {
   const legal = /((?:[A-Z][A-Za-z0-9&']*\s+){1,6}(?:Pvt\.?\s*Ltd|Private Limited|Limited|Ltd))/.exec(text)?.[1]?.trim();
   const named = /(?:for|towards)\s+([A-Z][A-Za-z0-9]*(?:\s[A-Z][A-Za-z0-9]*){0,3})\b/.exec(text)?.[1]?.trim();
   const brand = named && !(legal ?? "").startsWith(named) ? named : null;
-  const dmy = /\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})\b/.exec(text);
-  const dMon = /\b(\d{1,2})[\s-]*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s-,]*(\d{2,4})?\b/i.exec(text);
-  let nextDue: string | null = null;
-  const year = (y?: string) => (y ? (y.length === 2 ? `20${y}` : y) : today.slice(0, 4));
-  if (dmy) nextDue = `${year(dmy[3])}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
-  else if (dMon) nextDue = `${year(dMon[3])}-${String(MONTHS.indexOf(dMon[2].toLowerCase()) + 1).padStart(2, "0")}-${dMon[1].padStart(2, "0")}`;
-  if (nextDue && (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(nextDue) || nextDue < today)) nextDue = null;
+  const nextDue = dateFromSms(text, today) ?? addMonths(today, 1);
   const interval = /\b(month|monthly|mahina|mahine)\b/i.test(text) ? "month" : /\bquarter/i.test(text) ? "quarter" : /\b(year|yearly|annual)/i.test(text) ? "year" : null;
   const kind = /\b(loan|emi)\b/i.test(text) ? "emi" : /\b(sip|mutual fund)\b/i.test(text) ? "sip" : /\binsurance\b/i.test(text) ? "insurance" : /\b(electricity|bill|gas|broadband|recharge)\b/i.test(text) ? "bill" : "subscription";
   return { brand: brand ?? null, legalName: legal ?? null, amount: amount ? Math.round(rupees(amount) * 100) : null, interval, nextDue, kind } as const;
@@ -214,6 +232,7 @@ export const readSms = (req: Request) => guarded(async () => {
   if (typeof text !== "string" || !text.trim() || text.length > 800) return errJson(400, "INVALID");
   const today = istDate(nowIso());
   const rules = readSmsByRules(text, today);
+  const smsDate = dateFromSms(text, today);
   let model: z.infer<typeof SmsOut> | null = null;
   if (llmEnabled()) {
     const r = await runTask("sms", { text }, { useDemoCache: false, timeoutMs: 12_000 });
@@ -221,20 +240,20 @@ export const readSms = (req: Request) => guarded(async () => {
     if (p?.success && p.data.found) model = p.data;
   }
   // The model may only repeat what the message says: names must appear in it, the amount must be one of its
-  // numbers, the date must be a real future date. Anything else falls back to the rules (or stays empty).
+  // numbers, the date comes from the message (future as-is, past/today + 1 month, or 1 month after today).
   const lower = text.toLowerCase();
   const inText = (s: string | null | undefined) => (s && lower.includes(s.toLowerCase()) ? s.trim() : null);
   const amountOk = model?.amount_rupees != null && amountsIn(text).includes(model.amount_rupees);
-  const dateOk = !!model?.next_due && /^\d{4}-\d{2}-\d{2}$/.test(model.next_due) && model.next_due >= today && !Number.isNaN(Date.parse(model.next_due));
+  const dateOk = !!smsDate && !!model?.next_due && /^\d{4}-\d{2}-\d{2}$/.test(model.next_due) && model.next_due > today && model.next_due <= addMonths(today, 13) && !Number.isNaN(Date.parse(model.next_due));
   const draft = {
     brand: inText(model?.brand) ?? rules.brand,
     legalName: inText(model?.legal_name) ?? rules.legalName,
     amount: amountOk ? Math.round(model!.amount_rupees! * 100) : rules.amount,
     interval: model?.interval && (rules.interval === null || rules.interval === model.interval) ? model.interval : rules.interval,
-    nextDue: dateOk ? model!.next_due : rules.nextDue,
+    nextDue: smsDate ?? (dateOk ? model!.next_due! : rules.nextDue),
     kind: model?.kind ?? rules.kind,
   };
-  const found = Object.entries(draft).some(([k, v]) => k !== "kind" && v !== null);
+  const found = Boolean(draft.brand || draft.legalName || draft.amount || draft.interval || smsDate);
   return okJson({ draft, found, by: model ? "sarvam" : "rules" });
 });
 

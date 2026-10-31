@@ -5,6 +5,7 @@ import { passkeyVerified } from "@/engine/actions";
 import { addMonths, AutopayInput, buildLiveWorld, checkAutopay, horizonFrom, type LiveAutopay } from "@/engine/live";
 import { Session } from "@/engine/session";
 import { checkInvariants } from "@/engine/invariants";
+import { pillFor, rowsFor } from "@/lib/views";
 
 const joined = "2026-11-02T06:00:00.000Z"; // 11:30 AM IST
 const profile = { id: "lu_test", name: "Meera Rao", lang: "en" as const, startAt: joined };
@@ -34,7 +35,7 @@ describe("Pakka live engine", () => {
     expect(s.state.cycle("ap_one_c1").status).toBe("succeeded"); // silence: the charge goes ahead (simulated money)
     expect(checkInvariants(s)).toEqual([]);
   });
-  it("pauses only with the passkey-backed token", () => {
+  it("skips for 1 month with the passkey-backed token, then cancels on a second pause", () => {
     const s = new Session(profile.id, buildLiveWorld(profile, [ap()], horizonFrom(joined)));
     tick(s, "2026-11-04T17:00:00.000Z");
     const at = "2026-11-04T17:00:00.000Z";
@@ -42,9 +43,17 @@ describe("Pakka live engine", () => {
     expect(s.state.mandateStatus.get("ap_one")).toBe("active");
     const { pinToken } = passkeyVerified(s, at, profile.id, "pk_token_1");
     applyCommand(s, at, { kind: "customer_decision", cycleId: "ap_one_c1", choice: "pause", pinToken });
-    expect(s.state.mandateStatus.get("ap_one")).toBe("paused");
+    expect(s.state.mandateStatus.get("ap_one")).toBe("active");
+    expect(s.state.skipsUsed("ap_one")).toBe(1);
+    expect(s.state.cycle("ap_one_c2").status).toBe("scheduled");
     tick(s, "2026-11-06T00:00:00.000Z");
     expect(s.state.executions.size).toBe(0);
+
+    // Pausing a second time (after reaching maxSkipsAllowed = 1) cancels the mandate
+    const { pinToken: pinToken2 } = passkeyVerified(s, "2026-11-06T00:00:00.000Z", profile.id, "pk_token_2");
+    applyCommand(s, "2026-11-06T00:00:00.000Z", { kind: "customer_decision", cycleId: "ap_one_c2", choice: "pause", pinToken: pinToken2 });
+    expect(s.state.mandateStatus.get("ap_one")).toBe("revoked");
+    expect(pillFor(rowsFor(s, profile.id)[0])).toEqual({ kind: "muted", key: "pill.cancelled" });
   });
   it("keeps an EMI as remind-only", () => {
     const s = new Session(profile.id, buildLiveWorld(profile, [ap({ kind: "emi", trial: null, brand: "Ghar Loan" }, "ap_emi")], horizonFrom(joined)));

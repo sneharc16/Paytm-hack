@@ -58,10 +58,18 @@ export interface NudgeRecord {
 
 export interface Incident { id: string; merchantId: string; openedAt: ISO; metrics: Record<string, number> }
 
+/** Maximum number of monthly skips allowed per mandate before pausing again cancels it (configured in .env). */
+export function maxSkipsAllowed(): number {
+  const raw = process.env.NEXT_PUBLIC_MAX_SKIPS ?? process.env.MAX_SKIPS;
+  const n = raw !== undefined && raw.trim() !== "" ? Number(raw) : NaN;
+  return Number.isInteger(n) && n >= 0 ? n : 1;
+}
+
 export class EngineState {
   cursor: ISO;
   cycles = new Map<string, CycleState>();
   mandateStatus = new Map<string, "active" | "paused" | "revoked">();
+  mandateSkips = new Map<string, number>();
   alwaysKeep = new Set<string>();
   merchantSettings = new Map<string, MerchantSettings>();
   settingsChangedBy = new Map<string, { by: string; at: ISO }>();
@@ -97,6 +105,10 @@ export class EngineState {
     const c = this.cycles.get(id);
     if (!c) throw new Error(`unknown cycle ${id}`);
     return c;
+  }
+
+  skipsUsed(mandateId: string): number {
+    return this.mandateSkips.get(mandateId) ?? 0;
   }
 
   addTimer(at: ISO, kind: string, ref: string) {
@@ -192,12 +204,28 @@ export class EngineState {
         const a = this.actions.get(p.key);
         if (a) a.status = "executed";
         if (p.actionType === "requestUserOptOut") {
-          this.mandateStatus.set(p.mandateId, p.kind === "pause" ? "paused" : "revoked");
-          for (const c of this.world.cycles) {
-            if (c.mandateId !== p.mandateId) continue;
-            const cs = this.cycle(c.id);
-            if (["scheduled", "notice_received", "awaiting_answer", "confirmed", "ready", "retry_scheduled", "failed_business"].includes(cs.status)) {
-              cs.status = "opted_out"; cs.optOutKind = p.kind; this.dropTimer("retry", c.id);
+          const used = this.skipsUsed(p.mandateId);
+          const max = maxSkipsAllowed();
+          if (p.kind === "pause" && used < max) {
+            this.mandateSkips.set(p.mandateId, used + 1);
+            this.mandateStatus.set(p.mandateId, "active");
+            const targetId = p.cycleId ?? a?.cycleId;
+            const target = targetId ? this.world.cycles.find((c) => c.id === targetId) : undefined;
+            const cycles = target ? [target] : this.world.cycles.filter((c) => c.mandateId === p.mandateId);
+            for (const c of cycles) {
+              const cs = this.cycle(c.id);
+              if (["scheduled", "notice_received", "awaiting_answer", "confirmed", "ready", "retry_scheduled", "failed_business"].includes(cs.status)) {
+                cs.status = "opted_out"; cs.optOutKind = "pause"; this.dropTimer("retry", c.id);
+              }
+            }
+          } else {
+            this.mandateStatus.set(p.mandateId, "revoked");
+            for (const c of this.world.cycles) {
+              if (c.mandateId !== p.mandateId) continue;
+              const cs = this.cycle(c.id);
+              if (["scheduled", "notice_received", "awaiting_answer", "confirmed", "ready", "retry_scheduled", "failed_business", "opted_out"].includes(cs.status)) {
+                cs.status = "opted_out"; cs.optOutKind = "cancel"; this.dropTimer("retry", c.id);
+              }
             }
           }
         }

@@ -17,7 +17,13 @@ export interface Row { mandate: Mandate; merchant: Merchant; plan: Plan; cycle: 
 export function currentCycle(s: Session, mandateId: string): Cycle {
   const cycles = s.idx.cyclesByMandate.get(mandateId) ?? [];
   // A live world holds the next few charges ahead: the current one is the first not yet settled.
-  if (s.world.live) return [...cycles].sort((a, b) => a.seq - b.seq).find((c) => !["succeeded", "skipped"].includes(s.state.cycle(c.id).status)) ?? cycles[cycles.length - 1];
+  if (s.world.live) {
+    const active = s.state.mandateStatus.get(mandateId) === "active";
+    return [...cycles].sort((a, b) => a.seq - b.seq).find((c) => {
+      const st = s.state.cycle(c.id).status;
+      return active ? !["succeeded", "skipped", "opted_out"].includes(st) : !["succeeded", "skipped"].includes(st);
+    }) ?? cycles[cycles.length - 1];
+  }
   return cycles.reduce((a, b) => (b.seq > a.seq ? b : a), cycles[0]);
 }
 
@@ -40,7 +46,7 @@ export function pillFor(r: Row): { kind: PillKind; key: string } | null {
   if (st === "retry_scheduled") return { kind: "neutral", key: "pill.scheduled" };
   if (st === "failed_business") return { kind: "answer", key: "pill.failed" };
   if (st === "skipped") return { kind: "muted", key: "pill.skipped" };
-  if (st === "opted_out") return { kind: "muted", key: r.cs.optOutKind === "pause" ? "pill.paused" : "pill.cancelled" };
+  if (st === "opted_out") return { kind: "muted", key: r.cs.optOutKind === "pause" ? "pill.skipped" : "pill.cancelled" };
   if (st === "succeeded") return { kind: "done", key: "pill.charged" };
   if (st === "confirmed") return { kind: "neutral", key: "pill.scheduled" };
   return null;

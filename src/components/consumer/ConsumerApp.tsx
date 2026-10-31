@@ -7,7 +7,9 @@ import { type StringKey } from "@/copy/strings";
 import { baseLang, isRegional, langInfo, type UiLang } from "@/copy/languages";
 import { hasTable, tr, uiDayMonth, uiRelativeDay } from "@/copy/regional";
 import { speakWithSarvam, startListening, toEnglish, useRegional } from "@/lib/regional-client";
-import { addMin, istDay, ms, peakWindow } from "@/engine/clock";
+import { addMin, ist, istDay, ms, peakWindow } from "@/engine/clock";
+import { addMonths } from "@/engine/live";
+import { maxSkipsAllowed } from "@/engine/state";
 import { intakeTemplate } from "@/engine/actions";
 import { hasNameGap } from "@/engine/namegap";
 import type { Intake } from "@/engine/resolve";
@@ -245,8 +247,8 @@ function MandateRow({ r, lang, now, onClick }: { r: Row; lang: UiLang; now: stri
 }
 
 // ---------- C2 ----------
-function choiceLabel(lang: UiLang, c: Choice, amountFor?: string) {
-  return tr(lang, c === "keep" ? "choice.keep" : c === "skip" ? "choice.skip" : c === "pause" ? "choice.pause" : c === "cancel" ? "choice.cancel" : "choice.downgrade", { amount: amountFor ?? "" });
+function choiceLabel(lang: UiLang, c: Choice, amountFor?: string, pauseAsSkip?: boolean) {
+  return tr(lang, c === "keep" ? "choice.keep" : c === "skip" ? "choice.skip" : c === "pause" ? (pauseAsSkip ? "choice.skip.month" : "choice.pause") : c === "cancel" ? "choice.cancel" : "choice.downgrade", { amount: amountFor ?? "" });
 }
 
 function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; cycleId: string; lang: UiLang; now: string; onPin: (c: "pause" | "cancel") => void; onDone: (c: Choice, status: string) => void }) {
@@ -259,7 +261,12 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
   const settings = s.settings(mer.id);
   const usage = s.idx.usage.get(m.id);
   const cheaper = settings.offerDowngradePlanId ? s.idx.plan.get(settings.offerDowngradePlanId) : undefined;
-  const label = (c: Choice) => choiceLabel(lang, c, cheaper ? inr(cheaper.amount) : undefined);
+  const maxSkips = maxSkipsAllowed();
+  const skipsUsed = s.state.skipsUsed(m.id);
+  const pauseWillCancel = skipsUsed >= maxSkips;
+  const nextMonthIso = ist(`${addMonths(istDay(cs.dueOverride ?? c.dueAt), 1)} 22:00`);
+  const nextDate = uiDayMonth(nextMonthIso, lang);
+  const label = (ch: Choice) => choiceLabel(lang, ch, cheaper ? inr(cheaper.amount) : undefined, !pauseWillCancel);
   const [choice, setChoice] = useState<Choice | null>(cs.decision ?? null);
   const [busy, setBusy] = useState(false);
   const [audio, setAudio] = useState<"idle" | "loading" | "playing" | "error">("idle");
@@ -276,7 +283,7 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
     { id: "keep", desc: tr(lang, "choice.keep.desc", p) },
     ...(settings.offerSkip ? [{ id: "skip" as Choice, desc: tr(lang, "choice.skip.desc"), offer: true }] : []),
     ...(cheaper ? [{ id: "downgrade" as Choice, desc: tr(lang, "choice.downgrade.desc", { amount: inr(cheaper.amount) }), offer: true }] : []),
-    { id: "pause", desc: tr(lang, "choice.pause.desc"), pin: true },
+    { id: "pause", desc: pauseWillCancel ? tr(lang, "choice.pause.warn_cancel", { brand: mer.brand, max: maxSkips }) : tr(lang, "choice.skip.month.desc", { next: nextDate }), pin: true },
     { id: "cancel", desc: tr(lang, "choice.cancel.desc", p), pin: true },
   ];
   const listen = async () => {
@@ -354,9 +361,14 @@ function DecisionSheet({ s, cycleId, lang, now, onPin, onDone }: { s: Session; c
           );
         })}
       </div>
+      {pauseWillCancel && choice === "pause" && (
+        <p role="alert" className="rounded-[10px] bg-red-wash px-3 py-2 text-[14px] font-semibold text-red">
+          {tr(lang, "choice.pause.warn_cancel", { brand: mer.brand, max: maxSkips })}
+        </p>
+      )}
       <p className="flex gap-2 text-[14px] text-slate"><Info size={18} className="shrink-0" aria-hidden />{tr(lang, dh ? "noanswer.dh" : "noanswer.default", p)}</p>
       <button disabled={!choice || busy} onClick={confirm} className={`h-12 rounded-[10px] text-[16px] font-semibold ${choice ? "btn-primary text-white" : "bg-line-strong text-slate"}`}>
-        {busy ? tr(lang, "button.working") : choice ? label(choice) : tr(lang, "button.choose")}
+        {busy ? tr(lang, "button.working") : choice ? (choice === "pause" && pauseWillCancel ? tr(lang, "choice.cancel") : label(choice)) : tr(lang, "button.choose")}
       </button>
       <AIFooter lang={lang} />
     </div>
@@ -369,7 +381,9 @@ function PinPad({ s, userId, cycleId, choice, lang, onDone }: { s: Session; user
   const [digits, setDigits] = useState("");
   const [err, setErr] = useState(false);
   const [busy, setBusy] = useState(false);
-  const brand = s.merchantOf(s.idx.cycle.get(cycleId)!.mandateId).brand;
+  const c = s.idx.cycle.get(cycleId)!;
+  const brand = s.merchantOf(c.mandateId).brand;
+  const pauseWillCancel = choice === "pause" && s.state.skipsUsed(c.mandateId) >= maxSkipsAllowed();
   // In production this is NPCI's common library PIN screen; the app never sees the PIN.
   const submit = async () => {
     setBusy(true);
@@ -383,7 +397,8 @@ function PinPad({ s, userId, cycleId, choice, lang, onDone }: { s: Session; user
     <div className="flex flex-col items-center gap-3">
       <p className="rounded-full bg-amber-wash px-3 py-0.5 text-[13px] font-semibold text-amber">{tr(lang, "pin.demo")}</p>
       <h2 className="text-[20px] font-bold text-navy">{tr(lang, "pin.title")}</h2>
-      <p className="text-[14px] text-slate">{tr(lang, choice === "pause" ? "pin.what.pause" : "pin.what.cancel", { brand })}</p>
+      <p className="text-[14px] text-slate">{tr(lang, choice === "pause" && !pauseWillCancel ? "pin.what.pause" : "pin.what.cancel", { brand })}</p>
+      {pauseWillCancel && <p role="alert" className="rounded-[10px] bg-red-wash px-3 py-2 text-center text-[14px] font-semibold text-red">{tr(lang, "choice.pause.warn_cancel", { brand, max: maxSkipsAllowed() })}</p>}
       <div className="flex gap-3" aria-label={`${digits.length} digits entered`}>
         {Array.from({ length: 6 }, (_, i) => <span key={i} className={`h-3 w-3 rounded-full ${i < digits.length ? "bg-navy" : "border border-line-strong"}`} />)}
       </div>
@@ -406,20 +421,21 @@ function ResultState({ s, cycleId, choice, status, lang, now, close }: { s: Sess
   const c = s.idx.cycle.get(cycleId)!;
   const cs = s.state.cycle(cycleId);
   const mer = s.merchantOf(c.mandateId);
-  const p = { day: uiRelativeDay(c.dueAt, now, lang), amount: inr(c.amount), brand: mer.brand, next: uiDayMonth(addMin(c.dueAt, 31 * 24 * 60), lang) };
+  const nextIso = ist(`${addMonths(istDay(c.dueAt), 1)} 22:00`);
+  const p = { day: uiRelativeDay(c.dueAt, now, lang), amount: inr(c.amount), brand: mer.brand, next: uiDayMonth(nextIso, lang) };
   const verified = (choice === "skip" && cs.status === "skipped") || (choice === "keep" && cs.status === "confirmed") || ((choice === "pause" || choice === "cancel") && cs.status === "opted_out") || (choice === "downgrade" && !!cs.amountOverride);
+  const cancelledOnPause = choice === "pause" && (cs.optOutKind === "cancel" || s.state.mandateStatus.get(c.mandateId) === "revoked");
   let title: string, sub = "";
   if (status === "held") title = tr(lang, "result.held");
   else if (status === "late") title = tr(lang, "result.late");
   else if (!verified) { title = tr(lang, "button.slow"); }
-  else if (choice === "skip") { title = tr(lang, "result.skip", p); sub = tr(lang, "result.skip.sub", p); }
+  else if (choice === "skip" || (choice === "pause" && !cancelledOnPause)) { title = tr(lang, "result.skip", p); sub = tr(lang, "result.skip.sub", p); }
   else if (choice === "keep") { title = tr(lang, "result.keep", p); sub = tr(lang, "result.keep.sub", p); }
   else if (choice === "downgrade") {
     const newDue = cs.dueOverride ?? c.dueAt;
     title = tr(lang, "result.downgrade", { ...p, day: uiRelativeDay(newDue, now, lang), amount: inr(cs.amountOverride ?? c.amount) });
     sub = tr(lang, "result.downgrade.sub", { brand: mer.brand, plan: s.idx.plan.get(cs.planOverride ?? "")?.name ?? "" });
   }
-  else if (choice === "pause") { title = tr(lang, "result.pause", p); sub = tr(lang, "result.pause.sub"); }
   else { title = tr(lang, "result.cancel", p); sub = tr(lang, "result.cancel.sub", p); }
   return (
     <div className="flex flex-col items-center gap-3 py-2 text-center">
@@ -548,13 +564,18 @@ function DetailScreen({ s, mandateId, lang, now, back, ask }: { s: Session; mand
         <div className="mt-4 flex flex-col gap-2">
           {m.irrevocable ? (
             <div className="flex justify-between card px-4 py-3 text-[15px]"><span>{tr(lang, "detail.remind_when")}</span><span className="font-semibold">{tr(lang, "detail.remind_value")}</span></div>
-          ) : s.state.mandateStatus.get(m.id) === "active" && (
+          ) : s.state.mandateStatus.get(m.id) === "active" ? (
             <>
-              <button onClick={() => ask(cycle.id)} className="press h-12 rounded-full border border-line-strong bg-surface text-[15px] font-semibold text-navy">{tr(lang, "choice.pause")} / {tr(lang, "choice.cancel")}</button>
+              <button onClick={() => ask(cycle.id)} className="press h-12 rounded-full border border-line-strong bg-surface text-[15px] font-semibold text-navy">{tr(lang, s.state.skipsUsed(m.id) >= maxSkipsAllowed() ? "choice.pause" : "choice.skip.month")} / {tr(lang, "choice.cancel")}</button>
               {s.state.alwaysKeep.has(m.id)
                 ? <p className="flex items-center justify-center gap-1.5 rounded-full bg-green-wash py-3 text-[15px] font-semibold text-green"><Check size={18} aria-hidden />{tr(lang, "detail.always_keep")}</p>
                 : <button onClick={() => send({ kind: "always_keep", mandateId: m.id })} className="btn-soft h-12 rounded-full text-[15px] font-semibold">{tr(lang, "detail.always_keep")}</button>}
             </>
+          ) : (
+            <div className="flex items-center justify-between card px-4 py-3 text-[15px]">
+              <span className="font-semibold text-navy">{tr(lang, "result.cancel", { brand: mer.brand })}</span>
+              <StatusPill kind="muted">{tr(lang, "pill.cancelled")}</StatusPill>
+            </div>
           )}
         </div>
         {m.irrevocable && <p className="mt-3 flex gap-2 text-[14px] text-slate"><Lock size={16} className="mt-0.5" aria-hidden />{tr(lang, "row.irrevocable")}</p>}

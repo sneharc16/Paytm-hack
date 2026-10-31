@@ -6,6 +6,7 @@ import * as npci from "@/sim/npci";
 import { addMin, addSec, isPeak, isQuiet, istDay, ms, nextMorning, nextOffPeak } from "./clock";
 import { writeNudge, type NudgeKind } from "./explain";
 import type { Session } from "./session";
+import { maxSkipsAllowed } from "./state";
 import type { Actor, ISO } from "./types";
 
 export type Tool =
@@ -164,9 +165,10 @@ export function run(s: Session, at: ISO, a: PlannedAction): GatewayResult {
     case "requestUserOptOut": {
       const r = bank.optOut(st, mandateId!, p.pinToken);
       if ("error" in r) return block(r.error);
-      exec({ mandateId, kind: p.kind, pinToken: p.pinToken });
-      verified(addSec(at, 1), { check: "mandate_" + p.kind });
-      inform(addSec(at, 1), userId, p.kind === "pause" ? "result.pause" : "result.cancel");
+      const willCancel = p.kind === "cancel" || st.skipsUsed(mandateId!) >= maxSkipsAllowed();
+      exec({ mandateId, cycleId: a.cycleId, kind: willCancel ? "cancel" : "pause", pinToken: p.pinToken });
+      verified(addSec(at, 1), { check: "mandate_" + (willCancel ? "cancel" : "pause") });
+      inform(addSec(at, 1), userId, willCancel ? "result.cancel" : "result.pause");
       return { status: "executed", key, actionId };
     }
     case "scheduleRetry": {

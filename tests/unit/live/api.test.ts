@@ -92,8 +92,14 @@ describe("Pakka live API", () => {
     expect((await call(h.state, "state")).data.profile.id).toBe(userId);
   });
 
-  it("reads a bank SMS by rules when no model is set", () => {
+  it("reads a bank SMS by rules: keeps a future date as-is, otherwise sets nextDue to 1 month after the date", () => {
     const d = h.readSmsByRules("AutoPay set up: Rs.299.00 will be debited monthly for StreamKaro to Chalchitra Digital Pvt Ltd. Next debit on 15-11-2026. UMN abc@okbank", "2026-11-06");
     expect(d).toMatchObject({ amount: 29900, legalName: "Chalchitra Digital Pvt Ltd", interval: "month", nextDue: "2026-11-15", kind: "subscription", brand: "StreamKaro" });
+
+    const createdPast = h.readSmsByRules("Dear Customer, your UPI AutoPay mandate for Spotify of Rs.119.00 monthly to Spotify India Pvt Ltd was created on 15-10-2026. -HDFC Bank", "2026-10-31");
+    expect(createdPast.nextDue).toBe("2026-11-15");
+
+    const noDate = h.readSmsByRules("AutoPay set up: Rs.299.00 will be debited monthly for StreamKaro.", "2026-11-06");
+    expect(noDate.nextDue).toBe("2026-12-06");
   });
 });

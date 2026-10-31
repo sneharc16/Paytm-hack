@@ -1,0 +1,20 @@
+/* Pakka: the app's own palette (src/styles/tokens.css) with Mukta self-hosted. */
+@font-face { font-family: "Mukta"; font-weight: 400; src: url("./fonts/mukta-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Mukta"; font-weight: 500; src: url("./fonts/mukta-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Mukta"; font-weight: 600; src: url("./fonts/mukta-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Mukta"; font-weight: 700; src: url("./fonts/mukta-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Mukta"; font-weight: 800; src: url("./fonts/mukta-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Mukta"; font-weight: 400; unicode-range: U+0900-097F; src: url("./fonts/mukta-devanagari-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Mukta"; font-weight: 700; unicode-range: U+0900-097F; src: url("./fonts/mukta-devanagari-700-normal.woff2") format("woff2"); }
+
+:root {
+  --navy: #002E6E; --navy-700: #0A3F86; --cyan: #00BAF2; --ink: #12223F; --slate: #56657F; --mist: #8794AB;
+  --canvas: #F4F8FD; --surface: #FFFFFF; --blue: #0B72E7; --line: #E2E8F0; --line-strong: #CBD5E3;
+  --cyan-wash: #E6F8FE; --navy-wash: #EBF0F8; --green: #0B7A55; --green-wash: #E3F4EC;
+  --amber: #8F5300; --amber-wash: #FFF2D9; --red: #B42F2F; --red-wash: #FBEAEA;
+  --r-card: 16px; --r-sheet: 24px; --ease-out: cubic-bezier(.2,.8,.2,1);
+  --color-bg: var(--canvas); --color-fg: var(--ink); --color-accent: var(--navy);
+  --font-display: "Mukta", system-ui, sans-serif; --font-body: "Mukta", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --safe-x: 120px;
+}

@@ -8,6 +8,7 @@ import { isUiLang, langInfo, type UiLang } from "@/copy/languages";
 import { tr } from "@/copy/regional";
 import type { StringKey } from "@/copy/strings";
 import { AUTOPAY_KINDS, type AutopayInput } from "@/engine/live";
+import { maxSkipsAllowed } from "@/engine/state";
 import type { Session } from "@/engine/session";
 import { inr, timeIST } from "@/lib/format";
 import { useLive, type SmsDraft } from "@/lib/live-client";
@@ -240,6 +241,7 @@ function PasskeyConfirm({ s, cycleId, choice, lang, done }: { s: Session; cycleI
   const [err, setErr] = useState<string | null>(null);
   const c = s.idx.cycle.get(cycleId)!;
   const brand = s.merchantOf(c.mandateId).brand;
+  const pauseWillCancel = choice === "pause" && s.state.skipsUsed(c.mandateId) >= maxSkipsAllowed();
   const go = async () => {
     setBusy(true); setErr(null);
     const r = await confirm(cycleId, choice);
@@ -250,7 +252,8 @@ function PasskeyConfirm({ s, cycleId, choice, lang, done }: { s: Session; cycleI
     <div className="flex flex-col items-center gap-3 text-center">
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-sky-soft"><Fingerprint size={30} className="text-navy" aria-hidden /></span>
       <h2 className="text-[20px] font-bold text-navy">{tr(lang, "live.confirm.title")}</h2>
-      <p className="text-[15px] text-slate">{tr(lang, choice === "pause" ? "live.confirm.pause.body" : "live.confirm.cancel.body", { brand })}</p>
+      <p className="text-[15px] text-slate">{tr(lang, choice === "pause" && !pauseWillCancel ? "live.confirm.pause.body" : "live.confirm.cancel.body", { brand })}</p>
+      {pauseWillCancel && <p role="alert" className="rounded-[10px] bg-red-wash px-3 py-2 text-[14px] font-semibold text-red">{tr(lang, "choice.pause.warn_cancel", { brand, max: maxSkipsAllowed() })}</p>}
       <p className="text-[15px] font-semibold text-ink">{brand}, {inr(c.amount)}</p>
       {err && <p role="alert" className="text-[14px] text-red">{errText(lang, err)}</p>}
       <button disabled={busy} onClick={go} className="h-12 w-full rounded-full btn-primary text-[16px] font-semibold text-white">{busy ? tr(lang, "button.working") : tr(lang, "live.confirm.cta")}</button>

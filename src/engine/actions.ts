@@ -8,6 +8,7 @@ import { addMin, addSec, ist, istDay, istMinutes, ms, nextOffPeak } from "./cloc
 import { nextCaseCode, run } from "./gateway";
 import { resolveMandate, type Intake } from "./resolve";
 import type { Session } from "./session";
+import { maxSkipsAllowed } from "./state";
 import { mask } from "@/lib/privacy/mask";
 import type { Choice, ISO, MerchantSettings, ReviewStamp } from "./types";
 
@@ -64,7 +65,8 @@ export function customerDecision(s: Session, at: ISO, cycleId: string, choice: C
     return { status: r.status, actionId: r.actionId, reason: r.reason };
   }
   if (choice === "pause" || choice === "cancel") {
-    const r = run(s, t1, { type: "requestUserOptOut", ruleId: "USER_OPT_OUT_V1", actor: "customer", targetId: mandate.id, cycleId, discriminator: choice, params: { kind: choice, pinToken: opts.pinToken, mandateId: mandate.id } });
+    const optKind = choice === "cancel" || s.state.skipsUsed(mandate.id) >= maxSkipsAllowed() ? "cancel" : "pause";
+    const r = run(s, t1, { type: "requestUserOptOut", ruleId: "USER_OPT_OUT_V1", actor: "customer", targetId: mandate.id, cycleId, discriminator: optKind, params: { kind: optKind, pinToken: opts.pinToken, mandateId: mandate.id } });
     return { status: r.status, actionId: r.actionId, reason: r.reason };
   }
   return { status: rec.status, actionId: rec.actionId };

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Videowright project has its own toolchain (biome, its own tsconfig).
+    "videos/**",
   ]),
 ]);
 

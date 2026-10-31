@@ -4,6 +4,7 @@
 // Only money is simulated: the charge itself goes to the NPCI simulator, which succeeds.
 import { z } from "zod";
 import { ist, IST_OFFSET_MIN, ms } from "./clock";
+import { maxSkipsAllowed } from "./state";
 import type { Cycle, ISO, Lang, Mandate, Merchant, MerchantCategory, Plan, User, World } from "./types";
 import { sha256 } from "@/lib/hash";
 
@@ -84,10 +85,11 @@ export function buildLiveWorld(p: LiveProfile, autopays: LiveAutopay[], until: I
       trialStartedAt: a.trial ? ist(`${a.trial.startedOn} 12:00`) : null, usageConsent: false,
       createdAuth: { method: "upi_pin", device: "other app", at: a.addedAt },
     });
+    const minCycles = maxSkipsAllowed() + 1;
     for (let seq = 1; ; seq++) {
       const day = addMonths(a.nextDue, (seq - 1) * STEP[a.interval]);
       const dueAt = ist(`${day} ${CHARGE_TIME_IST}`);
-      if (seq > 1 && ms(dueAt) > ms(until)) break;
+      if (seq > minCycles && ms(dueAt) > ms(until)) break;
       // The bank's pre-debit notice comes a day ahead, but never before Pakka knew about the AutoPay.
       const notice = Math.max(ms(dueAt) - 24 * 3_600_000, ms(a.addedAt) + 60_000);
       cycles.push({

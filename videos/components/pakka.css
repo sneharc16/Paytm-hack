@@ -1,0 +1,41 @@
+/* Layout pieces shared by every Pakka scene. Colours come from styles/pakka/tokens.css. */
+.pk-scene { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--canvas); color: var(--ink); font-family: var(--font-body); font-size: 36px; line-height: 1.35; }
+.pk-scene * { box-sizing: border-box; }
+.pk-top { position: absolute; top: 52px; left: var(--safe-x); right: var(--safe-x); display: flex; align-items: center; gap: 28px; }
+.pk-mark { display: inline-flex; align-items: center; gap: .35em; font-weight: 800; font-size: 40px; color: var(--navy); }
+.pk-mark i { width: .85em; height: .85em; border-radius: .25em; background: var(--navy); position: relative; }
+.pk-mark i::after { content: ""; position: absolute; left: .3em; top: .17em; width: .22em; height: .38em; border: solid var(--cyan); border-width: 0 .12em .12em 0; transform: rotate(45deg); }
+.pk-chapter { font-size: 30px; color: var(--slate); padding-left: 28px; border-left: 1px solid var(--line-strong); }
+
+.pk-split { position: absolute; inset: 150px var(--safe-x) 90px; display: grid; grid-template-columns: 640px 1fr; gap: 64px; align-items: center; }
+.pk-kicker { font-size: 32px; color: var(--slate); margin-bottom: 14px; }
+.pk-title { font-family: var(--font-display); font-weight: 800; font-size: 76px; line-height: 1.04; color: var(--navy); letter-spacing: -0.01em; margin: 0 0 36px; }
+.pk-points { display: flex; flex-direction: column; gap: 22px; }
+.pk-point { display: flex; gap: 20px; align-items: flex-start; font-size: 38px; line-height: 1.25; opacity: 0; }
+.pk-point::before { content: ""; flex: none; width: 16px; height: 16px; margin-top: 15px; border-radius: 50%; background: var(--cyan); }
+.pk-point b { color: var(--navy); }
+.h { opacity: 0; }
+
+.pk-frame { position: relative; width: 100%; border: 1px solid var(--line-strong); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.pk-chrome { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.pk-chrome b { width: 13px; height: 13px; border-radius: 50%; background: var(--line-strong); }
+.pk-chrome span { margin-left: 18px; font-size: 20px; color: var(--slate); background: var(--canvas); border: 1px solid var(--line); border-radius: 999px; padding: 0 22px; line-height: 28px; }
+.pk-shots { position: relative; aspect-ratio: 1440 / 835; overflow: hidden; }
+.pk-shots img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+
+.pk-callout { position: absolute; padding: 22px 30px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 18px 50px rgba(0, 46, 110, .16); font-size: 34px; line-height: 1.25; color: var(--ink); opacity: 0; }
+.pk-callout small { display: block; font-size: 24px; color: var(--slate); }
+
+.pk-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 34px 38px; }
+.pk-chip { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 18px; font-weight: 600; color: var(--navy); }
+.pk-big { font-family: var(--font-display); font-weight: 800; color: var(--navy); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.pk-tag { display: inline-block; padding: 4px 18px; border-radius: 999px; font-size: 26px; font-weight: 600; }
+.pk-tag.green { background: var(--green-wash); color: var(--green); }
+.pk-tag.red { background: var(--red-wash); color: var(--red); }
+.pk-tag.amber { background: var(--amber-wash); color: var(--amber); }
+.pk-tag.navy { background: var(--navy-wash); color: var(--navy); }
+.pk-mono { font-family: var(--font-mono); }
+
+/* Consumer screens are a phone in the middle of a 1280x860 capture: crop to the phone. */
+.pk-phone { position: relative; width: 470px; height: 860px; margin: 0 auto; border-radius: 56px; overflow: hidden; background: var(--canvas); }
+.pk-phone img { position: absolute; top: 0; height: 100%; left: 50%; width: auto; transform: translateX(-50%); }
